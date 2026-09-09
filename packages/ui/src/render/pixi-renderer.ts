@@ -1,4 +1,4 @@
-import { Application, Assets, Container, Graphics, Sprite, Texture } from 'pixi.js'
+import { Application, Assets, Container, Graphics, Rectangle, Sprite, Texture } from 'pixi.js'
 import { CompositeTilemap } from '@pixi/tilemap'
 import { parseGid, tileId, walkLayers, type Layer, type MapObject, type TileMap } from '@tile-editor/core'
 import type { RenderOptions, TileRenderer } from './renderer'
@@ -35,6 +35,8 @@ export class PixiTileRenderer implements TileRenderer {
   private map?: TileMap
   private source?: TileSourceIndex
   private textures = new Map<string, Texture>()
+  /** One texture per gid, cropped out of its atlas where needed. */
+  private tileTextures = new Map<number, Texture>()
   private spritePool: Sprite[] = []
   private tilemaps = new Map<number, CompositeTilemap>()
   private ready = false
@@ -86,15 +88,32 @@ export class PixiTileRenderer implements TileRenderer {
       const url = urls[i]!
       if (result.status === 'fulfilled') this.textures.set(url, result.value)
     })
+    // An atlas tileset packs many tiles into one image, so each gid needs its
+    // own cropped view of that image rather than the whole thing.
+    this.tileTextures.clear()
+    for (const [gid, frame] of source.entries()) {
+      const base = this.textures.get(frame.url)
+      if (!base) continue
+      const wholeImage =
+        frame.sx === 0 &&
+        frame.sy === 0 &&
+        (frame.imageWidth === 0 || frame.sw === frame.imageWidth) &&
+        (frame.imageHeight === 0 || frame.sh === frame.imageHeight)
+      this.tileTextures.set(
+        gid,
+        wholeImage
+          ? base
+          : new Texture({ source: base.source, frame: new Rectangle(frame.sx, frame.sy, frame.sw, frame.sh) }),
+      )
+    }
+
     for (const tilemap of this.tilemaps.values()) tilemap.destroy()
     this.tilemaps.clear()
     this.tileLayers.removeChildren()
   }
 
   private textureFor(gid: number): Texture | undefined {
-    const frame = this.source?.frame(gid)
-    if (!frame) return undefined
-    return this.textures.get(frame.url)
+    return this.tileTextures.get(tileId(gid))
   }
 
   private borrowSprite(): Sprite {

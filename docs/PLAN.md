@@ -174,8 +174,13 @@ na Waszych plikach — stąd osobna pozycja w rejestrze ryzyk.
 **v1.1:** `animation` · kolizje kafla · szablony `.tx` · custom types
 (`propertyTypes`) · zstd.
 
-**Później:** mapy nieskończone i chunki · orientacja izometryczna
-i heksagonalna · `wangsets` (wracają z autotilingiem w M6) · `.world`.
+**Zrealizowane wcześniej niż planowano:** mapy nieskończone i chunki —
+w korpusie ich nie ma, ale przykładowa mapa Tileda na nich stanęła, a odczyt
+pliku, którego edytor nie rozumie, oznaczałby utratę danych przy zapisie.
+Odczyt i zapis chunków działa w obu formatach.
+
+**Później:** orientacja izometryczna i heksagonalna (czytane, ale rysowane
+jak ortogonalne) · `wangsets` (wracają z autotilingiem w M6) · `.world`.
 
 ### 5.5. Wierność round-tripu — zrealizowane inaczej niż zakładano
 
@@ -265,7 +270,7 @@ Każdy kończy się czymś, co da się uruchomić na telefonie.
 | M | Zakres | Deliverable | Stan |
 |---|---|---|---|
 | **M0** | Szkielet monorepo, model niezależny od formatu, **`JsonCodec` (TMJ/TSJ)**, złote testy round-tripu na 110 mapach z `examples/`, `ProjectFS` + adapter HTTP, serwer HTTP, CLI | `npx tile-editor .` startuje w Termuxie; round-trip zielony na całym korpusie | **gotowe** |
-| **M1** | **`XmlCodec` (TMX/TSX)**, `TileRenderer` na Pixi, pan/zoom, siatka, warstwy kafli i obiekty kaflowe read-only, tilesety-kolekcje, drzewo projektu | Otwierasz sokobana i tilt-balla na Tab S7 i płynnie po nich nawigujesz | **gotowe poza `XmlCodec`** |
+| **M1** | **`XmlCodec` (TMX/TSX)**, `TileRenderer` na Pixi, pan/zoom, siatka, warstwy kafli i obiekty kaflowe read-only, tilesety-kolekcje, drzewo projektu | Otwierasz sokobana i tilt-balla na Tab S7 i płynnie po nich nawigujesz | **gotowe** |
 | **M2** | Narzędzia: pędzel, gumka, wypełnienie, prostokąt, pipeta, zaznaczenie. Panel warstw (kolejność, widoczność, opacity). Stos undo/redo. Zapis | Pełna pętla edycji kafli i zapis | **gotowe** |
 | **M3** | Obiekty kaflowe: stawianie, przesuwanie, **rozciąganie, obrót, flip, `objectalignment`**. Pozostałe kształty. Edytor properties mapy, warstwy, obiektu i kafla. **Lint** — sprzeczne typy property, braki względem reszty map, GID-y spoza tilesetu, nieużywane kafle | **v1** | **gotowe poza pozostałymi kształtami obiektów** |
 | **M4** | Menedżer tilesetów, import grafik, edytor tilesetu (kolizje, animacje), mapy nieskończone | Praca z tilesetami bez wychodzenia do Tileda | — |

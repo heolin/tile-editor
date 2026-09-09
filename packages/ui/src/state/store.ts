@@ -8,7 +8,7 @@ import {
 import { HttpProjectFS } from '../fs/http-fs'
 import { buildTileSourceIndex, type TileSourceIndex } from '../render/tile-source'
 
-export type ToolId = 'brush' | 'eraser' | 'fill' | 'rect' | 'picker' | 'select'
+export type ToolId = 'brush' | 'eraser' | 'fill' | 'rect' | 'picker' | 'select' | 'object'
 export type PanelId = 'project' | 'layers' | 'tilesets' | 'properties' | 'lint'
 
 /** A rectangular block of tiles picked up from a tileset or the map. */
@@ -182,7 +182,8 @@ export const useEditor = create<EditorState>((set, get) => ({
     set({ revision: get().revision + 1, dirty: get().history.dirty })
   },
 
-  setTool: (tool) => set({ tool, selectedObjectIds: tool === 'select' ? get().selectedObjectIds : [] }),
+  setTool: (tool) =>
+    set({ tool, selectedObjectIds: tool === 'select' || tool === 'object' ? get().selectedObjectIds : [] }),
   setStamp: (stamp) => set({ stamp }),
   setActiveLayer: (id) => {
     const layer = id === undefined ? undefined : [...walkLayers(get().doc?.map.layers ?? [])].find((l) => l.id === id)
@@ -190,8 +191,12 @@ export const useEditor = create<EditorState>((set, get) => ({
       activeLayerId: id,
       selectedObjectIds: [],
       propertyTarget: id === undefined ? { kind: 'map' } : { kind: 'layer', id },
-      // Painting tiles onto an object layer is meaningless, so switch tools.
-      tool: layer?.kind === 'objectgroup' ? 'select' : get().tool === 'select' ? 'brush' : get().tool,
+      // Painting tiles onto an object layer is meaningless, and object tools
+      // are equally useless on a tile layer, so the tool follows the layer.
+      tool:
+        layer?.kind === 'objectgroup'
+          ? get().tool === 'object' ? 'object' : 'select'
+          : get().tool === 'select' || get().tool === 'object' ? 'brush' : get().tool,
     })
   },
   selectObjects: (ids) =>
@@ -333,6 +338,37 @@ export function captureStamp(layer: TileLayer, x0: number, y0: number, x1: numbe
 
 export function newLayerId(map: TileMap): number {
   return map.nextlayerid
+}
+
+/**
+ * Builds a tile object covering one grid cell. The anchor decides where
+ * (x, y) sits inside that box, which is why this cannot just be the cell's
+ * top-left corner (docs/PLAN.md section 5.1).
+ */
+export function makeTileObject(
+  map: TileMap,
+  gid: number,
+  cellX: number,
+  cellY: number,
+  anchor: { ax: number; ay: number },
+  size: { width: number; height: number },
+): MapObject {
+  const left = cellX * map.tilewidth
+  const top = cellY * map.tileheight
+  return {
+    id: map.nextobjectid,
+    name: '',
+    className: '',
+    x: left + anchor.ax * size.width,
+    y: top + anchor.ay * size.height,
+    width: size.width,
+    height: size.height,
+    rotation: 0,
+    visible: true,
+    shape: 'tile',
+    gid,
+    properties: [],
+  }
 }
 
 export function makeTileLayer(map: TileMap, name: string): TileLayer {

@@ -1,5 +1,5 @@
 import { gunzipSync, unzlibSync, gzipSync, zlibSync } from 'fflate'
-import { DenseLayerData } from '../layer-data.js'
+import { DenseLayerData, fromChunks, toChunks, type Chunk } from '../layer-data.js'
 import type {
   GroupLayer, ImageLayer, Layer, MapObject, ObjectLayer, Orientation,
   Property, RenderOrder, TextBlock, TileLayer, TileMap, TilesetRef,
@@ -235,17 +235,34 @@ function parseLayer(raw: Record<string, unknown>): Layer {
       const width = num(raw.width)
       const height = num(raw.height)
       const compression = raw.compression as string | undefined
-      const gids = decodeTileData(raw.data, compression)
+      // An infinite map arrives as chunks rather than one flat array. Reading
+      // them into a dense buffer keeps every tool oblivious to the difference.
+      const rawChunks = Array.isArray(raw.chunks) ? (raw.chunks as Record<string, unknown>[]) : undefined
+      const data = rawChunks
+        ? fromChunks(
+            rawChunks.map((chunk): Chunk => ({
+              x: num(chunk.x),
+              y: num(chunk.y),
+              width: num(chunk.width),
+              height: num(chunk.height),
+              gids: decodeTileData(chunk.data, compression),
+            })),
+          )
+        : DenseLayerData.fromArray(width, height, decodeTileData(raw.data, compression))
+      const encoded = rawChunks
+        ? (rawChunks[0]?.data as unknown)
+        : raw.data
       return {
         ...base,
         kind: 'tilelayer',
-        width,
-        height,
+        width: rawChunks ? data.bounds.width : width,
+        height: rawChunks ? data.bounds.height : height,
         x: num(raw.x),
         y: num(raw.y),
-        data: DenseLayerData.fromArray(width, height, gids),
-        encoding: typeof raw.data === 'string' ? 'base64' : 'csv',
+        data,
+        encoding: typeof encoded === 'string' ? 'base64' : 'csv',
         compression: compression as TileLayer['compression'],
+        chunked: rawChunks !== undefined ? true : undefined,
       }
     }
   }
@@ -293,7 +310,18 @@ function emitLayer(layer: Layer): Record<string, unknown> {
         height: layer.height,
         x: layer.x,
         y: layer.y,
-        data: encodeTileData(layer.data.toArray(), layer.encoding, layer.compression, layer.width),
+        data: layer.chunked
+          ? undefined
+          : encodeTileData(layer.data.toArray(), layer.encoding, layer.compression, layer.width),
+        chunks: layer.chunked
+          ? toChunks(layer.data).map((chunk) => ({
+              data: encodeTileData(chunk.gids, layer.encoding, layer.compression, chunk.width),
+              height: chunk.height,
+              width: chunk.width,
+              x: chunk.x,
+              y: chunk.y,
+            }))
+          : undefined,
         encoding: layer.encoding === 'base64' ? 'base64' : undefined,
         compression: layer.compression,
       })

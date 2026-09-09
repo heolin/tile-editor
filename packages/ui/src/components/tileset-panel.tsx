@@ -2,12 +2,40 @@ import { useMemo, useState } from 'react'
 import clsx from 'clsx'
 import { Empty, Panel } from './ui'
 import { useEditor } from '../state/store'
+import type { TileSourceIndex } from '../render/tile-source'
 
 /**
  * Both tilesets in the corpus are image collections: every tile is its own PNG,
  * so this grid loads a few dozen separate files rather than slicing one atlas.
  * Images are lazy so a large collection does not stall the first paint.
  */
+/**
+ * Draws one tile. An atlas tileset packs many tiles into a single image, so the
+ * thumbnail crops with background-position instead of showing the whole file.
+ */
+function TileThumb({ frame }: { frame: NonNullable<ReturnType<TileSourceIndex['frame']>> }) {
+  const box = 44
+  const scale = box / Math.max(frame.sw, frame.sh)
+  const width = frame.imageWidth || frame.sw
+  const height = frame.imageHeight || frame.sh
+  return (
+    <div className="flex h-full w-full items-center justify-center">
+      <div
+        aria-hidden
+        style={{
+          width: frame.sw * scale,
+          height: frame.sh * scale,
+          backgroundImage: `url(${frame.url})`,
+          backgroundSize: `${width * scale}px ${height * scale}px`,
+          backgroundPosition: `-${frame.sx * scale}px -${frame.sy * scale}px`,
+          backgroundRepeat: 'no-repeat',
+          imageRendering: 'pixelated',
+        }}
+      />
+    </div>
+  )
+}
+
 export function TilesetPanel() {
   const doc = useEditor((s) => s.doc)
   const stamp = useEditor((s) => s.stamp)
@@ -19,7 +47,14 @@ export function TilesetPanel() {
 
   const entries = useMemo(() => {
     if (!doc) return []
-    const out: { gid: number; url: string; label: string; tilesetPath: string; tileId: number; kind?: string }[] = []
+    const out: {
+      gid: number
+      frame: ReturnType<typeof doc.source.frame>
+      label: string
+      tilesetPath: string
+      tileId: number
+      kind?: string
+    }[] = []
     for (const ref of doc.map.tilesets) {
       const tileset = ref.tileset
       if (!tileset) continue
@@ -31,7 +66,7 @@ export function TilesetPanel() {
         const kind = tile?.properties.find((p) => p.name === 'kind')?.value
         out.push({
           gid,
-          url: frame.url,
+          frame,
           label: tile?.image?.split('/').pop() ?? `#${i}`,
           tilesetPath: tileset.sourcePath ?? ref.source ?? '',
           tileId: i,
@@ -77,13 +112,7 @@ export function TilesetPanel() {
                 stamp?.gids[0] === entry.gid ? 'border-accent ring-1 ring-accent' : 'border-line hover:border-line-strong',
               )}
             >
-              <img
-                src={entry.url}
-                alt={entry.label}
-                loading="lazy"
-                decoding="async"
-                className="h-full w-full object-contain [image-rendering:pixelated]"
-              />
+              <TileThumb frame={entry.frame!} />
             </button>
           ))}
         </div>

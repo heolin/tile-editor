@@ -13,12 +13,17 @@ export interface TileFrame {
   sy: number
   sw: number
   sh: number
+  /** Full size of the source image, needed to crop an atlas. */
+  imageWidth: number
+  imageHeight: number
 }
 
 export interface TileSourceIndex {
   frame(gid: number): TileFrame | undefined
   /** Every distinct image this map needs, for preloading. */
   urls(): string[]
+  /** Every gid this map can draw, paired with its frame. */
+  entries(): [number, TileFrame][]
 }
 
 /**
@@ -51,6 +56,8 @@ export function buildTileSourceIndex(
           sy: tileset.margin + row * (tileset.tileheight + tileset.spacing),
           sw: tileset.tilewidth,
           sh: tileset.tileheight,
+          imageWidth: tileset.imagewidth ?? 0,
+          imageHeight: tileset.imageheight ?? 0,
         })
       }
     }
@@ -64,6 +71,8 @@ export function buildTileSourceIndex(
         sy: 0,
         sw: tile.imagewidth ?? tileset.tilewidth,
         sh: tile.imageheight ?? tileset.tileheight,
+        imageWidth: tile.imagewidth ?? tileset.tilewidth,
+        imageHeight: tile.imageheight ?? tileset.tileheight,
       })
     }
   }
@@ -71,6 +80,7 @@ export function buildTileSourceIndex(
   return {
     frame: (gid) => frames.get(tileId(gid)),
     urls: () => [...new Set([...frames.values()].map((f) => f.url))],
+    entries: () => [...frames.entries()],
   }
 }
 

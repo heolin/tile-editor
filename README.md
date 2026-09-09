@@ -32,11 +32,13 @@ dodaj `--lan`.
 
 | | |
 |---|---|
-| **Formaty** | `.tmj` / `.tsj` / `.tiled-project` (JSON). TMX dochodzi w M1 |
+| **Formaty** | JSON (`.tmj` / `.tsj`) **i XML (`.tmx` / `.tsx`)**, plus `.tiled-project` |
 | **Wierność zapisu** | 85 ze 110 map z `examples/` zapisuje się bajtowo identycznie; każdy kolejny zapis jest bajtowo stabilny |
+| **Tilesety** | atlasy ze spacing i margin oraz kolekcje obrazków |
+| **Mapy nieskończone** | odczyt i zapis chunków w obu formatach |
 | **Edycja kafli** | pędzel, gumka, wypełnienie, prostokąt, pipeta, cofanie ze scalaniem pociągnięć |
 | **Warstwy** | kolejność, widoczność, krycie, dodawanie i usuwanie |
-| **Obiekty** | render z rozciąganiem, obrotem, flipem i `objectalignment`; zaznaczanie i przesuwanie ze snapowaniem |
+| **Obiekty** | stawianie, zaznaczanie, przesuwanie ze snapowaniem, kasowanie; render z rozciąganiem, obrotem, flipem i `objectalignment` |
 | **Properties** | mapy, warstwy, obiektu i kafla — wszystkie typy skalarne |
 | **Lint** | sprzeczne typy property, braki względem reszty map, GID-y spoza tilesetu, nieużywane kafle |
 | **Układ** | trzy progi: telefon, tablet w pionie, tablet w poziomie i desktop |
@@ -55,8 +57,8 @@ npm run dev:ui         # Vite dev server; równolegle uruchom npm start <folder>
 ## Skróty klawiszowe
 
 `B` pędzel · `E` gumka · `F` wypełnienie · `R` prostokąt · `I` pipeta ·
-`V` zaznaczanie · `G` siatka · `O` obiekty · `Ctrl+Z` / `Ctrl+Shift+Z` cofnij i
-ponów · `Ctrl+S` zapisz.
+`V` zaznaczanie · `A` stawianie obiektów · `G` siatka · `O` obiekty · `Ctrl+Z` / `Ctrl+Shift+Z` cofnij i
+ponów · `Ctrl+S` zapisz · `Delete` usuwa zaznaczone obiekty.
 
 Na płótnie: przeciągnięcie dwoma palcami albo `Alt` z myszą przesuwa widok,
 `Alt` podczas przeciągania obiektu wyłącza snapowanie do siatki, a kliknięcie

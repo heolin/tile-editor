@@ -98,6 +98,8 @@ export interface TileLayer extends LayerBase {
   /** How the source encoded the data, so a save can put it back the same way. */
   encoding: 'csv' | 'base64'
   compression?: 'gzip' | 'zlib' | 'zstd'
+  /** Set for infinite maps, whose data is stored as chunks rather than a grid. */
+  chunked?: boolean
 }
 
 export interface ObjectLayer extends LayerBase {

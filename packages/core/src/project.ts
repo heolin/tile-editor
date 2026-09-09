@@ -1,7 +1,9 @@
-import { parseMapJson, serializeMapJson, type ParsedMap } from './json/map-codec.js'
+import { parseMapJson, serializeMapJson } from './json/map-codec.js'
 import { parseProjectJson } from './json/project-codec.js'
-import { parseTilesetJson, serializeTilesetJson, type ParsedTileset } from './json/tileset-codec.js'
-import type { FormatHints } from './json/common.js'
+import { parseTilesetJson, serializeTilesetJson } from './json/tileset-codec.js'
+import { DEFAULT_HINTS, type FormatHints } from './json/common.js'
+import { parseMapXml, serializeMapXml } from './xml/map-codec.js'
+import { parseTilesetXml, serializeTilesetXml } from './xml/tileset-codec.js'
 import type { TileMap, TiledProject, Tileset } from './model.js'
 import { basename, dirname, extname, normalizePath, resolveFrom } from './paths.js'
 
@@ -78,12 +80,26 @@ export async function scanProject(fs: ProjectFS): Promise<ProjectContents> {
   }
 }
 
-export interface LoadedMap extends ParsedMap {
-  path: string
+/** Which serialisation a document came from, so a save goes back the same way. */
+export type DocumentFormat = 'json' | 'xml'
+
+export function formatOf(path: string): DocumentFormat {
+  return ['.tmx', '.tsx', '.tx'].includes(extname(path).toLowerCase()) ? 'xml' : 'json'
 }
 
-export interface LoadedTileset extends ParsedTileset {
+export interface LoadedMap {
   path: string
+  map: TileMap
+  format: DocumentFormat
+  /** Only meaningful for the JSON format; XML has a single dialect. */
+  hints: FormatHints
+}
+
+export interface LoadedTileset {
+  path: string
+  tileset: Tileset
+  format: DocumentFormat
+  hints: FormatHints
 }
 
 /**
@@ -104,16 +120,26 @@ export class ProjectLoader {
     const cached = this.tilesetCache.get(key)
     if (cached) return cached
     const text = await this.fs.readText(key)
-    const parsed = parseTilesetJson(text, key)
-    const loaded: LoadedTileset = { ...parsed, path: key }
+    const format = formatOf(key)
+    const loaded: LoadedTileset =
+      format === 'xml'
+        ? { ...parseTilesetXml(text, key), path: key, format, hints: DEFAULT_HINTS }
+        : { ...parseTilesetJson(text, key), path: key, format }
     this.tilesetCache.set(key, loaded)
     return loaded
   }
 
   async loadMap(path: string): Promise<LoadedMap> {
     const key = normalizePath(path)
-    const parsed = parseMapJson(await this.fs.readText(key))
+    const text = await this.fs.readText(key)
+    const format = formatOf(key)
+    const parsed =
+      format === 'xml'
+        ? { map: parseMapXml(text).map, hints: DEFAULT_HINTS }
+        : parseMapJson(text)
     for (const ref of parsed.map.tilesets) {
+      // A TMX map may embed its tileset outright, in which case it is already
+      // attached and there is nothing to resolve.
       if (!ref.source) continue
       try {
         const loaded = await this.loadTileset(resolveFrom(key, ref.source))
@@ -123,15 +149,19 @@ export class ProjectLoader {
         // still opens, just without art for those tiles.
       }
     }
-    return { ...parsed, path: key }
+    return { ...parsed, path: key, format }
   }
 
   async saveMap(map: TileMap, path: string, hints: FormatHints): Promise<void> {
-    await this.fs.writeText(normalizePath(path), serializeMapJson(map, hints))
+    const key = normalizePath(path)
+    const text = formatOf(key) === 'xml' ? serializeMapXml(map) : serializeMapJson(map, hints)
+    await this.fs.writeText(key, text)
   }
 
   async saveTileset(tileset: Tileset, path: string, hints: FormatHints): Promise<void> {
-    await this.fs.writeText(normalizePath(path), serializeTilesetJson(tileset, hints))
+    const key = normalizePath(path)
+    const text = formatOf(key) === 'xml' ? serializeTilesetXml(tileset) : serializeTilesetJson(tileset, hints)
+    await this.fs.writeText(key, text)
   }
 
   invalidate(path?: string): void {

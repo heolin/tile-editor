@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import clsx from 'clsx'
 import { FolderTree, Layers, Palette, ShieldCheck, SlidersHorizontal } from 'lucide-react'
-import { mapTitle } from '@tile-editor/core'
+import { RemoveObjectsCommand, mapTitle } from '@tile-editor/core'
 import { MapCanvas } from './components/canvas'
 import { LayersPanel } from './components/layers-panel'
 import { LintPanel } from './components/lint-panel'
@@ -192,6 +192,17 @@ function useKeyboardShortcuts(): void {
         state.redo()
         return
       }
+      if (event.key === 'Delete' || event.key === 'Backspace') {
+        const layer = state.activeObjectLayer()
+        const selected = state.selectedObjects()
+        if (layer && selected.length > 0) {
+          event.preventDefault()
+          state.history.run(new RemoveObjectsCommand(layer, selected))
+          state.selectObjects([])
+          state.touch()
+        }
+        return
+      }
       if (mod) return
 
       switch (event.key.toLowerCase()) {
@@ -201,6 +212,7 @@ function useKeyboardShortcuts(): void {
         case 'r': state.setTool('rect'); break
         case 'i': state.setTool('picker'); break
         case 'v': state.setTool('select'); break
+        case 'a': state.setTool('object'); break
         case 'g': state.toggleGrid(); break
         case 'o': state.toggleObjects(); break
       }

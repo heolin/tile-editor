@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import {
-  SetTilesCommand, UpdateObjectsCommand, tileId,
-  type MapObject,
+  AddObjectCommand, RemoveObjectsCommand, SetTilesCommand, UpdateObjectsCommand,
+  tilesetForGid, type MapObject,
 } from '@tile-editor/core'
-import { captureStamp, floodFill, paintStamp, useEditor, type Stamp } from '../state/store'
+import { floodFill, makeTileObject, paintStamp, useEditor, type Stamp } from '../state/store'
+import { tileObjectAnchor } from '../render/tile-source'
 import { createRenderer, type PixiTileRenderer } from '../render/pixi-renderer'
 
 interface PointerRecord {
@@ -103,7 +104,7 @@ export function MapCanvas() {
       showObjects: state.showObjects,
       activeLayerId: state.activeLayerId,
       hover,
-      hoverStamp: state.tool === 'brush' ? state.stamp : undefined,
+      hoverStamp: state.tool === 'brush' || state.tool === 'object' ? state.stamp : undefined,
       selectedObjectIds: state.selectedObjectIds,
       marquee: marquee ? { x0: marquee.x0, y0: marquee.y0, x1: marquee.x1, y1: marquee.y1 } : undefined,
     })
@@ -198,6 +199,30 @@ export function MapCanvas() {
     else if (state.stamp) paintStamp(command, state.stamp, cell.x, cell.y)
   }
 
+  /** Places a tile object covering the clicked cell, using the current stamp. */
+  function placeObject(clientX: number, clientY: number): void {
+    const state = useEditor.getState()
+    const layer = state.activeObjectLayer()
+    const cell = tileAt(clientX, clientY)
+    const gid = state.stamp?.gids[0]
+    const map = state.doc?.map
+    if (!layer || !cell || !map) return
+    if (!gid) {
+      state.notify('Wybierz najpierw kafel w panelu tilesetów.', 'error')
+      return
+    }
+    const ref = tilesetForGid(map, gid)
+    const tileset = ref?.tileset
+    const frame = state.doc!.source.frame(gid)
+    const object = makeTileObject(map, gid, cell.x, cell.y, tileObjectAnchor(tileset), {
+      width: frame?.sw ?? map.tilewidth,
+      height: frame?.sh ?? map.tileheight,
+    })
+    state.history.run(new AddObjectCommand(layer, object, map))
+    state.selectObjects([object.id])
+    state.touch()
+  }
+
   function beginSelect(clientX: number, clientY: number): boolean {
     const state = useEditor.getState()
     const layer = state.activeObjectLayer()
@@ -268,6 +293,10 @@ export function MapCanvas() {
     }
 
     const state = useEditor.getState()
+    if (state.tool === 'object') {
+      placeObject(event.clientX, event.clientY)
+      return
+    }
     if (state.tool === 'select') {
       if (!beginSelect(event.clientX, event.clientY)) {
         dragRef.current = { kind: 'pan', lastX: event.clientX, lastY: event.clientY }

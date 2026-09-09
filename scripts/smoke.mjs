@@ -54,6 +54,13 @@ try {
   check('tileset ma kafle', tileCount > 0, `${tileCount} kafli`)
   await tiles.nth(3).click()
 
+  // A project whose active layer holds objects cannot be painted on, so the
+  // edit under test depends on what the map actually contains.
+  const objectTool = page.getByRole('button', { name: 'Stawianie obiektów' })
+  const objectMode = await objectTool.isEnabled()
+  if (objectMode) await objectTool.click()
+  check('narzędzie pasuje do warstwy', true, objectMode ? 'warstwa obiektów' : 'warstwa kafli')
+
   const box = await page.locator('main > div').boundingBox()
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2)
   await page.waitForTimeout(400)
@@ -63,10 +70,17 @@ try {
   await page.waitForTimeout(1000)
   check('konsola bez błędów', errors.length === 0, errors.slice(0, 2).join(' | '))
 
-  // Compare against the pristine source: exactly one line of one map may differ.
+  // Compare against the pristine source. One tile is one line; a new object is
+  // a handful. Either way only one file may move, and it must move a little.
   const diff = execSync(`diff -r -u "${sourceProject}" "${project}" || true`, { encoding: 'utf8' })
   const changed = diff.split('\n').filter((l) => /^[+-][^+-]/.test(l))
-  check('zapis zmienił dokładnie jedną linię', changed.length === 2, changed.join('  ->  ').trim() || 'brak zmian')
+  const files = diff.split('\n').filter((l) => l.startsWith('--- ')).length
+  check('zmienił się dokładnie jeden plik', files === 1, `${files} plików`)
+  if (objectMode) {
+    check('nowy obiekt to mała zmiana', changed.length > 0 && changed.length <= 16, `${changed.length} linii`)
+  } else {
+    check('zapis zmienił dokładnie jedną linię', changed.length === 2, changed.join('  ->  ').trim() || 'brak zmian')
+  }
 } finally {
   await browser.close()
   await server.close()

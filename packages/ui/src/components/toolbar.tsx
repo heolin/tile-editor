@@ -1,7 +1,7 @@
 import clsx from 'clsx'
 import {
   Brush, Eraser, Grid3x3, PaintBucket, Pipette, Redo2, Save, Shapes,
-  Square, MousePointer2, Undo2,
+  Square, MousePointer2, StickyNote, Undo2,
 } from 'lucide-react'
 import { Button } from './ui'
 import { useEditor, type ToolId } from '../state/store'
@@ -37,11 +37,21 @@ export function ToolBar() {
       <span className="mx-1 h-5 w-px bg-line" />
       <Button
         active={tool === 'select'}
+        disabled={!isObjectLayer}
         title="Zaznaczanie obiektów (V)"
         aria-label="Zaznaczanie obiektów"
         onClick={() => setTool('select')}
       >
         <MousePointer2 size={16} />
+      </Button>
+      <Button
+        active={tool === 'object'}
+        disabled={!isObjectLayer}
+        title="Stawianie obiektów (A)"
+        aria-label="Stawianie obiektów"
+        onClick={() => setTool('object')}
+      >
+        <StickyNote size={16} />
       </Button>
     </div>
   )
