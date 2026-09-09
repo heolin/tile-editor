@@ -59,6 +59,9 @@ export function MapCanvas() {
       }
       renderer = created
       rendererRef.current = created
+      // Diagnostic handle used by scripts/bench.mjs to time draws directly
+      // rather than inferring cost from frame scheduling.
+      ;(window as unknown as { __tileEditor?: unknown }).__tileEditor = created
       if (hostRef.current) created.mount(hostRef.current)
       setMounted(true)
     })
@@ -100,6 +103,7 @@ export function MapCanvas() {
     if (!renderer || !state.doc) return
     renderer.draw({
       camera: state.camera,
+      revision: state.revision,
       showGrid: state.showGrid,
       showObjects: state.showObjects,
       activeLayerId: state.activeLayerId,

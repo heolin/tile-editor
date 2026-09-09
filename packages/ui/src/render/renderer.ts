@@ -15,6 +15,11 @@ export interface Stamp {
 
 export interface RenderOptions {
   camera: Camera
+  /**
+   * Bumped whenever the document changes. Panning and zooming leave it alone,
+   * which lets the renderer keep the tile geometry it already built.
+   */
+  revision: number
   showGrid: boolean
   showObjects: boolean
   activeLayerId?: number

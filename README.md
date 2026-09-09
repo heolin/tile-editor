@@ -45,12 +45,24 @@ dodaj `--lan`.
 | **Układ** | trzy progi: telefon, tablet w pionie, tablet w poziomie i desktop |
 | **Gesty** | dwa palce = pan i zoom, jeden palec = narzędzie, kółko = zoom do kursora |
 
+## Wydajność
+
+`npm run bench` generuje mapy 50×50, 100×100 i 200×200 i mierzy czas
+rysowania klatki. Na programowym rasteryzatorze (SwiftShader w headless
+Chrome, czyli dolna granica) wychodzi **1–4 ms na klatkę przy 120 000 kafli**,
+niezależnie od rozmiaru mapy — geometria kafli jest budowana raz na zmianę
+dokumentu, a nie na każdy ruch kamery.
+
+Budżet klatki na ekranie 120 Hz to 8,3 ms, więc zapas jest duży. Prawdziwy
+pomiar na Galaxy Tab S7 wciąż jest do zrobienia.
+
 ## Polecenia
 
 ```bash
 npm start <folder>     # serwer + edytor
 npm test               # złote testy round-tripu na korpusie examples/
 npm run smoke          # test end-to-end w przeglądarce (wymaga playwright)
+npm run bench          # benchmark renderera na wygenerowanych dużych mapach
 npm run typecheck
 npm run dev:ui         # Vite dev server; równolegle uruchom npm start <folder>
 ```

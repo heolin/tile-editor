@@ -3,7 +3,7 @@ import {
   DenseLayerData, History, ProjectLoader, SetTilesCommand,
   createFromTemplate, createTileMap, lintMap, lintProject,
   lintUnusedTiles, mapTitle, normalizePath, tileId, walkLayers,
-  type FormatHints, type LintFinding, type Layer, type MapObject,
+  type DocumentFormat, type FormatHints, type LintFinding, type Layer, type MapObject,
   type ObjectLayer, type ProjectContents, type TileLayer, type TileMap, type Tileset,
 } from '@tile-editor/core'
 import { HttpProjectFS } from '../fs/http-fs'
@@ -29,6 +29,8 @@ export interface OpenDocument {
   path: string
   map: TileMap
   hints: FormatHints
+  /** Which serialisation this map came from, shown in the properties panel. */
+  format: DocumentFormat
   source: TileSourceIndex
 }
 
@@ -169,7 +171,7 @@ export const useEditor = create<EditorState>((set, get) => ({
       const firstLayer = [...walkLayers(loaded.map.layers)][0]
       get().history.clear()
       set({
-        doc: { path: loaded.path, map: loaded.map, hints: loaded.hints, source },
+        doc: { path: loaded.path, map: loaded.map, hints: loaded.hints, format: loaded.format, source },
         activeLayerId: firstLayer?.id,
         selectedObjectIds: [],
         propertyTarget: { kind: 'map' },

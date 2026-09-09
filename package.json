@@ -11,7 +11,8 @@
     "smoke": "node scripts/smoke.mjs",
     "start": "node packages/cli/bin/tile-editor.mjs",
     "dev:ui": "npm run dev -w @tile-editor/ui",
-    "typecheck": "tsc -p packages/core/tsconfig.json --noEmit && tsc -p packages/server/tsconfig.json --noEmit && tsc -p packages/ui/tsconfig.json --noEmit"
+    "typecheck": "tsc -p packages/core/tsconfig.json --noEmit && tsc -p packages/server/tsconfig.json --noEmit && tsc -p packages/ui/tsconfig.json --noEmit",
+    "bench": "node scripts/bench.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.7.0",

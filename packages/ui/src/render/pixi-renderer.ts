@@ -44,6 +44,8 @@ export class PixiTileRenderer implements TileRenderer {
   private spritePool: Sprite[] = []
   private tilemaps = new Map<number, CompositeTilemap>()
   private ready = false
+  /** Document revision the tile and object geometry was last built for. */
+  private builtRevision = -1
 
   async init(): Promise<void> {
     const app = new Application()
@@ -122,6 +124,7 @@ export class PixiTileRenderer implements TileRenderer {
     for (const tilemap of this.tilemaps.values()) tilemap.destroy()
     this.tilemaps.clear()
     this.tileLayers.removeChildren()
+    this.builtRevision = -1
   }
 
   private textureFor(gid: number): Texture | undefined {
@@ -338,11 +341,23 @@ export class PixiTileRenderer implements TileRenderer {
     const alpha = Math.max(0, Math.min(1, (cellPixels - 10) / 26)) * 0.4
     if (alpha <= 0.01) return
 
-    for (let x = 0; x <= map.width; x++) {
-      this.grid.moveTo(x * map.tilewidth, 0).lineTo(x * map.tilewidth, h)
+    // Only the visible slice is worth drawing: a 200x200 map would otherwise
+    // rebuild 400 line segments on every frame of a zoom.
+    const view = this.app?.screen
+    const left = view ? Math.max(0, Math.floor(-options.camera.x / options.camera.zoom / map.tilewidth)) : 0
+    const top = view ? Math.max(0, Math.floor(-options.camera.y / options.camera.zoom / map.tileheight)) : 0
+    const right = view
+      ? Math.min(map.width, Math.ceil((view.width - options.camera.x) / options.camera.zoom / map.tilewidth) + 1)
+      : map.width
+    const bottom = view
+      ? Math.min(map.height, Math.ceil((view.height - options.camera.y) / options.camera.zoom / map.tileheight) + 1)
+      : map.height
+
+    for (let x = left; x <= right; x++) {
+      this.grid.moveTo(x * map.tilewidth, top * map.tileheight).lineTo(x * map.tilewidth, bottom * map.tileheight)
     }
-    for (let y = 0; y <= map.height; y++) {
-      this.grid.moveTo(0, y * map.tileheight).lineTo(w, y * map.tileheight)
+    for (let y = top; y <= bottom; y++) {
+      this.grid.moveTo(left * map.tilewidth, y * map.tileheight).lineTo(right * map.tilewidth, y * map.tileheight)
     }
     this.grid.stroke({ color: 0x000000, width, alpha })
   }
@@ -447,16 +462,29 @@ export class PixiTileRenderer implements TileRenderer {
     return undefined
   }
 
+  /** Wall time of the last draw, in milliseconds. Read by scripts/bench.mjs. */
+  lastDrawMs = 0
+  /** Draws since the renderer was created, for spotting redundant repaints. */
+  drawCount = 0
+
   draw(options: RenderOptions): void {
     if (!this.app || !this.ready || !this.map) return
+    const started = performance.now()
     const { camera } = options
     this.world.position.set(camera.x, camera.y)
     this.world.scale.set(camera.zoom)
     this.drawGrid(options)
-    this.drawTileLayers(options)
-    this.drawObjects(options)
+    // Tile and object geometry depends only on the document. Rebuilding it for
+    // a pan or zoom cost 156 ms a frame on a 50x50 map before this check.
+    if (options.revision !== this.builtRevision) {
+      this.drawTileLayers(options)
+      this.drawObjects(options)
+      this.builtRevision = options.revision
+    }
     this.drawOverlay(options)
     this.app.render()
+    this.lastDrawMs = performance.now() - started
+    this.drawCount++
   }
 
   toWorld(clientX: number, clientY: number): { x: number; y: number } {

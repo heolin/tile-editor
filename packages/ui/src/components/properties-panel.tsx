@@ -1,7 +1,9 @@
 import { useMemo } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
+import { useState } from 'react'
 import {
-  SetPropertyCommand, UpdateLayerCommand, UpdateObjectsCommand, walkLayers,
+  FLIP_H, FLIP_V, ResizeMapCommand, SetPropertyCommand, UpdateLayerCommand,
+  UpdateObjectsCommand, parseGid, walkLayers,
   type Property, type PropertyType,
 } from '@tile-editor/core'
 import { Button, Empty, Field, Panel, Select, TextInput } from './ui'
@@ -186,13 +188,48 @@ function resolveOwner(target: PropertyOwner): ResolvedOwner | undefined {
 
 function MapHeader() {
   const doc = useEditor((s) => s.doc)!
+  useEditor((s) => s.revision)
+  const state = useEditor.getState()
+  const [size, setSize] = useState<{ w: number; h: number } | null>(null)
+  const w = size?.w ?? doc.map.width
+  const h = size?.h ?? doc.map.height
+  const changed = w !== doc.map.width || h !== doc.map.height
+
+  const apply = () => {
+    if (!changed || w < 1 || h < 1) return
+    state.history.run(new ResizeMapCommand(doc.map, w, h))
+    state.touch()
+    setSize(null)
+  }
+
   return (
-    <dl className="grid grid-cols-2 gap-x-3 gap-y-1 border-b border-line px-3 py-2 text-[11px]">
-      <Stat label="Rozmiar" value={`${doc.map.width} × ${doc.map.height}`} />
-      <Stat label="Kafel" value={`${doc.map.tilewidth} × ${doc.map.tileheight}`} />
-      <Stat label="Orientacja" value={doc.map.orientation} />
-      <Stat label="Format" value={doc.hints.dialect === 'plain' ? 'JSON (generator)' : 'JSON (Tiled)'} />
-    </dl>
+    <div className="border-b border-line pb-2">
+      <dl className="grid grid-cols-2 gap-x-3 gap-y-1 px-3 py-2 text-[11px]">
+        <Stat label="Kafel" value={`${doc.map.tilewidth} × ${doc.map.tileheight}`} />
+        <Stat label="Orientacja" value={doc.map.orientation} />
+        <Stat
+          label="Format"
+          value={doc.format === 'xml' ? 'TMX' : doc.hints.dialect === 'plain' ? 'JSON (generator)' : 'JSON (Tiled)'}
+        />
+      </dl>
+      <div className="grid grid-cols-2">
+        <Field label="Szerokość (kafle)">
+          <TextInput className="num" type="number" min={1} value={w} onChange={(e) => setSize({ w: Number(e.target.value), h })} />
+        </Field>
+        <Field label="Wysokość (kafle)">
+          <TextInput className="num" type="number" min={1} value={h} onChange={(e) => setSize({ w, h: Number(e.target.value) })} />
+        </Field>
+      </div>
+      {changed ? (
+        <div className="flex items-center gap-2 px-3 pt-1">
+          <Button size="sm" variant="solid" onClick={apply}>Zmień rozmiar</Button>
+          <Button size="sm" variant="outline" onClick={() => setSize(null)}>Anuluj</Button>
+          <span className="text-[11px] text-warn">
+            {w < doc.map.width || h < doc.map.height ? 'Kafle poza nowym obszarem przepadną.' : ''}
+          </span>
+        </div>
+      ) : null}
+    </div>
   )
 }
 
@@ -256,6 +293,28 @@ function ObjectHeader({ id }: { id: number }) {
           <TextInput type="number" className="num flex-1" value={obj.rotation} onChange={(e) => patch({ rotation: Number(e.target.value) })} />
         </div>
       </Field>
+      {obj.gid !== undefined ? (
+        <Field label="Odbicie" hint="Flagi zapisane w wysokich bitach gid, tak jak robi to Tiled.">
+          <div className="flex items-center gap-1">
+            <Button
+              size="sm"
+              variant="outline"
+              active={parseGid(obj.gid).flipH}
+              onClick={() => patch({ gid: (obj.gid! ^ FLIP_H) >>> 0 })}
+            >
+              W poziomie
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              active={parseGid(obj.gid).flipV}
+              onClick={() => patch({ gid: (obj.gid! ^ FLIP_V) >>> 0 })}
+            >
+              W pionie
+            </Button>
+          </div>
+        </Field>
+      ) : null}
     </div>
   )
 }
