@@ -1,4 +1,4 @@
-import { Application, Assets, Container, Graphics, Rectangle, Sprite, Texture } from 'pixi.js'
+import { Application, Assets, Container, Graphics, Rectangle, Sprite, Text, Texture } from 'pixi.js'
 import { CompositeTilemap } from '@pixi/tilemap'
 import { parseGid, tileId, walkLayers, type Layer, type MapObject, type TileMap } from '@tile-editor/core'
 import type { RenderOptions, TileRenderer } from './renderer'
@@ -28,6 +28,10 @@ export class PixiTileRenderer implements TileRenderer {
   private world = new Container()
   private tileLayers = new Container()
   private objectLayer = new Container()
+  /** Non-tile object shapes, which have no texture of their own. */
+  private shapes = new Graphics()
+  private labels = new Container()
+  private labelPool: Text[] = []
   private overlay = new Graphics()
   private grid = new Graphics()
   private background = new Graphics()
@@ -55,7 +59,15 @@ export class PixiTileRenderer implements TileRenderer {
     })
     app.ticker.stop()
     this.app = app
-    this.world.addChild(this.background, this.tileLayers, this.grid, this.objectLayer, this.overlay)
+    this.world.addChild(
+      this.background,
+      this.tileLayers,
+      this.grid,
+      this.objectLayer,
+      this.shapes,
+      this.labels,
+      this.overlay,
+    )
     app.stage.addChild(this.world)
     this.ready = true
   }
@@ -155,6 +167,75 @@ export class PixiTileRenderer implements TileRenderer {
     }
   }
 
+  /** Tiled colours an object layer through an optional `color` attribute. */
+  private layerColor(layer: { extra?: Record<string, unknown> }): number {
+    const raw = layer.extra?.color
+    if (typeof raw !== 'string') return 0x4fd6bc
+    const hex = raw.replace('#', '')
+    const rgb = hex.length === 8 ? hex.slice(2) : hex
+    const value = Number.parseInt(rgb, 16)
+    return Number.isFinite(value) ? value : 0x4fd6bc
+  }
+
+  /**
+   * Objects without a tile have no pixels of their own, so they are drawn as
+   * outlines. The corpus contains none of these, but any map from Tiled can,
+   * and an invisible object is worse than an ugly one.
+   */
+  private drawShape(obj: MapObject, color: number, width: number): void {
+    const g = this.shapes
+    const w = obj.width
+    const h = obj.height
+    const radians = (obj.rotation * Math.PI) / 180
+    const place = (lx: number, ly: number) => ({
+      x: obj.x + lx * Math.cos(radians) - ly * Math.sin(radians),
+      y: obj.y + lx * Math.sin(radians) + ly * Math.cos(radians),
+    })
+
+    switch (obj.shape) {
+      case 'point': {
+        g.circle(obj.x, obj.y, width * 3).fill({ color, alpha: 0.8 }).stroke({ color, width })
+        return
+      }
+      case 'polygon':
+      case 'polyline': {
+        const points = (obj.polygon ?? obj.polyline ?? []).map((p) => place(p.x, p.y))
+        if (points.length < 2) return
+        g.moveTo(points[0]!.x, points[0]!.y)
+        for (const point of points.slice(1)) g.lineTo(point.x, point.y)
+        if (obj.shape === 'polygon') {
+          g.closePath().fill({ color, alpha: 0.12 })
+        }
+        g.stroke({ color, width })
+        return
+      }
+      case 'ellipse': {
+        // Pixi has no rotated-ellipse primitive, so trace one.
+        const steps = 40
+        for (let i = 0; i <= steps; i++) {
+          const t = (i / steps) * Math.PI * 2
+          const point = place((0.5 + Math.cos(t) / 2) * w, (0.5 + Math.sin(t) / 2) * h)
+          if (i === 0) g.moveTo(point.x, point.y)
+          else g.lineTo(point.x, point.y)
+        }
+        g.fill({ color, alpha: 0.12 }).stroke({ color, width })
+        return
+      }
+      default: {
+        const corners = [place(0, 0), place(w, 0), place(w, h), place(0, h)]
+        g.moveTo(corners[0]!.x, corners[0]!.y)
+        for (const point of corners.slice(1)) g.lineTo(point.x, point.y)
+        g.closePath().fill({ color, alpha: 0.12 }).stroke({ color, width })
+      }
+    }
+  }
+
+  private borrowLabel(): Text {
+    const label = this.labelPool.pop() ?? new Text({ text: '', style: { fontSize: 12, fill: 0xe7edec } })
+    label.visible = true
+    return label
+  }
+
   private drawObjects(options: RenderOptions): void {
     const map = this.map
     if (!map) return
@@ -165,13 +246,39 @@ export class PixiTileRenderer implements TileRenderer {
       this.spritePool.push(sprite)
     }
     this.objectLayer.removeChildren()
+    for (const child of this.labels.children) this.labelPool.push(child as Text)
+    this.labels.removeChildren()
+    this.shapes.clear()
     if (!options.showObjects) return
+
+    const strokeWidth = 2 / options.camera.zoom
 
     for (const layer of walkLayers(map.layers)) {
       if (layer.kind !== 'objectgroup' || !layer.visible) continue
+      const color = this.layerColor(layer)
       const ordered = layer.draworder === 'index' ? layer.objects : [...layer.objects].sort((a, b) => a.y - b.y)
       for (const obj of ordered) {
-        if (!obj.visible || obj.gid === undefined) continue
+        if (!obj.visible) continue
+        if (obj.gid === undefined) {
+          this.drawShape(obj, color, strokeWidth)
+          const caption = obj.name || obj.className
+          if (caption) {
+            const label = this.borrowLabel()
+            label.text = caption
+            label.style.fontSize = 12 / options.camera.zoom
+            label.position.set(obj.x + strokeWidth * 2, obj.y + strokeWidth * 2)
+            this.labels.addChild(label)
+          }
+          if (obj.shape === 'text' && obj.text) {
+            const label = this.borrowLabel()
+            label.text = obj.text.text
+            label.style.fontSize = (obj.text.pixelsize ?? 16)
+            label.scale.set(1)
+            label.position.set(obj.x, obj.y)
+            this.labels.addChild(label)
+          }
+          continue
+        }
         const texture = this.textureFor(obj.gid)
         const frame = this.source?.frame(obj.gid)
         if (!texture || !frame) continue
@@ -219,19 +326,25 @@ export class PixiTileRenderer implements TileRenderer {
     const w = map.width * map.tilewidth
     const h = map.height * map.tileheight
     this.background.rect(0, 0, w, h).fill({ color: 0x0b1112, alpha: 0.85 })
-    if (!options.showGrid) return
-    // Below roughly four screen pixels per cell the grid becomes noise.
-    const step = map.tilewidth * options.camera.zoom < 4 ? 0 : 1
-    if (step === 0) return
     const width = 1 / options.camera.zoom
+    // The map's own edge is always worth showing, grid or not.
+    this.grid.rect(0, 0, w, h).stroke({ color: 0x4fd6bc, width: width * 1.5, alpha: 0.5 })
+    if (!options.showGrid) return
+
+    // A grid drawn at full strength over 16-pixel tiles washes the artwork out,
+    // so it fades in as cells grow and disappears once they are too small to
+    // aim at anyway.
+    const cellPixels = Math.min(map.tilewidth, map.tileheight) * options.camera.zoom
+    const alpha = Math.max(0, Math.min(1, (cellPixels - 10) / 26)) * 0.4
+    if (alpha <= 0.01) return
+
     for (let x = 0; x <= map.width; x++) {
       this.grid.moveTo(x * map.tilewidth, 0).lineTo(x * map.tilewidth, h)
     }
     for (let y = 0; y <= map.height; y++) {
       this.grid.moveTo(0, y * map.tileheight).lineTo(w, y * map.tileheight)
     }
-    this.grid.stroke({ color: 0x33443f, width, alpha: 0.7 })
-    this.grid.rect(0, 0, w, h).stroke({ color: 0x4fd6bc, width: width * 1.5, alpha: 0.5 })
+    this.grid.stroke({ color: 0x000000, width, alpha })
   }
 
   private drawOverlay(options: RenderOptions): void {
@@ -315,6 +428,20 @@ export class PixiTileRenderer implements TileRenderer {
     for (let i = layer.objects.length - 1; i >= 0; i--) {
       const obj = layer.objects[i]!
       if (!obj.visible) continue
+      if (obj.shape === 'point') {
+        if (Math.hypot(worldX - obj.x, worldY - obj.y) <= this.map.tilewidth / 3) return obj
+        continue
+      }
+      const outline = obj.polygon ?? obj.polyline
+      if (outline && outline.length >= 3) {
+        const radians = (obj.rotation * Math.PI) / 180
+        const points = outline.map((p) => ({
+          x: obj.x + p.x * Math.cos(radians) - p.y * Math.sin(radians),
+          y: obj.y + p.x * Math.sin(radians) + p.y * Math.cos(radians),
+        }))
+        if (pointInPolygon(worldX, worldY, points)) return obj
+        continue
+      }
       if (pointInPolygon(worldX, worldY, this.objectCorners(obj))) return obj
     }
     return undefined
