@@ -59,17 +59,21 @@ export function PropertiesPanel() {
         <ul className="flex flex-col divide-y divide-line/60">
           {owner.node.properties.map((prop, index) => (
             <li key={index} className="flex flex-col gap-1.5 px-3 py-2">
-              <div className="flex items-center gap-1.5">
+              {/* The name gets its own row: sharing one with the type selector
+                  crushed it to a couple of characters in a 240px panel. */}
+              {/* A grid rather than flex: the shared base class on Select sets
+                  w-full, which beats any width utility passed in here. */}
+              <div className="grid grid-cols-[minmax(0,1fr)_76px_auto] items-center gap-1.5">
                 <TextInput
                   value={prop.name}
                   aria-label="Nazwa property"
                   onChange={(e) => setAt(index, { name: e.target.value })}
-                  className="flex-1"
+                  className="font-medium"
                 />
                 <Select
                   value={prop.type}
                   aria-label="Typ property"
-                  className="w-[86px] shrink-0"
+                  className="px-1 text-[11px]"
                   onChange={(e) => setAt(index, { type: e.target.value as PropertyType, value: coerce(prop.value, e.target.value as PropertyType) })}
                 >
                   {TYPES.map((t) => (
@@ -78,8 +82,9 @@ export function PropertiesPanel() {
                 </Select>
                 <button
                   type="button"
-                  className="hit px-1 text-ink-faint hover:text-danger"
+                  className="hit shrink-0 px-1 text-ink-faint hover:text-danger"
                   title="Usuń property"
+                  aria-label={`Usuń property ${prop.name}`}
                   onClick={() => commit(owner.node.properties.filter((_, i) => i !== index))}
                 >
                   <Trash2 size={14} />

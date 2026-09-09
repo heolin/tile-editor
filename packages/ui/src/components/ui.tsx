@@ -68,7 +68,7 @@ export function TextInput({ className, ...rest }: React.InputHTMLAttributes<HTML
   return (
     <input
       className={clsx(
-        'hit w-full rounded-md border border-line bg-ground px-2 text-[13px] text-ink',
+        'hit w-full min-w-0 rounded-md border border-line bg-ground px-2 text-[13px] text-ink',
         'placeholder:text-ink-faint focus:border-accent focus:outline-none',
         className,
       )}
@@ -81,7 +81,7 @@ export function Select({ className, children, ...rest }: React.SelectHTMLAttribu
   return (
     <select
       className={clsx(
-        'hit w-full rounded-md border border-line bg-ground px-2 text-[13px] text-ink focus:border-accent focus:outline-none',
+        'hit w-full min-w-0 rounded-md border border-line bg-ground px-2 text-[13px] text-ink focus:border-accent focus:outline-none',
         className,
       )}
       {...rest}
