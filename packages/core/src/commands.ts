@@ -1,0 +1,374 @@
+import { DenseLayerData } from './layer-data.js'
+import type { Layer, MapObject, Property, TileLayer, TileMap } from './model.js'
+import { walkLayers } from './model.js'
+
+/**
+ * Undo is semantic, not a diff of application state: each edit knows what it
+ * did and how to take it back. Strokes merge so that dragging a brush across
+ * forty tiles is one undo step, not forty (docs/PLAN.md section 3).
+ */
+export interface EditCommand {
+  readonly label: string
+  /** Consecutive commands sharing a key collapse into one history entry. */
+  readonly mergeKey?: string
+  apply(): void
+  revert(): void
+  /** Absorbs a following command with the same mergeKey. Returns false to refuse. */
+  absorb?(next: EditCommand): boolean
+}
+
+export class History {
+  private past: EditCommand[] = []
+  private future: EditCommand[] = []
+  private listeners = new Set<() => void>()
+  private savedDepth = 0
+
+  get canUndo(): boolean {
+    return this.past.length > 0
+  }
+
+  get canRedo(): boolean {
+    return this.future.length > 0
+  }
+
+  get dirty(): boolean {
+    return this.past.length !== this.savedDepth
+  }
+
+  get undoLabel(): string | undefined {
+    return this.past[this.past.length - 1]?.label
+  }
+
+  get redoLabel(): string | undefined {
+    return this.future[this.future.length - 1]?.label
+  }
+
+  subscribe(fn: () => void): () => void {
+    this.listeners.add(fn)
+    return () => this.listeners.delete(fn)
+  }
+
+  private notify(): void {
+    for (const fn of this.listeners) fn()
+  }
+
+  run(command: EditCommand): void {
+    command.apply()
+    const last = this.past[this.past.length - 1]
+    if (last && command.mergeKey && last.mergeKey === command.mergeKey && last.absorb?.(command)) {
+      this.future = []
+      this.notify()
+      return
+    }
+    this.past.push(command)
+    this.future = []
+    this.notify()
+  }
+
+  undo(): void {
+    const command = this.past.pop()
+    if (!command) return
+    command.revert()
+    this.future.push(command)
+    this.notify()
+  }
+
+  redo(): void {
+    const command = this.future.pop()
+    if (!command) return
+    command.apply()
+    this.past.push(command)
+    this.notify()
+  }
+
+  markSaved(): void {
+    this.savedDepth = this.past.length
+    this.notify()
+  }
+
+  clear(): void {
+    this.past = []
+    this.future = []
+    this.savedDepth = 0
+    this.notify()
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Concrete edits                                                      */
+/* ------------------------------------------------------------------ */
+
+interface CellEdit {
+  x: number
+  y: number
+  before: number
+  after: number
+}
+
+/** Paints tiles, remembering only the cells that actually changed. */
+export class SetTilesCommand implements EditCommand {
+  readonly mergeKey: string
+  private edits: CellEdit[] = []
+  private index = new Set<string>()
+
+  constructor(readonly label: string, private layer: TileLayer, strokeId: string) {
+    this.mergeKey = `tiles:${layer.id}:${strokeId}`
+  }
+
+  /** Records an intended change; call before apply(). */
+  add(x: number, y: number, gid: number): void {
+    const key = `${x},${y}`
+    if (this.index.has(key)) return
+    const before = this.layer.data.get(x, y)
+    if (before === gid) return
+    this.index.add(key)
+    this.edits.push({ x, y, before, after: gid })
+  }
+
+  get empty(): boolean {
+    return this.edits.length === 0
+  }
+
+  apply(): void {
+    for (const e of this.edits) this.layer.data.set(e.x, e.y, e.after)
+  }
+
+  revert(): void {
+    for (let i = this.edits.length - 1; i >= 0; i--) {
+      const e = this.edits[i]!
+      this.layer.data.set(e.x, e.y, e.before)
+    }
+  }
+
+  absorb(next: EditCommand): boolean {
+    if (!(next instanceof SetTilesCommand) || next.layer !== this.layer) return false
+    for (const e of next.edits) {
+      const key = `${e.x},${e.y}`
+      if (this.index.has(key)) {
+        const existing = this.edits.find((c) => c.x === e.x && c.y === e.y)!
+        existing.after = e.after
+      } else {
+        this.index.add(key)
+        this.edits.push(e)
+      }
+    }
+    return true
+  }
+}
+
+export class AddObjectCommand implements EditCommand {
+  readonly label = 'Dodaj obiekt'
+  constructor(private layer: { objects: MapObject[] }, private object: MapObject, private map: TileMap) {}
+
+  apply(): void {
+    this.layer.objects.push(this.object)
+    this.map.nextobjectid = Math.max(this.map.nextobjectid, this.object.id + 1)
+  }
+
+  revert(): void {
+    const i = this.layer.objects.indexOf(this.object)
+    if (i >= 0) this.layer.objects.splice(i, 1)
+  }
+}
+
+export class RemoveObjectsCommand implements EditCommand {
+  readonly label: string
+  private removed: { object: MapObject; index: number }[] = []
+
+  constructor(private layer: { objects: MapObject[] }, private objects: MapObject[]) {
+    this.label = objects.length === 1 ? 'Usuń obiekt' : `Usuń ${objects.length} obiektów`
+  }
+
+  apply(): void {
+    this.removed = []
+    for (const obj of this.objects) {
+      const index = this.layer.objects.indexOf(obj)
+      if (index >= 0) {
+        this.removed.push({ object: obj, index })
+        this.layer.objects.splice(index, 1)
+      }
+    }
+  }
+
+  revert(): void {
+    for (let i = this.removed.length - 1; i >= 0; i--) {
+      const { object, index } = this.removed[i]!
+      this.layer.objects.splice(index, 0, object)
+    }
+  }
+}
+
+type ObjectPatch = Partial<Pick<MapObject, 'x' | 'y' | 'width' | 'height' | 'rotation' | 'gid' | 'name' | 'className' | 'visible'>>
+
+/** Moves, resizes, rotates or renames objects; drags merge into one step. */
+export class UpdateObjectsCommand implements EditCommand {
+  readonly mergeKey: string | undefined
+  private before: ObjectPatch[]
+
+  constructor(
+    readonly label: string,
+    private objects: MapObject[],
+    private after: ObjectPatch[],
+    mergeKey?: string,
+  ) {
+    this.mergeKey = mergeKey
+    this.before = objects.map((obj, i) => {
+      const patch: ObjectPatch = {}
+      for (const key of Object.keys(after[i] ?? {}) as (keyof ObjectPatch)[]) {
+        ;(patch as Record<string, unknown>)[key] = obj[key]
+      }
+      return patch
+    })
+  }
+
+  apply(): void {
+    this.objects.forEach((obj, i) => Object.assign(obj, this.after[i] ?? {}))
+  }
+
+  revert(): void {
+    this.objects.forEach((obj, i) => Object.assign(obj, this.before[i] ?? {}))
+  }
+
+  absorb(next: EditCommand): boolean {
+    if (!(next instanceof UpdateObjectsCommand)) return false
+    if (next.objects.length !== this.objects.length) return false
+    if (next.objects.some((o, i) => o !== this.objects[i])) return false
+    this.after = next.after
+    return true
+  }
+}
+
+/** Adds, removes or replaces a property on any node that carries properties. */
+export class SetPropertyCommand implements EditCommand {
+  readonly label: string
+  readonly mergeKey: string | undefined
+  private before: Property[]
+
+  constructor(
+    private owner: { properties: Property[] },
+    private next: Property[],
+    label = 'Zmień properties',
+    mergeKey?: string,
+  ) {
+    this.label = label
+    this.mergeKey = mergeKey
+    this.before = owner.properties.map((p) => ({ ...p }))
+  }
+
+  apply(): void {
+    this.owner.properties = this.next.map((p) => ({ ...p }))
+  }
+
+  revert(): void {
+    this.owner.properties = this.before.map((p) => ({ ...p }))
+  }
+
+  absorb(next: EditCommand): boolean {
+    if (!(next instanceof SetPropertyCommand) || next.owner !== this.owner) return false
+    this.next = next.next
+    return true
+  }
+}
+
+export class AddLayerCommand implements EditCommand {
+  readonly label = 'Dodaj warstwę'
+  constructor(private map: TileMap, private layer: Layer, private at: number) {}
+
+  apply(): void {
+    this.map.layers.splice(this.at, 0, this.layer)
+    this.map.nextlayerid = Math.max(this.map.nextlayerid, this.layer.id + 1)
+  }
+
+  revert(): void {
+    const i = this.map.layers.indexOf(this.layer)
+    if (i >= 0) this.map.layers.splice(i, 1)
+  }
+}
+
+export class RemoveLayerCommand implements EditCommand {
+  readonly label = 'Usuń warstwę'
+  private at = -1
+  constructor(private map: TileMap, private layer: Layer) {}
+
+  apply(): void {
+    this.at = this.map.layers.indexOf(this.layer)
+    if (this.at >= 0) this.map.layers.splice(this.at, 1)
+  }
+
+  revert(): void {
+    if (this.at >= 0) this.map.layers.splice(this.at, 0, this.layer)
+  }
+}
+
+export class MoveLayerCommand implements EditCommand {
+  readonly label = 'Zmień kolejność warstw'
+  constructor(private map: TileMap, private from: number, private to: number) {}
+
+  private move(from: number, to: number): void {
+    const [layer] = this.map.layers.splice(from, 1)
+    if (layer) this.map.layers.splice(to, 0, layer)
+  }
+
+  apply(): void {
+    this.move(this.from, this.to)
+  }
+
+  revert(): void {
+    this.move(this.to, this.from)
+  }
+}
+
+/** Toggles visibility, opacity, name or lock on a layer. */
+export class UpdateLayerCommand implements EditCommand {
+  private before: Partial<Layer>
+
+  constructor(readonly label: string, private layer: Layer, private patch: Partial<Layer>) {
+    this.before = {} as Partial<Layer>
+    for (const key of Object.keys(patch) as (keyof Layer)[]) {
+      ;(this.before as Record<string, unknown>)[key] = layer[key]
+    }
+  }
+
+  apply(): void {
+    Object.assign(this.layer, this.patch)
+  }
+
+  revert(): void {
+    Object.assign(this.layer, this.before)
+  }
+}
+
+/** Resizes every tile layer in the map, anchoring content at the origin. */
+export class ResizeMapCommand implements EditCommand {
+  readonly label = 'Zmień rozmiar mapy'
+  private before: { layer: TileLayer; data: DenseLayerData; width: number; height: number }[] = []
+  private prevSize: { width: number; height: number }
+
+  constructor(private map: TileMap, private width: number, private height: number) {
+    this.prevSize = { width: map.width, height: map.height }
+  }
+
+  apply(): void {
+    this.before = []
+    for (const layer of walkLayers(this.map.layers)) {
+      if (layer.kind !== 'tilelayer') continue
+      const data = layer.data as DenseLayerData
+      this.before.push({ layer, data, width: layer.width, height: layer.height })
+      layer.data = data.resized(this.width, this.height)
+      layer.width = this.width
+      layer.height = this.height
+    }
+    this.map.width = this.width
+    this.map.height = this.height
+  }
+
+  revert(): void {
+    for (const entry of this.before) {
+      entry.layer.data = entry.data
+      entry.layer.width = entry.width
+      entry.layer.height = entry.height
+    }
+    this.map.width = this.prevSize.width
+    this.map.height = this.prevSize.height
+  }
+}

@@ -1,0 +1,292 @@
+import { useMemo } from 'react'
+import { Plus, Trash2 } from 'lucide-react'
+import {
+  SetPropertyCommand, UpdateLayerCommand, UpdateObjectsCommand, walkLayers,
+  type Property, type PropertyType,
+} from '@tile-editor/core'
+import { Button, Empty, Field, Panel, Select, TextInput } from './ui'
+import { useEditor, type PropertyOwner } from '../state/store'
+
+const TYPES: PropertyType[] = ['string', 'int', 'float', 'bool', 'color', 'file']
+
+/**
+ * All of the corpus's game semantics live in properties rather than classes, so
+ * this panel is the editor's centre of gravity, not a side feature
+ * (docs/PLAN.md section 5.1).
+ */
+export function PropertiesPanel() {
+  const doc = useEditor((s) => s.doc)
+  const target = useEditor((s) => s.propertyTarget)
+  useEditor((s) => s.revision)
+  const state = useEditor.getState()
+
+  const owner = useMemo(() => resolveOwner(target), [target, doc, state.revision])
+
+  if (!doc) return <Panel title="Properties"><Empty>Brak otwartej mapy.</Empty></Panel>
+  if (!owner) return <Panel title="Properties"><Empty>Nic nie jest zaznaczone.</Empty></Panel>
+
+  const commit = (next: Property[]) => {
+    state.history.run(new SetPropertyCommand(owner.node, next, `Properties: ${owner.title}`, `props:${owner.key}`))
+    state.touch()
+  }
+
+  const setAt = (index: number, patch: Partial<Property>) => {
+    const next = owner.node.properties.map((p, i) => (i === index ? { ...p, ...patch } : { ...p }))
+    commit(next)
+  }
+
+  return (
+    <Panel
+      title={`Properties · ${owner.title}`}
+      actions={
+        <Button
+          size="sm"
+          title="Dodaj property"
+          onClick={() => commit([...owner.node.properties, { name: uniqueName(owner.node.properties), type: 'string', value: '' }])}
+        >
+          <Plus size={14} />
+        </Button>
+      }
+    >
+      {owner.header}
+
+      {owner.node.properties.length === 0 ? (
+        <Empty>Brak properties. Dodaj pierwszą przyciskiem plus.</Empty>
+      ) : (
+        <ul className="flex flex-col divide-y divide-line/60">
+          {owner.node.properties.map((prop, index) => (
+            <li key={index} className="flex flex-col gap-1.5 px-3 py-2">
+              <div className="flex items-center gap-1.5">
+                <TextInput
+                  value={prop.name}
+                  aria-label="Nazwa property"
+                  onChange={(e) => setAt(index, { name: e.target.value })}
+                  className="flex-1"
+                />
+                <Select
+                  value={prop.type}
+                  aria-label="Typ property"
+                  className="w-[86px] shrink-0"
+                  onChange={(e) => setAt(index, { type: e.target.value as PropertyType, value: coerce(prop.value, e.target.value as PropertyType) })}
+                >
+                  {TYPES.map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </Select>
+                <button
+                  type="button"
+                  className="hit px-1 text-ink-faint hover:text-danger"
+                  title="Usuń property"
+                  onClick={() => commit(owner.node.properties.filter((_, i) => i !== index))}
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+              <PropertyValue prop={prop} onChange={(value) => setAt(index, { value })} />
+            </li>
+          ))}
+        </ul>
+      )}
+    </Panel>
+  )
+}
+
+function PropertyValue({ prop, onChange }: { prop: Property; onChange: (value: unknown) => void }) {
+  if (prop.type === 'bool') {
+    return (
+      <label className="flex items-center gap-2 text-[13px] text-ink-dim">
+        <input
+          type="checkbox"
+          checked={prop.value === true}
+          onChange={(e) => onChange(e.target.checked)}
+          className="h-4 w-4 accent-[var(--color-accent)]"
+        />
+        {prop.value === true ? 'true' : 'false'}
+      </label>
+    )
+  }
+  if (prop.type === 'color') {
+    const value = typeof prop.value === 'string' && prop.value ? toHex(prop.value) : '#4fd6bc'
+    return (
+      <div className="flex items-center gap-2">
+        <input
+          type="color"
+          value={value}
+          onChange={(e) => onChange(fromHex(e.target.value))}
+          className="hit w-12 rounded border border-line bg-ground"
+        />
+        <TextInput value={String(prop.value ?? '')} onChange={(e) => onChange(e.target.value)} />
+      </div>
+    )
+  }
+  if (prop.type === 'int' || prop.type === 'float') {
+    return (
+      <TextInput
+        type="number"
+        inputMode={prop.type === 'int' ? 'numeric' : 'decimal'}
+        step={prop.type === 'int' ? 1 : 'any'}
+        value={String(prop.value ?? 0)}
+        onChange={(e) => onChange(prop.type === 'int' ? Math.trunc(Number(e.target.value)) : Number(e.target.value))}
+        className="num"
+      />
+    )
+  }
+  return <TextInput value={String(prop.value ?? '')} onChange={(e) => onChange(e.target.value)} />
+}
+
+/* ------------------------------------------------------------------ */
+
+interface ResolvedOwner {
+  key: string
+  title: string
+  node: { properties: Property[] }
+  header?: React.ReactNode
+}
+
+function resolveOwner(target: PropertyOwner): ResolvedOwner | undefined {
+  const state = useEditor.getState()
+  const doc = state.doc
+  if (!doc) return undefined
+
+  if (target.kind === 'map') {
+    return { key: 'map', title: 'Mapa', node: doc.map, header: <MapHeader /> }
+  }
+  if (target.kind === 'layer') {
+    const layer = [...walkLayers(doc.map.layers)].find((l) => l.id === target.id)
+    if (!layer) return undefined
+    return { key: `layer:${layer.id}`, title: layer.name || 'Warstwa', node: layer, header: <LayerHeader id={layer.id} /> }
+  }
+  if (target.kind === 'object') {
+    for (const layer of walkLayers(doc.map.layers)) {
+      if (layer.kind !== 'objectgroup') continue
+      const obj = layer.objects.find((o) => o.id === target.id)
+      if (obj) return { key: `object:${obj.id}`, title: `Obiekt #${obj.id}`, node: obj, header: <ObjectHeader id={obj.id} /> }
+    }
+    return undefined
+  }
+  const entry = state.tilesets().find((t) => t.path === target.tilesetPath)
+  const tile = entry?.tileset.tiles.find((t) => t.id === target.tileId)
+  if (!tile || !entry) return undefined
+  return {
+    key: `tile:${target.tilesetPath}:${tile.id}`,
+    title: `Kafel #${tile.id}`,
+    node: tile,
+    header: (
+      <p className="border-b border-line px-3 py-2 text-[11px] text-ink-faint">
+        {entry.tileset.name} · {tile.image?.split('/').pop() ?? `id ${tile.id}`}
+        <br />
+        <span className="text-warn">Zapis tilesetów dochodzi w M4 — zmiany tu nie trafią jeszcze na dysk.</span>
+      </p>
+    ),
+  }
+}
+
+function MapHeader() {
+  const doc = useEditor((s) => s.doc)!
+  return (
+    <dl className="grid grid-cols-2 gap-x-3 gap-y-1 border-b border-line px-3 py-2 text-[11px]">
+      <Stat label="Rozmiar" value={`${doc.map.width} × ${doc.map.height}`} />
+      <Stat label="Kafel" value={`${doc.map.tilewidth} × ${doc.map.tileheight}`} />
+      <Stat label="Orientacja" value={doc.map.orientation} />
+      <Stat label="Format" value={doc.hints.dialect === 'plain' ? 'JSON (generator)' : 'JSON (Tiled)'} />
+    </dl>
+  )
+}
+
+function LayerHeader({ id }: { id: number }) {
+  const doc = useEditor((s) => s.doc)!
+  const state = useEditor.getState()
+  const layer = [...walkLayers(doc.map.layers)].find((l) => l.id === id)
+  if (!layer) return null
+  return (
+    <div className="border-b border-line pb-2">
+      <Field label="Nazwa warstwy">
+        <TextInput
+          value={layer.name}
+          onChange={(e) => {
+            state.history.run(new UpdateLayerCommand('Zmień nazwę warstwy', layer, { name: e.target.value }))
+            state.touch()
+          }}
+        />
+      </Field>
+    </div>
+  )
+}
+
+function ObjectHeader({ id }: { id: number }) {
+  const doc = useEditor((s) => s.doc)!
+  const state = useEditor.getState()
+  let object
+  for (const layer of walkLayers(doc.map.layers)) {
+    if (layer.kind === 'objectgroup') {
+      const found = layer.objects.find((o) => o.id === id)
+      if (found) object = found
+    }
+  }
+  if (!object) return null
+  const obj = object
+  const patch = (next: Partial<typeof obj>) => {
+    state.history.run(new UpdateObjectsCommand('Zmień obiekt', [obj], [next]))
+    state.touch()
+  }
+  return (
+    <div className="border-b border-line pb-2">
+      <Field label="Nazwa">
+        <TextInput value={obj.name} onChange={(e) => patch({ name: e.target.value })} />
+      </Field>
+      <Field label="Klasa" hint="W korpusie nieużywana — semantyka siedzi w properties.">
+        <TextInput value={obj.className} onChange={(e) => patch({ className: e.target.value })} />
+      </Field>
+      <div className="grid grid-cols-2">
+        <Field label="X"><TextInput type="number" className="num" value={obj.x} onChange={(e) => patch({ x: Number(e.target.value) })} /></Field>
+        <Field label="Y"><TextInput type="number" className="num" value={obj.y} onChange={(e) => patch({ y: Number(e.target.value) })} /></Field>
+        <Field label="Szerokość"><TextInput type="number" className="num" value={obj.width} onChange={(e) => patch({ width: Number(e.target.value) })} /></Field>
+        <Field label="Wysokość"><TextInput type="number" className="num" value={obj.height} onChange={(e) => patch({ height: Number(e.target.value) })} /></Field>
+      </div>
+      <Field label="Obrót (stopnie)">
+        <div className="flex items-center gap-1">
+          {[0, 90, 180, 270].map((deg) => (
+            <Button key={deg} size="sm" variant="outline" active={obj.rotation === deg} onClick={() => patch({ rotation: deg })}>
+              {deg}°
+            </Button>
+          ))}
+          <TextInput type="number" className="num flex-1" value={obj.rotation} onChange={(e) => patch({ rotation: Number(e.target.value) })} />
+        </div>
+      </Field>
+    </div>
+  )
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <>
+      <dt className="text-ink-faint">{label}</dt>
+      <dd className="num text-right text-ink-dim">{value}</dd>
+    </>
+  )
+}
+
+function uniqueName(props: Property[]): string {
+  let i = 1
+  while (props.some((p) => p.name === `property${i}`)) i++
+  return `property${i}`
+}
+
+function coerce(value: unknown, type: PropertyType): unknown {
+  switch (type) {
+    case 'int': return Math.trunc(Number(value) || 0)
+    case 'float': return Number(value) || 0
+    case 'bool': return Boolean(value)
+    default: return value === undefined || value === null ? '' : String(value)
+  }
+}
+
+/** Tiled stores colours as #AARRGGBB; the colour input wants #RRGGBB. */
+function toHex(value: string): string {
+  const hex = value.replace('#', '')
+  return '#' + (hex.length === 8 ? hex.slice(2) : hex).padStart(6, '0')
+}
+
+function fromHex(value: string): string {
+  return '#ff' + value.replace('#', '')
+}

@@ -1,0 +1,8 @@
+{
+  "name": "@tile-editor/cli",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": { "tile-editor": "./bin/tile-editor.mjs" },
+  "files": ["bin", "dist"],
+  "dependencies": { "@tile-editor/core": "0.1.0", "@tile-editor/server": "0.1.0" }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "tile-editor-root",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build -w @tile-editor/core && npm run build -w @tile-editor/server && npm run build -w @tile-editor/ui",
+    "test": "vitest run",
+    "smoke": "node scripts/smoke.mjs",
+    "start": "node packages/cli/bin/tile-editor.mjs",
+    "dev:ui": "npm run dev -w @tile-editor/ui",
+    "typecheck": "tsc -p packages/core/tsconfig.json --noEmit && tsc -p packages/server/tsconfig.json --noEmit && tsc -p packages/ui/tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^24.7.0",
+    "playwright": "^1.63.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true
+  }
+}

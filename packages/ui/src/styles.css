@@ -1,0 +1,116 @@
+@import "tailwindcss";
+
+/**
+ * Editor palette. Dark-first, because that is where a map editor lives, with a
+ * neutral biased slightly toward the accent so nothing reads as flat grey.
+ */
+@theme {
+  --color-ground: #0b1112;
+  --color-surface: #121b1c;
+  --color-raised: #182325;
+  --color-hover: #1f2d2f;
+  --color-line: #24322f;
+  --color-line-strong: #33443f;
+
+  --color-ink: #e7edec;
+  --color-ink-dim: #a6b5b3;
+  --color-ink-faint: #6f807e;
+
+  --color-accent: #4fd6bc;
+  --color-accent-deep: #0f3330;
+  --color-accent-ink: #7ce4cf;
+
+  --color-danger: #ee8195;
+  --color-danger-deep: #38191f;
+  --color-warn: #e0a552;
+  --color-warn-deep: #31250f;
+  --color-ok: #6fcb86;
+  --color-ok-deep: #122c19;
+
+  /* Three tiers, chosen so a Galaxy Tab S7 keeps the docked layout in both
+     orientations and only collapses its rails when turned upright. */
+  --breakpoint-md: 768px;
+  --breakpoint-wide: 1180px;
+
+  --font-sans: "Archivo", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+    overscroll-behavior: none;
+  }
+
+  body {
+    margin: 0;
+    background: var(--color-ground);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+    /* The canvas owns all gestures; the page itself must never pan or zoom. */
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 1px;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-line-strong);
+    border-radius: 6px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+@layer components {
+  /**
+   * Touch targets grow on coarse pointers only, so a mouse or S Pen keeps the
+   * denser layout it can aim at. See docs/PLAN.md section 7.2.
+   */
+  .hit {
+    min-height: 32px;
+    min-width: 32px;
+  }
+  @media (pointer: coarse) {
+    .hit {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+
+  .panel-title {
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-ink-faint);
+  }
+
+  .num {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
