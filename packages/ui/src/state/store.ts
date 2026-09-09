@@ -1,7 +1,8 @@
 import { create } from 'zustand'
 import {
   DenseLayerData, History, ProjectLoader, SetTilesCommand,
-  lintMap, lintProject, lintUnusedTiles, mapTitle, tileId, walkLayers,
+  createFromTemplate, createTileMap, lintMap, lintProject,
+  lintUnusedTiles, mapTitle, normalizePath, tileId, walkLayers,
   type FormatHints, type LintFinding, type Layer, type MapObject,
   type ObjectLayer, type ProjectContents, type TileLayer, type TileMap, type Tileset,
 } from '@tile-editor/core'
@@ -31,6 +32,19 @@ export interface OpenDocument {
   source: TileSourceIndex
 }
 
+export interface NewMapRequest {
+  /** File name without a folder, extension included. */
+  fileName: string
+  folder: string
+  width: number
+  height: number
+  tilewidth: number
+  tileheight: number
+  /** Path of a map to copy the structure from, or undefined for a blank map. */
+  templatePath?: string
+  keepContent: boolean
+}
+
 export type PropertyOwner =
   | { kind: 'map' }
   | { kind: 'layer'; id: number }
@@ -55,6 +69,8 @@ interface EditorState {
 
   activeLayerId?: number
   selectedObjectIds: number[]
+  /** Tilesets edited through the properties panel, saved with the map. */
+  dirtyTilesets: Set<string>
   tool: ToolId
   stamp?: Stamp
   activeTilesetPath?: string
@@ -72,8 +88,11 @@ interface EditorState {
 
   init(): Promise<void>
   openMap(path: string): Promise<void>
+  createMap(options: NewMapRequest): Promise<void>
+  refreshProject(): Promise<void>
   save(): Promise<void>
   touch(): void
+  markTilesetDirty(path: string): void
 
   setTool(tool: ToolId): void
   setStamp(stamp: Stamp | undefined): void
@@ -108,6 +127,7 @@ export const useEditor = create<EditorState>((set, get) => ({
   dirty: false,
   saving: false,
   selectedObjectIds: [],
+  dirtyTilesets: new Set<string>(),
   tool: 'brush',
   camera: { x: 0, y: 0, zoom: 1 },
   showGrid: true,
@@ -155,6 +175,7 @@ export const useEditor = create<EditorState>((set, get) => ({
         propertyTarget: { kind: 'map' },
         revision: get().revision + 1,
         dirty: false,
+        dirtyTilesets: new Set(),
         camera: { x: 0, y: 0, zoom: 1 },
         lint: [],
       })
@@ -163,15 +184,93 @@ export const useEditor = create<EditorState>((set, get) => ({
     }
   },
 
+  async createMap(options) {
+    const { loader, project, fs: files } = get()
+    if (!loader || !project) return
+    const folder = normalizePath(options.folder)
+    const path = normalizePath(folder ? `${folder}/${options.fileName}` : options.fileName)
+
+    if (await files.exists(path)) {
+      get().notify(`Plik ${path} już istnieje.`, 'error')
+      return
+    }
+
+    try {
+      let map
+      if (options.templatePath) {
+        const template = await loader.loadMap(options.templatePath)
+        map = createFromTemplate(template.map, {
+          path,
+          templatePath: template.path,
+          width: options.width,
+          height: options.height,
+          keepContent: options.keepContent,
+        })
+      } else {
+        // A blank map still needs something to paint with, so it picks up the
+        // project's tilesets rather than opening with an empty palette.
+        const tilesets = []
+        for (const tilesetPath of project.tilesets) {
+          const loaded = await loader.loadTileset(tilesetPath).catch(() => undefined)
+          if (loaded) tilesets.push({ path: tilesetPath, tilecount: Math.max(1, loaded.tileset.tilecount) })
+        }
+        map = createTileMap({
+          path,
+          width: options.width,
+          height: options.height,
+          tilewidth: options.tilewidth,
+          tileheight: options.tileheight,
+          tilesets,
+          layers: [{ name: 'kafle', kind: 'tilelayer' }, { name: 'obiekty', kind: 'objectgroup' }],
+        })
+      }
+      await loader.saveMap(map, path, { dialect: 'tiled', rootBraceInline: true, trailingNewline: false })
+      await get().refreshProject()
+      await get().openMap(path)
+      get().notify(`Utworzono ${mapTitle(path)}`)
+    } catch (error) {
+      get().notify(error instanceof Error ? error.message : String(error), 'error')
+    }
+  },
+
+  async refreshProject() {
+    const files = get().fs
+    files.invalidate()
+    const data = await files.project()
+    set({
+      root: data.root,
+      project: {
+        configPath: data.configPath,
+        config: data.config as ProjectContents['config'],
+        maps: data.maps,
+        tilesets: data.tilesets,
+        images: data.images,
+      },
+    })
+  },
+
   async save() {
-    const { doc, loader, history } = get()
+    const { doc, loader, history, dirtyTilesets } = get()
     if (!doc || !loader) return
     set({ saving: true })
     try {
       await loader.saveMap(doc.map, doc.path, doc.hints)
+      // Tile properties drive the games in this corpus, so an edit to one has
+      // to reach the .tsj alongside the map that prompted it.
+      const savedTilesets: string[] = []
+      for (const path of dirtyTilesets) {
+        const loaded = loader.tilesets.get(path)
+        if (!loaded) continue
+        await loader.saveTileset(loaded.tileset, path, loaded.hints)
+        savedTilesets.push(path)
+      }
       history.markSaved()
-      set({ dirty: false, saving: false })
-      get().notify(`Zapisano ${mapTitle(doc.path)}`)
+      set({ dirty: false, saving: false, dirtyTilesets: new Set() })
+      get().notify(
+        savedTilesets.length > 0
+          ? `Zapisano ${mapTitle(doc.path)} i ${savedTilesets.length} tileset${savedTilesets.length === 1 ? '' : 'y'}`
+          : `Zapisano ${mapTitle(doc.path)}`,
+      )
     } catch (error) {
       set({ saving: false })
       get().notify(error instanceof Error ? error.message : String(error), 'error')
@@ -179,7 +278,13 @@ export const useEditor = create<EditorState>((set, get) => ({
   },
 
   touch() {
-    set({ revision: get().revision + 1, dirty: get().history.dirty })
+    set({ revision: get().revision + 1, dirty: get().history.dirty || get().dirtyTilesets.size > 0 })
+  },
+
+  markTilesetDirty(path) {
+    const next = new Set(get().dirtyTilesets)
+    next.add(path)
+    set({ dirtyTilesets: next })
   },
 
   setTool: (tool) =>

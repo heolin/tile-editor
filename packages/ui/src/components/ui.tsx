@@ -138,3 +138,31 @@ export function Toast({ text, tone }: { text: string; tone: 'ok' | 'error' }) {
     </div>
   )
 }
+
+/** A centred modal. Used sparingly: only for actions that create a file. */
+export function Dialog({ open, onClose, title, children, footer }: {
+  open: boolean
+  onClose: () => void
+  title: string
+  children: ReactNode
+  footer?: ReactNode
+}) {
+  if (!open) return null
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center p-0 md:items-center md:p-6">
+      <button type="button" aria-label="Zamknij" className="absolute inset-0 bg-black/60" onClick={onClose} />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        className="relative flex max-h-[85vh] w-full max-w-md flex-col rounded-t-2xl border border-line bg-surface shadow-2xl md:rounded-xl"
+      >
+        <header className="flex items-center justify-between border-b border-line px-4 py-3">
+          <h2 className="text-[14px] font-semibold">{title}</h2>
+        </header>
+        <div className="min-h-0 flex-1 overflow-y-auto py-2">{children}</div>
+        {footer ? <footer className="flex justify-end gap-2 border-t border-line px-4 py-3">{footer}</footer> : null}
+      </div>
+    </div>
+  )
+}

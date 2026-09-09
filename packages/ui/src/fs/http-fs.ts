@@ -60,6 +60,11 @@ export class HttpProjectFS implements ProjectFS {
     return list.some((e) => e.path === key)
   }
 
+  /** Drops the cached listing so a newly written file becomes visible. */
+  invalidate(): void {
+    this.cachedList = undefined
+  }
+
   assetUrl(path: string): string {
     return this.url('/assets/' + normalizePath(path).split('/').map(encodeURIComponent).join('/'))
   }

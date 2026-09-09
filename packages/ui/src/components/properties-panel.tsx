@@ -27,6 +27,7 @@ export function PropertiesPanel() {
 
   const commit = (next: Property[]) => {
     state.history.run(new SetPropertyCommand(owner.node, next, `Properties: ${owner.title}`, `props:${owner.key}`))
+    if (target.kind === 'tile') state.markTilesetDirty(target.tilesetPath)
     state.touch()
   }
 
@@ -175,7 +176,9 @@ function resolveOwner(target: PropertyOwner): ResolvedOwner | undefined {
       <p className="border-b border-line px-3 py-2 text-[11px] text-ink-faint">
         {entry.tileset.name} · {tile.image?.split('/').pop() ?? `id ${tile.id}`}
         <br />
-        <span className="text-warn">Zapis tilesetów dochodzi w M4 — zmiany tu nie trafią jeszcze na dysk.</span>
+        <span className="text-ink-faint">
+          Zmiany zapisują się do {entry.tileset.sourcePath ?? 'tilesetu'} razem z mapą.
+        </span>
       </p>
     ),
   }
