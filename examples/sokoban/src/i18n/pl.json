@@ -1,0 +1,56 @@
+{
+  "controls.steer": "Chodź pole po polu",
+  "controls.action": "Cofnij ostatni ruch",
+
+  "setup.story": "HISTORIA",
+  "setup.coop": "WE DWOJE",
+  "setup.story-needs": "dla {seats} gracza",
+  "setup.coop-needs": "dla {seats} graczy",
+  "setup.start": "START",
+  "setup.difficulty": "ZAPAS",
+  "setup.locked": "Ukończ wcześniejszą planszę",
+  "setup.par": {
+    "one": "Norma {count} ruch",
+    "few": "Norma {count} ruchy",
+    "many": "Norma {count} ruchów",
+    "other": "Norma {count} ruchów"
+  },
+  "setup.best": {
+    "one": "Rekord {count} ruch",
+    "few": "Rekord {count} ruchy",
+    "many": "Rekord {count} ruchów",
+    "other": "Rekord {count} ruchów"
+  },
+
+  "hud.moves": "RUCHY",
+  "hud.reset": "OD NOWA",
+  "hud.budget": "{used} / {budget}",
+
+  "stuck.title": "Plansza jest nie do skończenia",
+  "stuck.body": "Skrzynka, na którą czekał cel, wpadła do dziury. Wraca tylko przez reset.",
+  "stuck.reset": "ZACZNIJ OD NOWA",
+
+  "results.title": "PLANSZA UKOŃCZONA",
+  "results.over-budget": "Ponad {budget}",
+  "results.best": "Nowy rekord",
+  "results.coins": {
+    "one": "{count} moneta",
+    "few": "{count} monety",
+    "many": "{count} monet",
+    "other": "{count} monet"
+  },
+  "results.unlocked": "Nowa plansza",
+  "results.next": "DALEJ",
+  "results.retry": "JESZCZE RAZ",
+  "results.levels": "PLANSZE",
+
+  "setup.title": "MAGAZYN",
+  "howto.1.title": "Pchaj",
+  "howto.1.body": "Wejdź na skrzynię, żeby ją popchnąć. Można tylko pchać, nigdy ciągnąć — więc pomyśl przed ruchem.",
+  "howto.2.title": "Dopasuj kolory",
+  "howto.2.body": "Każda skrzynia musi stanąć na znaczniku w swoim kolorze, a dół zatrzymuje to, co do niego wpadnie.",
+  "howto.3.title": "Cofaj",
+  "howto.3.body": "Przycisk akcji cofa ostatni ruch, krok po kroku. Albo zresetuj planszę i zacznij od nowa.",
+  "howto.4.title": "Kooperacja",
+  "howto.4.body": "W niektórych magazynach pracuje dwóch ludzi naraz, każdy na własnym kontrolerze."
+}

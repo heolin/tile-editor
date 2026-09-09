@@ -1,0 +1,123 @@
+{ "compressionlevel":-1,
+ "height":7,
+ "infinite":false,
+ "layers":[
+        {
+         "data":[2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
+         "height":7,
+         "id":1,
+         "name":"floor",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":11,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "data":[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 11, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 12, 0, 9, 0, 0, 0, 0, 0,
+            0, 8, 0, 0, 0, 0, 0, 0, 0, 10, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+         "height":7,
+         "id":2,
+         "name":"goals",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":11,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "data":[0, 0, 7, 7, 7, 7, 7, 0, 0, 0, 0,
+            0, 0, 7, 0, 0, 0, 7, 0, 0, 0, 0,
+            0, 0, 7, 0, 0, 0, 7, 0, 0, 0, 0,
+            0, 0, 7, 0, 0, 0, 7, 0, 0, 0, 0,
+            7, 7, 7, 0, 0, 0, 7, 7, 7, 7, 7,
+            7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7,
+            7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7],
+         "height":7,
+         "id":3,
+         "name":"walls",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":11,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "data":[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 29, 31, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 24, 25, 26, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 27, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 28, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+         "height":7,
+         "id":4,
+         "name":"things",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":11,
+         "x":0,
+         "y":0
+        }],
+ "nextlayerid":5,
+ "nextobjectid":1,
+ "orientation":"orthogonal",
+ "properties":[
+        {
+         "name":"metrics",
+         "type":"string",
+         "value":"{\"box_changes\": 13, \"box_lines\": 16, \"forced_ratio\": 0.0, \"mean_branching\": 2.952, \"moves\": 78, \"nodes\": 115, \"pushes\": 21, \"trap_density\": 0.554}"
+        }, 
+        {
+         "name":"mode",
+         "type":"string",
+         "value":"story"
+        }, 
+        {
+         "name":"parMoves",
+         "type":"int",
+         "value":78
+        }, 
+        {
+         "name":"seed",
+         "type":"int",
+         "value":705
+        }, 
+        {
+         "name":"solution",
+         "type":"string",
+         "value":"DurrDulldDuurrdDuullddDuuurrddDLdLLrrRRRRllluuuulldRDrddlUUluurrDullddrUruLdrD"
+        }, 
+        {
+         "name":"title",
+         "type":"string",
+         "value":"Colc 3"
+        }],
+ "renderorder":"right-down",
+ "tiledversion":"1.11.2",
+ "tileheight":128,
+ "tilesets":[
+        {
+         "firstgid":1,
+         "source":"..\/sokoban.tsj"
+        }],
+ "tilewidth":128,
+ "type":"map",
+ "version":"1.11",
+ "width":11
+}

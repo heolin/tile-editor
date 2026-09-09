@@ -1,0 +1,45 @@
+{
+  "controls.steer": "Tocz swoją kulkę",
+  "controls.action": "Nic — cała gra to przechylanie",
+
+  "setup.story": "HISTORIA",
+  "setup.versus": "POJEDYNEK",
+  "setup.versus-needs": "{min}+ graczy",
+  "setup.boards": "PLANSZE",
+  "setup.difficulty": "POZIOM",
+  "setup.start": "START",
+  "setup.versus-caption": {
+    "one": "{available} plansz zbudowanych dla czterech kulek — gra się {count} wylosowaną",
+    "few": "{available} plansz zbudowanych dla czterech kulek — gra się {count} wylosowane",
+    "many": "{available} plansz zbudowanych dla czterech kulek — gra się {count} wylosowanych",
+    "other": "{available} plansz zbudowanych dla czterech kulek — gra się {count} wylosowanych"
+  },
+  "setup.level-line": "{title}   {index} / {total}",
+  "setup.locked": "ZAMKNIĘTE",
+  "setup.no-record": "brak rekordu",
+  "setup.best": "najlepszy {time}",
+
+  "hud.series": "{series}  {title}",
+
+  "results.final": "KLASYFIKACJA KOŃCOWA",
+  "results.board": "PLANSZA {index} Z {total}",
+  "results.cleared": "POZIOM ZALICZONY",
+  "results.out-of-time": "KONIEC CZASU",
+  "results.no-finish": "bez mety",
+  "results.finish": "Zakończ",
+  "results.continue": "Dalej",
+  "results.next-level": "Następny poziom",
+  "results.again": "Jeszcze raz",
+  "results.menu": "Menu",
+
+  "setup.title": "KULKA",
+  "howto.1.title": "Tocz",
+  "howto.1.body": "Przechyl, żeby toczyć kulkę po planszy. Toczy się dalej, gdy wyprostujesz, więc skręcaj wcześniej.",
+  "howto.2.title": "Dotrzyj do mety",
+  "howto.2.body": "Dojedź do mety, nie wpadając do dziury i nie przecinając lasera.",
+  "howto.3.title": "Dwa tryby",
+  "howto.3.body": "Fabuła to drabinka plansz, każda odblokowuje następną. Wersus stawia wszystkich naraz na jednej planszy.",
+  "milestones.daily": "Zalicz dziś jedną planszę",
+  "milestones.story": "Zalicz wszystkie plansze fabuły",
+  "milestones.versus": "Zalicz wszystkie plansze wersusu"
+}

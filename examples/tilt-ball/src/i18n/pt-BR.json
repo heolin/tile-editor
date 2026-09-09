@@ -1,0 +1,43 @@
+{
+  "controls.steer": "Role sua bolinha",
+  "controls.action": "Nada — inclinar é o jogo inteiro",
+
+  "setup.story": "HISTÓRIA",
+  "setup.versus": "VERSUS",
+  "setup.versus-needs": "{min}+ jogadores",
+  "setup.boards": "TABULEIROS",
+  "setup.difficulty": "DIFICULDADE",
+  "setup.start": "COMEÇAR",
+  "setup.versus-caption": {
+    "one": "{available} tabuleiros feitos para quatro bolinhas — {count} sorteado",
+    "other": "{available} tabuleiros feitos para quatro bolinhas — {count} sorteados"
+  },
+  "setup.level-line": "{title}   {index} / {total}",
+  "setup.locked": "TRANCADO",
+  "setup.no-record": "sem recorde",
+  "setup.best": "melhor {time}",
+
+  "hud.series": "{series}  {title}",
+
+  "results.final": "CLASSIFICAÇÃO FINAL",
+  "results.board": "TABULEIRO {index} DE {total}",
+  "results.cleared": "FASE CONCLUÍDA",
+  "results.out-of-time": "TEMPO ESGOTADO",
+  "results.no-finish": "não chegou",
+  "results.finish": "Terminar",
+  "results.continue": "Continuar",
+  "results.next-level": "Próxima fase",
+  "results.again": "De novo",
+  "results.menu": "Menu",
+
+  "setup.title": "BOLINHA",
+  "howto.1.title": "Role",
+  "howto.1.body": "Incline para rolar sua bola pelo tabuleiro. Ela continua rolando depois que você endireita, então vire antes.",
+  "howto.2.title": "Chegue ao fim",
+  "howto.2.body": "Alcance a meta sem cair num buraco nem cruzar um laser.",
+  "howto.3.title": "Dois modos",
+  "howto.3.body": "História é uma escada de tabuleiros, cada um liberando o próximo. Versus põe todo mundo no mesmo tabuleiro.",
+  "milestones.daily": "Complete um tabuleiro hoje",
+  "milestones.story": "Complete todos os tabuleiros de história",
+  "milestones.versus": "Complete todos os tabuleiros de versus"
+}

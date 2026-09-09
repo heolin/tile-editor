@@ -1,0 +1,26 @@
+{
+  "name": "@kapsel/tilt-ball",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Tilt a ball across a walled board into the goal hole. Up to 4 players at once, story and versus modes.",
+  "exports": {
+    ".": "./src/game-module.ts"
+  },
+  "scripts": {
+    "predev": "node ../../scripts/setup-https.mjs",
+    "dev": "vite",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@kapsel/shared": "*",
+    "@playground/game-core": "file:../../../phaser-playground/game-core",
+    "phaser": "^4.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "vite": "^5.4.0",
+    "vitest": "^2.1.9"
+  }
+}

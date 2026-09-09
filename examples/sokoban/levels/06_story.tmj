@@ -1,0 +1,127 @@
+{ "compressionlevel":-1,
+ "height":8,
+ "infinite":false,
+ "layers":[
+        {
+         "data":[2, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2],
+         "height":8,
+         "id":1,
+         "name":"floor",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":7,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "data":[0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 18, 0, 0, 0,
+            0, 8, 0, 18, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 20, 0,
+            0, 0, 0, 0, 0, 0, 0],
+         "height":8,
+         "id":2,
+         "name":"goals",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":7,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "data":[7, 7, 7, 7, 7, 7, 7,
+            7, 0, 0, 0, 0, 0, 7,
+            7, 0, 0, 0, 0, 0, 7,
+            7, 0, 0, 7, 7, 0, 7,
+            7, 0, 0, 0, 7, 0, 7,
+            7, 0, 0, 0, 7, 0, 7,
+            7, 7, 0, 7, 7, 0, 7,
+            0, 7, 7, 7, 7, 7, 7],
+         "height":8,
+         "id":3,
+         "name":"walls",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":7,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "data":[0, 0, 0, 0, 0, 0, 0,
+            0, 0, 24, 0, 0, 0, 0,
+            0, 0, 24, 0, 0, 0, 0,
+            0, 0, 25, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 31, 0,
+            0, 0, 24, 0, 0, 0, 0,
+            0, 0, 29, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0],
+         "height":8,
+         "id":4,
+         "name":"things",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":7,
+         "x":0,
+         "y":0
+        }],
+ "nextlayerid":5,
+ "nextobjectid":1,
+ "orientation":"orthogonal",
+ "properties":[
+        {
+         "name":"metrics",
+         "type":"string",
+         "value":"{\"box_changes\": 5, \"box_lines\": 8, \"forced_ratio\": 0.231, \"mean_branching\": 3.077, \"moves\": 42, \"nodes\": 23, \"pushes\": 13, \"trap_density\": 0.204}"
+        }, 
+        {
+         "name":"mode",
+         "type":"string",
+         "value":"story"
+        }, 
+        {
+         "name":"parMoves",
+         "type":"int",
+         "value":42
+        }, 
+        {
+         "name":"seed",
+         "type":"int",
+         "value":118
+        }, 
+        {
+         "name":"solution",
+         "type":"string",
+         "value":"UluuuRldddrruLUluRRRurDDullldddlUUrurrrdDD"
+        }, 
+        {
+         "name":"title",
+         "type":"string",
+         "value":"Make a bridge"
+        }],
+ "renderorder":"right-down",
+ "tiledversion":"1.11.2",
+ "tileheight":128,
+ "tilesets":[
+        {
+         "firstgid":1,
+         "source":"..\/sokoban.tsj"
+        }],
+ "tilewidth":128,
+ "type":"map",
+ "version":"1.11",
+ "width":7
+}

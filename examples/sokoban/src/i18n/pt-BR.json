@@ -1,0 +1,50 @@
+{
+  "controls.steer": "Ande de casa em casa",
+  "controls.action": "Desfaz o último movimento",
+
+  "setup.story": "HISTÓRIA",
+  "setup.coop": "EM DUPLA",
+  "setup.story-needs": "para {seats} jogador",
+  "setup.coop-needs": "para {seats} jogadores",
+  "setup.start": "COMEÇAR",
+  "setup.difficulty": "FOLGA",
+  "setup.locked": "Termine antes a fase anterior",
+  "setup.par": {
+    "one": "Par {count} movimento",
+    "other": "Par {count} movimentos"
+  },
+  "setup.best": {
+    "one": "Recorde {count} movimento",
+    "other": "Recorde {count} movimentos"
+  },
+
+  "hud.moves": "MOVIMENTOS",
+  "hud.reset": "REINICIAR",
+  "hud.budget": "{used} / {budget}",
+
+  "stuck.title": "A fase não tem mais solução",
+  "stuck.body": "Uma caixa que um alvo esperava caiu num buraco. Só reiniciar traz ela de volta.",
+  "stuck.reset": "COMEÇAR DE NOVO",
+
+  "results.title": "RESOLVIDA",
+  "results.over-budget": "Acima de {budget}",
+  "results.best": "Novo recorde",
+  "results.coins": {
+    "one": "{count} moeda",
+    "other": "{count} moedas"
+  },
+  "results.unlocked": "Nova fase",
+  "results.next": "PRÓXIMA",
+  "results.retry": "DE NOVO",
+  "results.levels": "FASES",
+
+  "setup.title": "DEPÓSITO",
+  "howto.1.title": "Empurre",
+  "howto.1.body": "Ande contra uma caixa para empurrá-la. Você só empurra, nunca puxa — então pense antes.",
+  "howto.2.title": "Cores iguais",
+  "howto.2.body": "Cada caixa tem que parar numa marca da própria cor, e o buraco fica com o que cair dentro.",
+  "howto.3.title": "Desfaça",
+  "howto.3.body": "O botão de ação desfaz o último movimento, um passo por vez. Ou reinicie o tabuleiro.",
+  "howto.4.title": "Cooperativo",
+  "howto.4.body": "Alguns depósitos colocam dois trabalhadores ao mesmo tempo, cada um no seu controle."
+}

@@ -1,0 +1,40 @@
+{
+  "controls.steer": "Deine Kugel rollen",
+  "controls.action": "Nichts — Kippen ist das ganze Spiel",
+
+  "setup.story": "STORY",
+  "setup.versus": "DUELL",
+  "setup.versus-needs": "ab {min} Spielern",
+  "setup.boards": "BRETTER",
+  "setup.difficulty": "SCHWIERIGKEIT",
+  "setup.start": "START",
+  "setup.versus-caption": "{available} Bretter für vier Kugeln — {count} zufällig gezogen",
+  "setup.level-line": "{title}   {index} / {total}",
+  "setup.locked": "GESPERRT",
+  "setup.no-record": "kein Rekord",
+  "setup.best": "Bestzeit {time}",
+
+  "hud.series": "{series}  {title}",
+
+  "results.final": "ENDSTAND",
+  "results.board": "BRETT {index} VON {total}",
+  "results.cleared": "LEVEL GESCHAFFT",
+  "results.out-of-time": "ZEIT ABGELAUFEN",
+  "results.no-finish": "nicht angekommen",
+  "results.finish": "Fertig",
+  "results.continue": "Weiter",
+  "results.next-level": "Nächstes Level",
+  "results.again": "Nochmal",
+  "results.menu": "Menü",
+
+  "setup.title": "KUGELLABYRINTH",
+  "howto.1.title": "Rollen",
+  "howto.1.body": "Kippe das Gerät, um die Kugel über das Brett zu rollen. Sie rollt weiter, also lenke früh.",
+  "howto.2.title": "Ins Ziel",
+  "howto.2.body": "Erreiche das Ziel, ohne in ein Loch zu fallen oder einen Laser zu kreuzen.",
+  "howto.3.title": "Zwei Modi",
+  "howto.3.body": "Story ist eine Leiter aus Brettern, jedes schaltet das nächste frei. Versus setzt alle zugleich auf ein Brett.",
+  "milestones.daily": "Heute ein Brett schaffen",
+  "milestones.story": "Jedes Story-Brett schaffen",
+  "milestones.versus": "Jedes Versus-Brett schaffen"
+}

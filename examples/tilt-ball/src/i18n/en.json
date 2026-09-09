@@ -1,0 +1,40 @@
+{
+  "controls.steer": "Roll your ball",
+  "controls.action": "Nothing — tilt is the whole game",
+
+  "setup.story": "STORY",
+  "setup.versus": "VERSUS",
+  "setup.versus-needs": "{min}+ players",
+  "setup.boards": "BOARDS",
+  "setup.difficulty": "DIFFICULTY",
+  "setup.start": "START",
+  "setup.versus-caption": "{available} boards built for four balls — {count} drawn at random",
+  "setup.level-line": "{title}   {index} / {total}",
+  "setup.locked": "LOCKED",
+  "setup.no-record": "no record",
+  "setup.best": "best {time}",
+
+  "hud.series": "{series}  {title}",
+
+  "results.final": "FINAL STANDINGS",
+  "results.board": "BOARD {index} OF {total}",
+  "results.cleared": "LEVEL CLEARED",
+  "results.out-of-time": "OUT OF TIME",
+  "results.no-finish": "no finish",
+  "results.finish": "Finish",
+  "results.continue": "Continue",
+  "results.next-level": "Next level",
+  "results.again": "Again",
+  "results.menu": "Menu",
+
+  "setup.title": "TILT BALL",
+  "howto.1.title": "Roll",
+  "howto.1.body": "Tilt to roll your ball across the board. It keeps rolling after you level off, so steer early.",
+  "howto.2.title": "Reach the goal",
+  "howto.2.body": "Get to the goal without dropping into a pit or crossing a laser.",
+  "howto.3.title": "Two modes",
+  "howto.3.body": "Story is a ladder of boards, each one unlocking the next. Versus puts every player on one board at once.",
+  "milestones.daily": "Clear a board today",
+  "milestones.story": "Clear every story board",
+  "milestones.versus": "Clear every versus board"
+}

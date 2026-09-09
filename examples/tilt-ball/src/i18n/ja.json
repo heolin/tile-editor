@@ -1,0 +1,40 @@
+{
+  "controls.steer": "ボールを転がす",
+  "controls.action": "なし — かたむけるだけのゲーム",
+
+  "setup.story": "ストーリー",
+  "setup.versus": "たいせん",
+  "setup.versus-needs": "{min}人以上",
+  "setup.boards": "ボード数",
+  "setup.difficulty": "むずかしさ",
+  "setup.start": "スタート",
+  "setup.versus-caption": "4つのボール用のボードが{available}枚 — その中から{count}枚をランダムに選びます",
+  "setup.level-line": "{title}   {index} / {total}",
+  "setup.locked": "ロック中",
+  "setup.no-record": "記録なし",
+  "setup.best": "最高 {time}",
+
+  "hud.series": "{series}  {title}",
+
+  "results.final": "さいしゅう順位",
+  "results.board": "ボード {index} / {total}",
+  "results.cleared": "クリア！",
+  "results.out-of-time": "時間切れ",
+  "results.no-finish": "ゴールできず",
+  "results.finish": "おわる",
+  "results.continue": "つづける",
+  "results.next-level": "つぎのステージ",
+  "results.again": "もう一度",
+  "results.menu": "メニュー",
+
+  "setup.title": "かたむけボール",
+  "howto.1.title": "ころがす",
+  "howto.1.body": "かたむけてボールをころがします。もどしても止まらないので、早めにまげましょう。",
+  "howto.2.title": "ゴールする",
+  "howto.2.body": "あなに落ちず、レーザーにも当たらずにゴールへ。",
+  "howto.3.title": "2つのモード",
+  "howto.3.body": "ストーリーは1面ずつ進むはしご。バーサスは全員が同じ面で同時にあそびます。",
+  "milestones.daily": "今日ステージを1つクリアする",
+  "milestones.story": "ストーリーの全ステージをクリアする",
+  "milestones.versus": "バーサスの全ステージをクリアする"
+}

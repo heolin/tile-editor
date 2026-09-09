@@ -1,0 +1,50 @@
+{
+  "controls.steer": "Step from square to square",
+  "controls.action": "Undo the last move",
+
+  "setup.story": "STORY",
+  "setup.coop": "CO-OP",
+  "setup.story-needs": "for {seats} player",
+  "setup.coop-needs": "for {seats} players",
+  "setup.start": "START",
+  "setup.difficulty": "SLACK",
+  "setup.locked": "Finish the level before it",
+  "setup.par": {
+    "one": "Par {count} move",
+    "other": "Par {count} moves"
+  },
+  "setup.best": {
+    "one": "Best {count} move",
+    "other": "Best {count} moves"
+  },
+
+  "hud.moves": "MOVES",
+  "hud.reset": "RESET",
+  "hud.budget": "{used} / {budget}",
+
+  "stuck.title": "The board is stuck",
+  "stuck.body": "A crate a goal was waiting for has gone into a pit. Only a reset gets it back.",
+  "stuck.reset": "START OVER",
+
+  "results.title": "SOLVED",
+  "results.over-budget": "Over {budget}",
+  "results.best": "New record",
+  "results.coins": {
+    "one": "{count} coin",
+    "other": "{count} coins"
+  },
+  "results.unlocked": "New level",
+  "results.next": "NEXT",
+  "results.retry": "AGAIN",
+  "results.levels": "LEVELS",
+
+  "setup.title": "BOX DEPOT",
+  "howto.1.title": "Push",
+  "howto.1.body": "Walk into a crate to push it. You can only push, never pull — so think before you shove.",
+  "howto.2.title": "Match the colours",
+  "howto.2.body": "Every crate has to finish on a mark of its own colour, and a pit keeps whatever falls in.",
+  "howto.3.title": "Undo",
+  "howto.3.body": "The action button takes the last move back, one step at a time. Or reset the board and start over.",
+  "howto.4.title": "Co-op",
+  "howto.4.body": "Some depots put two workers on the floor at once, each on their own controller."
+}

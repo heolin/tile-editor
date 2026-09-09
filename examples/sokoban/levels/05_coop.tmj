@@ -1,0 +1,108 @@
+{ "compressionlevel":-1,
+ "height":7,
+ "infinite":false,
+ "layers":[
+        {
+         "data":[2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
+         "height":7,
+         "id":1,
+         "name":"floor",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":11,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "data":[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 20, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+         "height":7,
+         "id":2,
+         "name":"goals",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":11,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "data":[7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+            7, 0, 0, 0, 7, 0, 0, 0, 0, 0, 7,
+            7, 0, 0, 0, 7, 0, 0, 0, 0, 0, 7,
+            7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7,
+            7, 0, 0, 0, 7, 0, 0, 0, 0, 0, 7,
+            7, 0, 0, 0, 7, 0, 0, 0, 0, 0, 7,
+            7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7],
+         "height":7,
+         "id":3,
+         "name":"walls",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":11,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "data":[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 29, 0, 0, 0, 0, 30, 0, 0, 0,
+            0, 0, 24, 0, 0, 0, 0, 25, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 31, 0, 0, 0, 0, 0, 0, 31, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+         "height":7,
+         "id":4,
+         "name":"things",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":11,
+         "x":0,
+         "y":0
+        }],
+ "nextlayerid":5,
+ "nextobjectid":1,
+ "orientation":"orthogonal",
+ "properties":[
+        {
+         "name":"mode",
+         "type":"string",
+         "value":"coop"
+        }, 
+        {
+         "name":"parMoves",
+         "type":"int",
+         "value":24
+        }, 
+        {
+         "name":"title",
+         "type":"string",
+         "value":"Hole in the middle"
+        }],
+ "renderorder":"right-down",
+ "tiledversion":"1.11.2",
+ "tileheight":128,
+ "tilesets":[
+        {
+         "firstgid":1,
+         "source":"..\/sokoban.tsj"
+        }],
+ "tilewidth":128,
+ "type":"map",
+ "version":"1.11",
+ "width":11
+}

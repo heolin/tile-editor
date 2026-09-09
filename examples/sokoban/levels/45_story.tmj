@@ -1,0 +1,139 @@
+{ "compressionlevel":-1,
+ "height":11,
+ "infinite":false,
+ "layers":[
+        {
+         "data":[2, 2, 2, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2, 2, 2],
+         "height":11,
+         "id":1,
+         "name":"floor",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":9,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "data":[0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 9, 0, 8, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 8, 0, 0,
+            0, 0, 10, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0],
+         "height":11,
+         "id":2,
+         "name":"goals",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":9,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "data":[0, 7, 7, 7, 7, 7, 7, 0, 0,
+            0, 7, 0, 7, 7, 0, 7, 7, 7,
+            0, 7, 0, 0, 0, 0, 0, 0, 7,
+            0, 7, 0, 0, 0, 0, 0, 0, 7,
+            0, 7, 0, 0, 0, 0, 0, 0, 7,
+            0, 7, 0, 7, 7, 0, 0, 0, 7,
+            0, 7, 0, 7, 7, 7, 0, 0, 7,
+            7, 7, 0, 7, 7, 7, 0, 0, 7,
+            7, 0, 0, 0, 0, 0, 0, 0, 7,
+            7, 7, 0, 7, 7, 7, 0, 0, 7,
+            0, 7, 7, 7, 7, 7, 7, 7, 7],
+         "height":11,
+         "id":3,
+         "name":"walls",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":9,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "data":[0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 24, 0, 0,
+            0, 0, 0, 0, 0, 0, 24, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 29, 25, 0, 0, 0, 26, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0],
+         "height":11,
+         "id":4,
+         "name":"things",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":9,
+         "x":0,
+         "y":0
+        }],
+ "nextlayerid":5,
+ "nextobjectid":1,
+ "orientation":"orthogonal",
+ "properties":[
+        {
+         "name":"metrics",
+         "type":"string",
+         "value":"{\"box_changes\": 15, \"box_lines\": 19, \"forced_ratio\": 0.031, \"mean_branching\": 6.719, \"moves\": 147, \"nodes\": 2265, \"pushes\": 32, \"trap_density\": 0.543}"
+        }, 
+        {
+         "name":"mode",
+         "type":"string",
+         "value":"story"
+        }, 
+        {
+         "name":"parMoves",
+         "type":"int",
+         "value":147
+        }, 
+        {
+         "name":"seed",
+         "type":"int",
+         "value":503
+        }, 
+        {
+         "name":"solution",
+         "type":"string",
+         "value":"RRRlluuuuurrrrrdLrddlUUdddrddlUUUUruuulldldllddddrrRllluuuuuurrrrrdddddddlUUruullUdrruLLLLulDDurrrdrrddlUUruLruulDDuulldRurrddlDlUluurrDLddrUdrddlU"
+        }, 
+        {
+         "name":"title",
+         "type":"string",
+         "value":"Cola 2"
+        }],
+ "renderorder":"right-down",
+ "tiledversion":"1.11.2",
+ "tileheight":128,
+ "tilesets":[
+        {
+         "firstgid":1,
+         "source":"..\/sokoban.tsj"
+        }],
+ "tilewidth":128,
+ "type":"map",
+ "version":"1.11",
+ "width":9
+}

@@ -1,0 +1,61 @@
+{
+ "compressionlevel": -1,
+ "width": 16,
+ "height": 20,
+ "tilewidth": 64,
+ "tileheight": 64,
+ "infinite": false,
+ "orientation": "orthogonal",
+ "renderorder": "right-down",
+ "type": "map",
+ "version": "1.10",
+ "tiledversion": "1.10.0",
+ "nextlayerid": 2,
+ "nextobjectid": 1,
+ "properties": [
+  {
+   "name": "title",
+   "type": "string",
+   "value": "Untitled"
+  },
+  {
+   "name": "mode",
+   "type": "string",
+   "value": "story"
+  },
+  {
+   "name": "background",
+   "type": "string",
+   "value": "brown"
+  },
+  {
+   "name": "ballSize",
+   "type": "string",
+   "value": "small"
+  },
+  {
+   "name": "edges",
+   "type": "string",
+   "value": "wall"
+  }
+ ],
+ "tilesets": [
+  {
+   "firstgid": 1,
+   "source": "../tiltball.tsj"
+  }
+ ],
+ "layers": [
+  {
+   "id": 1,
+   "name": "objects",
+   "type": "objectgroup",
+   "draworder": "topdown",
+   "opacity": 1,
+   "visible": true,
+   "x": 0,
+   "y": 0,
+   "objects": []
+  }
+ ]
+}

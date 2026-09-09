@@ -1,0 +1,527 @@
+{
+ "name": "sokoban",
+ "type": "tileset",
+ "version": "1.10",
+ "tiledversion": "1.10.0",
+ "tilewidth": 128,
+ "tileheight": 128,
+ "tilecount": 31,
+ "columns": 0,
+ "margin": 0,
+ "spacing": 0,
+ "tiles": [
+  {
+   "id": 0,
+   "image": "src/assets/art/ground/ground_green.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "ground"
+    }
+   ]
+  },
+  {
+   "id": 1,
+   "image": "src/assets/art/ground/ground_grey.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "ground"
+    }
+   ]
+  },
+  {
+   "id": 2,
+   "image": "src/assets/art/ground/ground_brown.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "ground"
+    }
+   ]
+  },
+  {
+   "id": 3,
+   "image": "src/assets/art/walls/wall_red.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "wall"
+    }
+   ]
+  },
+  {
+   "id": 4,
+   "image": "src/assets/art/walls/wall_brick.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "wall"
+    }
+   ]
+  },
+  {
+   "id": 5,
+   "image": "src/assets/art/walls/wall_concrete.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "wall"
+    }
+   ]
+  },
+  {
+   "id": 6,
+   "image": "src/assets/art/walls/wall_brown.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "wall"
+    }
+   ]
+  },
+  {
+   "id": 7,
+   "image": "src/assets/art/goals/goal_brown.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "goal"
+    },
+    {
+     "name": "colour",
+     "type": "string",
+     "value": "brown"
+    }
+   ]
+  },
+  {
+   "id": 8,
+   "image": "src/assets/art/goals/goal_red.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "goal"
+    },
+    {
+     "name": "colour",
+     "type": "string",
+     "value": "red"
+    }
+   ]
+  },
+  {
+   "id": 9,
+   "image": "src/assets/art/goals/goal_blue.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "goal"
+    },
+    {
+     "name": "colour",
+     "type": "string",
+     "value": "blue"
+    }
+   ]
+  },
+  {
+   "id": 10,
+   "image": "src/assets/art/goals/goal_green.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "goal"
+    },
+    {
+     "name": "colour",
+     "type": "string",
+     "value": "green"
+    }
+   ]
+  },
+  {
+   "id": 11,
+   "image": "src/assets/art/goals/goal_grey.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "goal"
+    },
+    {
+     "name": "colour",
+     "type": "string",
+     "value": "grey"
+    }
+   ]
+  },
+  {
+   "id": 12,
+   "image": "src/assets/art/goals/spot_brown.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "goal"
+    },
+    {
+     "name": "colour",
+     "type": "string",
+     "value": "brown"
+    }
+   ]
+  },
+  {
+   "id": 13,
+   "image": "src/assets/art/goals/spot_red.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "goal"
+    },
+    {
+     "name": "colour",
+     "type": "string",
+     "value": "red"
+    }
+   ]
+  },
+  {
+   "id": 14,
+   "image": "src/assets/art/goals/spot_blue.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "goal"
+    },
+    {
+     "name": "colour",
+     "type": "string",
+     "value": "blue"
+    }
+   ]
+  },
+  {
+   "id": 15,
+   "image": "src/assets/art/goals/spot_green.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "goal"
+    },
+    {
+     "name": "colour",
+     "type": "string",
+     "value": "green"
+    }
+   ]
+  },
+  {
+   "id": 16,
+   "image": "src/assets/art/goals/spot_grey.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "goal"
+    },
+    {
+     "name": "colour",
+     "type": "string",
+     "value": "grey"
+    }
+   ]
+  },
+  {
+   "id": 17,
+   "image": "src/assets/art/goals/hole.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "hole"
+    }
+   ]
+  },
+  {
+   "id": 18,
+   "image": "src/assets/art/goals/hole_brown.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "hole"
+    },
+    {
+     "name": "colour",
+     "type": "string",
+     "value": "brown"
+    }
+   ]
+  },
+  {
+   "id": 19,
+   "image": "src/assets/art/goals/hole_red.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "hole"
+    },
+    {
+     "name": "colour",
+     "type": "string",
+     "value": "red"
+    }
+   ]
+  },
+  {
+   "id": 20,
+   "image": "src/assets/art/goals/hole_blue.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "hole"
+    },
+    {
+     "name": "colour",
+     "type": "string",
+     "value": "blue"
+    }
+   ]
+  },
+  {
+   "id": 21,
+   "image": "src/assets/art/goals/hole_green.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "hole"
+    },
+    {
+     "name": "colour",
+     "type": "string",
+     "value": "green"
+    }
+   ]
+  },
+  {
+   "id": 22,
+   "image": "src/assets/art/goals/hole_grey.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "hole"
+    },
+    {
+     "name": "colour",
+     "type": "string",
+     "value": "grey"
+    }
+   ]
+  },
+  {
+   "id": 23,
+   "image": "src/assets/art/crates/crate_brown.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "crate"
+    },
+    {
+     "name": "colour",
+     "type": "string",
+     "value": "brown"
+    }
+   ]
+  },
+  {
+   "id": 24,
+   "image": "src/assets/art/crates/crate_red.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "crate"
+    },
+    {
+     "name": "colour",
+     "type": "string",
+     "value": "red"
+    }
+   ]
+  },
+  {
+   "id": 25,
+   "image": "src/assets/art/crates/crate_blue.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "crate"
+    },
+    {
+     "name": "colour",
+     "type": "string",
+     "value": "blue"
+    }
+   ]
+  },
+  {
+   "id": 26,
+   "image": "src/assets/art/crates/crate_green.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "crate"
+    },
+    {
+     "name": "colour",
+     "type": "string",
+     "value": "green"
+    }
+   ]
+  },
+  {
+   "id": 27,
+   "image": "src/assets/art/crates/crate_grey.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "crate"
+    },
+    {
+     "name": "colour",
+     "type": "string",
+     "value": "grey"
+    }
+   ]
+  },
+  {
+   "id": 28,
+   "image": "src/assets/art/player/player_green_down_1.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "start"
+    },
+    {
+     "name": "seat",
+     "type": "int",
+     "value": 0
+    }
+   ]
+  },
+  {
+   "id": 29,
+   "image": "src/assets/art/player/player_blue_down_1.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "start"
+    },
+    {
+     "name": "seat",
+     "type": "int",
+     "value": 1
+    }
+   ]
+  },
+  {
+   "id": 30,
+   "image": "src/assets/art/items/coin.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "coin"
+    }
+   ]
+  }
+ ]
+}

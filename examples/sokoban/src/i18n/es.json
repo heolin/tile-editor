@@ -1,0 +1,50 @@
+{
+  "controls.steer": "Camina de casilla en casilla",
+  "controls.action": "Deshace el último movimiento",
+
+  "setup.story": "HISTORIA",
+  "setup.coop": "EN PAREJA",
+  "setup.story-needs": "para {seats} jugador",
+  "setup.coop-needs": "para {seats} jugadores",
+  "setup.start": "EMPEZAR",
+  "setup.difficulty": "MARGEN",
+  "setup.locked": "Termina antes el nivel anterior",
+  "setup.par": {
+    "one": "Par {count} movimiento",
+    "other": "Par {count} movimientos"
+  },
+  "setup.best": {
+    "one": "Récord {count} movimiento",
+    "other": "Récord {count} movimientos"
+  },
+
+  "hud.moves": "MOVIMIENTOS",
+  "hud.reset": "REINICIAR",
+  "hud.budget": "{used} / {budget}",
+
+  "stuck.title": "El tablero ya no tiene solución",
+  "stuck.body": "Una caja que esperaba una meta ha caído en un hoyo. Solo reiniciar la devuelve.",
+  "stuck.reset": "EMPEZAR DE NUEVO",
+
+  "results.title": "RESUELTO",
+  "results.over-budget": "Más de {budget}",
+  "results.best": "Nuevo récord",
+  "results.coins": {
+    "one": "{count} moneda",
+    "other": "{count} monedas"
+  },
+  "results.unlocked": "Nuevo nivel",
+  "results.next": "SIGUIENTE",
+  "results.retry": "OTRA VEZ",
+  "results.levels": "NIVELES",
+
+  "setup.title": "ALMACÉN",
+  "howto.1.title": "Empuja",
+  "howto.1.body": "Camina contra una caja para empujarla. Solo puedes empujar, nunca tirar: piensa antes de mover.",
+  "howto.2.title": "Colores iguales",
+  "howto.2.body": "Cada caja debe acabar sobre una marca de su color, y un foso se queda con lo que cae dentro.",
+  "howto.3.title": "Deshaz",
+  "howto.3.body": "El botón de acción deshace el último movimiento, paso a paso. O reinicia el tablero y empieza de nuevo.",
+  "howto.4.title": "Cooperativo",
+  "howto.4.body": "Algunos almacenes ponen a dos operarios a la vez, cada uno con su mando."
+}

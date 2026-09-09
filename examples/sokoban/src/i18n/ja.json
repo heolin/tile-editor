@@ -1,0 +1,47 @@
+{
+  "controls.steer": "マスからマスへ歩く",
+  "controls.action": "直前の動きを取り消す",
+
+  "setup.story": "ストーリー",
+  "setup.coop": "ふたりで",
+  "setup.story-needs": "{seats} 人よう",
+  "setup.coop-needs": "{seats} 人よう",
+  "setup.start": "スタート",
+  "setup.difficulty": "よゆう",
+  "setup.locked": "前のステージをクリアしよう",
+  "setup.par": {
+    "other": "目標 {count} 手"
+  },
+  "setup.best": {
+    "other": "記録 {count} 手"
+  },
+
+  "hud.moves": "てすう",
+  "hud.reset": "やりなおす",
+  "hud.budget": "{used} / {budget}",
+
+  "stuck.title": "このステージはもう解けません",
+  "stuck.body": "ゴールが待っていた荷物が穴に落ちました。やり直すしかありません。",
+  "stuck.reset": "はじめから",
+
+  "results.title": "クリア",
+  "results.over-budget": "{budget} 超過",
+  "results.best": "新記録",
+  "results.coins": {
+    "other": "コイン {count}"
+  },
+  "results.unlocked": "新ステージ",
+  "results.next": "つぎへ",
+  "results.retry": "もういちど",
+  "results.levels": "ステージ",
+
+  "setup.title": "そうこ",
+  "howto.1.title": "おす",
+  "howto.1.body": "荷物にぶつかると押せます。押すだけで引けないので、動かす前に考えましょう。",
+  "howto.2.title": "色を合わせる",
+  "howto.2.body": "荷物は同じ色のマークの上に置きます。あなに落ちたものはもどってきません。",
+  "howto.3.title": "もどす",
+  "howto.3.body": "アクションボタンで1手ずつもどせます。やり直したいときは面をリセットしましょう。",
+  "howto.4.title": "きょうりょくプレイ",
+  "howto.4.body": "2人で同時に働く倉庫もあります。ひとりに1つコントローラーが必要です。"
+}

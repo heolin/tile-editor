@@ -1,0 +1,40 @@
+{
+  "controls.steer": "Haz rodar tu bola",
+  "controls.action": "Nada — inclinar es todo el juego",
+
+  "setup.story": "HISTORIA",
+  "setup.versus": "VERSUS",
+  "setup.versus-needs": "{min}+ jugadores",
+  "setup.boards": "TABLEROS",
+  "setup.difficulty": "DIFICULTAD",
+  "setup.start": "EMPEZAR",
+  "setup.versus-caption": "{available} tableros hechos para cuatro bolas — {count} al azar",
+  "setup.level-line": "{title}   {index} / {total}",
+  "setup.locked": "BLOQUEADO",
+  "setup.no-record": "sin récord",
+  "setup.best": "mejor {time}",
+
+  "hud.series": "{series}  {title}",
+
+  "results.final": "CLASIFICACIÓN FINAL",
+  "results.board": "TABLERO {index} DE {total}",
+  "results.cleared": "NIVEL SUPERADO",
+  "results.out-of-time": "SE ACABÓ EL TIEMPO",
+  "results.no-finish": "sin llegada",
+  "results.finish": "Terminar",
+  "results.continue": "Continuar",
+  "results.next-level": "Siguiente nivel",
+  "results.again": "Otra vez",
+  "results.menu": "Menú",
+
+  "setup.title": "BOLA INCLINADA",
+  "howto.1.title": "Rueda",
+  "howto.1.body": "Inclina para rodar tu bola por el tablero. Sigue rodando aunque endereces, así que gira antes.",
+  "howto.2.title": "Llega a la meta",
+  "howto.2.body": "Alcanza la meta sin caer en un hueco ni cruzar un láser.",
+  "howto.3.title": "Dos modos",
+  "howto.3.body": "Historia es una escalera de tableros y cada uno abre el siguiente. Versus pone a todos en el mismo tablero.",
+  "milestones.daily": "Supera un tablero hoy",
+  "milestones.story": "Supera todos los tableros de historia",
+  "milestones.versus": "Supera todos los tableros de versus"
+}

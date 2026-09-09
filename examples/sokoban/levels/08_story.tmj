@@ -1,0 +1,119 @@
+{ "compressionlevel":-1,
+ "height":6,
+ "infinite":false,
+ "layers":[
+        {
+         "data":[2, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 2, 2, 2, 2],
+         "height":6,
+         "id":1,
+         "name":"floor",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":7,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "data":[0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 8, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0,
+            0, 8, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0],
+         "height":6,
+         "id":2,
+         "name":"goals",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":7,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "data":[7, 7, 7, 7, 7, 7, 0,
+            7, 0, 7, 0, 0, 7, 7,
+            7, 0, 0, 0, 0, 0, 7,
+            7, 0, 0, 0, 0, 0, 7,
+            7, 0, 0, 0, 0, 7, 7,
+            7, 7, 7, 7, 7, 7, 0],
+         "height":6,
+         "id":3,
+         "name":"walls",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":7,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "data":[0, 0, 0, 0, 0, 0, 0,
+            0, 29, 0, 0, 0, 0, 0,
+            0, 0, 24, 0, 24, 0, 0,
+            0, 0, 0, 0, 0, 31, 0,
+            0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0],
+         "height":6,
+         "id":4,
+         "name":"things",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":7,
+         "x":0,
+         "y":0
+        }],
+ "nextlayerid":5,
+ "nextobjectid":1,
+ "orientation":"orthogonal",
+ "properties":[
+        {
+         "name":"metrics",
+         "type":"string",
+         "value":"{\"box_changes\": 2, \"box_lines\": 6, \"forced_ratio\": 0.167, \"mean_branching\": 4.5, \"moves\": 36, \"nodes\": 12, \"pushes\": 6, \"trap_density\": 0.0}"
+        }, 
+        {
+         "name":"mode",
+         "type":"string",
+         "value":"story"
+        }, 
+        {
+         "name":"parMoves",
+         "type":"int",
+         "value":36
+        }, 
+        {
+         "name":"seed",
+         "type":"int",
+         "value":103
+        }, 
+        {
+         "name":"solution",
+         "type":"string",
+         "value":"ddrrrruLulDrddlluluRddrruLdlluurDrdL"
+        }, 
+        {
+         "name":"title",
+         "type":"string",
+         "value":"Order is the key"
+        }],
+ "renderorder":"right-down",
+ "tiledversion":"1.11.2",
+ "tileheight":128,
+ "tilesets":[
+        {
+         "firstgid":1,
+         "source":"..\/sokoban.tsj"
+        }],
+ "tilewidth":128,
+ "type":"map",
+ "version":"1.11",
+ "width":7
+}

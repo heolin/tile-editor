@@ -1,0 +1,50 @@
+{
+  "controls.steer": "Geh von Feld zu Feld",
+  "controls.action": "Letzten Zug zurücknehmen",
+
+  "setup.story": "STORY",
+  "setup.coop": "ZU ZWEIT",
+  "setup.story-needs": "für {seats} Spieler",
+  "setup.coop-needs": "für {seats} Spieler",
+  "setup.start": "START",
+  "setup.difficulty": "SPIELRAUM",
+  "setup.locked": "Schließe zuerst das Level davor ab",
+  "setup.par": {
+    "one": "Vorgabe {count} Zug",
+    "other": "Vorgabe {count} Züge"
+  },
+  "setup.best": {
+    "one": "Rekord {count} Zug",
+    "other": "Rekord {count} Züge"
+  },
+
+  "hud.moves": "ZÜGE",
+  "hud.reset": "NEU",
+  "hud.budget": "{used} / {budget}",
+
+  "stuck.title": "Das Level ist nicht mehr lösbar",
+  "stuck.body": "Eine Kiste, auf die ein Ziel gewartet hat, ist in eine Grube gefallen. Nur ein Neustart holt sie zurück.",
+  "stuck.reset": "NEU BEGINNEN",
+
+  "results.title": "GELÖST",
+  "results.over-budget": "Über {budget}",
+  "results.best": "Neuer Rekord",
+  "results.coins": {
+    "one": "{count} Münze",
+    "other": "{count} Münzen"
+  },
+  "results.unlocked": "Neues Level",
+  "results.next": "WEITER",
+  "results.retry": "NOCHMAL",
+  "results.levels": "LEVEL",
+
+  "setup.title": "KISTENLAGER",
+  "howto.1.title": "Schieben",
+  "howto.1.body": "Lauf gegen eine Kiste, um sie zu schieben. Ziehen geht nicht — überleg also vorher.",
+  "howto.2.title": "Farben treffen",
+  "howto.2.body": "Jede Kiste muss auf einer Markierung ihrer eigenen Farbe enden, und eine Grube behält, was hineinfällt.",
+  "howto.3.title": "Rückgängig",
+  "howto.3.body": "Die Aktionstaste nimmt den letzten Zug zurück, Schritt für Schritt. Oder setze das Feld zurück.",
+  "howto.4.title": "Koop",
+  "howto.4.body": "In manchen Lagern arbeiten zwei Leute gleichzeitig, jeder mit eigenem Controller."
+}

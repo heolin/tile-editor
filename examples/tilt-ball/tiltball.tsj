@@ -1,0 +1,990 @@
+{
+ "name": "tiltball",
+ "type": "tileset",
+ "version": "1.10",
+ "tiledversion": "1.10.0",
+ "tilewidth": 64,
+ "tileheight": 64,
+ "tilecount": 55,
+ "columns": 0,
+ "margin": 0,
+ "spacing": 0,
+ "objectalignment": "center",
+ "tiles": [
+  {
+   "id": 0,
+   "image": "src/assets/art/blocks/block_small.png",
+   "imagewidth": 64,
+   "imageheight": 64,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "block"
+    }
+   ]
+  },
+  {
+   "id": 1,
+   "image": "src/assets/art/blocks/block_square.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "block"
+    }
+   ]
+  },
+  {
+   "id": 2,
+   "image": "src/assets/art/blocks/block_narrow.png",
+   "imagewidth": 64,
+   "imageheight": 256,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "block"
+    }
+   ]
+  },
+  {
+   "id": 3,
+   "image": "src/assets/art/blocks/block_large.png",
+   "imagewidth": 128,
+   "imageheight": 256,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "block"
+    }
+   ]
+  },
+  {
+   "id": 4,
+   "image": "src/assets/art/blocks/block_corner.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "block"
+    }
+   ]
+  },
+  {
+   "id": 5,
+   "image": "src/assets/art/blocks/block_corner_large.png",
+   "imagewidth": 256,
+   "imageheight": 256,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "block"
+    }
+   ]
+  },
+  {
+   "id": 6,
+   "image": "src/assets/art/blocks/block_small_bouncy.png",
+   "imagewidth": 64,
+   "imageheight": 64,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "block"
+    },
+    {
+     "name": "bouncy",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 7,
+   "image": "src/assets/art/blocks/block_square_bouncy.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "block"
+    },
+    {
+     "name": "bouncy",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 8,
+   "image": "src/assets/art/blocks/block_narrow_bouncy.png",
+   "imagewidth": 64,
+   "imageheight": 256,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "block"
+    },
+    {
+     "name": "bouncy",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 9,
+   "image": "src/assets/art/blocks/block_large_bouncy.png",
+   "imagewidth": 128,
+   "imageheight": 256,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "block"
+    },
+    {
+     "name": "bouncy",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 10,
+   "image": "src/assets/art/blocks/block_corner_bouncy.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "block"
+    },
+    {
+     "name": "bouncy",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 11,
+   "image": "src/assets/art/blocks/block_corner_large_bouncy.png",
+   "imagewidth": 256,
+   "imageheight": 256,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "block"
+    },
+    {
+     "name": "bouncy",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 12,
+   "image": "src/assets/art/blocks/block_rotate_narrow.png",
+   "imagewidth": 64,
+   "imageheight": 256,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "block"
+    },
+    {
+     "name": "rotates",
+     "type": "bool",
+     "value": true
+    },
+    {
+     "name": "rotatePeriod",
+     "type": "float",
+     "value": 4.0
+    }
+   ]
+  },
+  {
+   "id": 13,
+   "image": "src/assets/art/blocks/block_rotate_large.png",
+   "imagewidth": 128,
+   "imageheight": 256,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "block"
+    },
+    {
+     "name": "rotates",
+     "type": "bool",
+     "value": true
+    },
+    {
+     "name": "rotatePeriod",
+     "type": "float",
+     "value": 4.0
+    }
+   ]
+  },
+  {
+   "id": 14,
+   "image": "src/assets/art/blocks/block_locked_small.png",
+   "imagewidth": 64,
+   "imageheight": 64,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "block"
+    },
+    {
+     "name": "lock",
+     "type": "string",
+     "value": "yellow"
+    }
+   ]
+  },
+  {
+   "id": 15,
+   "image": "src/assets/art/blocks/block_locked_square.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "block"
+    },
+    {
+     "name": "lock",
+     "type": "string",
+     "value": "yellow"
+    }
+   ]
+  },
+  {
+   "id": 16,
+   "image": "src/assets/art/blocks/block_locked_narrow.png",
+   "imagewidth": 64,
+   "imageheight": 256,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "block"
+    },
+    {
+     "name": "lock",
+     "type": "string",
+     "value": "yellow"
+    }
+   ]
+  },
+  {
+   "id": 17,
+   "image": "src/assets/art/blocks/block_locked_large.png",
+   "imagewidth": 128,
+   "imageheight": 256,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "block"
+    },
+    {
+     "name": "lock",
+     "type": "string",
+     "value": "yellow"
+    }
+   ]
+  },
+  {
+   "id": 18,
+   "image": "src/assets/art/blocks/block_locked_small_orange.png",
+   "imagewidth": 64,
+   "imageheight": 64,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "block"
+    },
+    {
+     "name": "lock",
+     "type": "string",
+     "value": "orange"
+    }
+   ]
+  },
+  {
+   "id": 19,
+   "image": "src/assets/art/blocks/block_locked_square_orange.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "block"
+    },
+    {
+     "name": "lock",
+     "type": "string",
+     "value": "orange"
+    }
+   ]
+  },
+  {
+   "id": 20,
+   "image": "src/assets/art/blocks/block_locked_narrow_orange.png",
+   "imagewidth": 64,
+   "imageheight": 256,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "block"
+    },
+    {
+     "name": "lock",
+     "type": "string",
+     "value": "orange"
+    }
+   ]
+  },
+  {
+   "id": 21,
+   "image": "src/assets/art/blocks/block_locked_large_orange.png",
+   "imagewidth": 128,
+   "imageheight": 256,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "block"
+    },
+    {
+     "name": "lock",
+     "type": "string",
+     "value": "orange"
+    }
+   ]
+  },
+  {
+   "id": 22,
+   "image": "src/assets/art/blocks/block_locked_small_pink.png",
+   "imagewidth": 64,
+   "imageheight": 64,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "block"
+    },
+    {
+     "name": "lock",
+     "type": "string",
+     "value": "pink"
+    }
+   ]
+  },
+  {
+   "id": 23,
+   "image": "src/assets/art/blocks/block_locked_square_pink.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "block"
+    },
+    {
+     "name": "lock",
+     "type": "string",
+     "value": "pink"
+    }
+   ]
+  },
+  {
+   "id": 24,
+   "image": "src/assets/art/blocks/block_locked_narrow_pink.png",
+   "imagewidth": 64,
+   "imageheight": 256,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "block"
+    },
+    {
+     "name": "lock",
+     "type": "string",
+     "value": "pink"
+    }
+   ]
+  },
+  {
+   "id": 25,
+   "image": "src/assets/art/blocks/block_locked_large_pink.png",
+   "imagewidth": 128,
+   "imageheight": 256,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "block"
+    },
+    {
+     "name": "lock",
+     "type": "string",
+     "value": "pink"
+    }
+   ]
+  },
+  {
+   "id": 26,
+   "image": "src/assets/art/holes/hole.png",
+   "imagewidth": 96,
+   "imageheight": 96,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "hole"
+    }
+   ]
+  },
+  {
+   "id": 27,
+   "image": "src/assets/art/holes/hole_large.png",
+   "imagewidth": 160,
+   "imageheight": 160,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "hole"
+    },
+    {
+     "name": "large",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 28,
+   "image": "src/assets/art/holes/hole_small_end.png",
+   "imagewidth": 96,
+   "imageheight": 96,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "goal"
+    }
+   ]
+  },
+  {
+   "id": 29,
+   "image": "src/assets/art/holes/hole_large_end.png",
+   "imagewidth": 160,
+   "imageheight": 160,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "goal"
+    },
+    {
+     "name": "large",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 30,
+   "image": "src/assets/art/holes/hole_small_end_locked.png",
+   "imagewidth": 96,
+   "imageheight": 96,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "goal"
+    },
+    {
+     "name": "lock",
+     "type": "string",
+     "value": "yellow"
+    }
+   ]
+  },
+  {
+   "id": 31,
+   "image": "src/assets/art/holes/hole_large_end_locked.png",
+   "imagewidth": 160,
+   "imageheight": 160,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "goal"
+    },
+    {
+     "name": "large",
+     "type": "bool",
+     "value": true
+    },
+    {
+     "name": "lock",
+     "type": "string",
+     "value": "yellow"
+    }
+   ]
+  },
+  {
+   "id": 32,
+   "image": "src/assets/art/holes/hole_start.png",
+   "imagewidth": 96,
+   "imageheight": 96,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "start"
+    }
+   ]
+  },
+  {
+   "id": 33,
+   "image": "src/assets/art/key.png",
+   "imagewidth": 73,
+   "imageheight": 68,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "key"
+    },
+    {
+     "name": "lock",
+     "type": "string",
+     "value": "yellow"
+    }
+   ]
+  },
+  {
+   "id": 34,
+   "image": "src/assets/art/key_orange.png",
+   "imagewidth": 73,
+   "imageheight": 68,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "key"
+    },
+    {
+     "name": "lock",
+     "type": "string",
+     "value": "orange"
+    }
+   ]
+  },
+  {
+   "id": 35,
+   "image": "src/assets/art/key_pink.png",
+   "imagewidth": 73,
+   "imageheight": 68,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "key"
+    },
+    {
+     "name": "lock",
+     "type": "string",
+     "value": "pink"
+    }
+   ]
+  },
+  {
+   "id": 36,
+   "image": "src/assets/art/lasers/laser_shooter_start.png",
+   "imagewidth": 70,
+   "imageheight": 70,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "laser-start"
+    },
+    {
+     "name": "laserColour",
+     "type": "string",
+     "value": "red"
+    }
+   ]
+  },
+  {
+   "id": 37,
+   "image": "src/assets/art/lasers/laser_shooter_end.png",
+   "imagewidth": 70,
+   "imageheight": 70,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "laser-end"
+    },
+    {
+     "name": "laserColour",
+     "type": "string",
+     "value": "red"
+    }
+   ]
+  },
+  {
+   "id": 38,
+   "image": "src/assets/art/void.png",
+   "imagewidth": 64,
+   "imageheight": 64,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "void"
+    }
+   ]
+  },
+  {
+   "id": 39,
+   "image": "src/assets/art/lasers/laser_switch_RedOn.png",
+   "imagewidth": 70,
+   "imageheight": 70,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "switch"
+    },
+    {
+     "name": "laserColour",
+     "type": "string",
+     "value": "red"
+    },
+    {
+     "name": "on",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 40,
+   "image": "src/assets/art/lasers/laser_switch_RedOff.png",
+   "imagewidth": 70,
+   "imageheight": 70,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "switch"
+    },
+    {
+     "name": "laserColour",
+     "type": "string",
+     "value": "red"
+    },
+    {
+     "name": "on",
+     "type": "bool",
+     "value": false
+    }
+   ]
+  },
+  {
+   "id": 41,
+   "image": "src/assets/art/lasers/laser_switch_GreenOn.png",
+   "imagewidth": 70,
+   "imageheight": 70,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "switch"
+    },
+    {
+     "name": "laserColour",
+     "type": "string",
+     "value": "green"
+    },
+    {
+     "name": "on",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 42,
+   "image": "src/assets/art/lasers/laser_switch_GreenOff.png",
+   "imagewidth": 70,
+   "imageheight": 70,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "switch"
+    },
+    {
+     "name": "laserColour",
+     "type": "string",
+     "value": "green"
+    },
+    {
+     "name": "on",
+     "type": "bool",
+     "value": false
+    }
+   ]
+  },
+  {
+   "id": 43,
+   "image": "src/assets/art/lasers/laser_switch_BlueOn.png",
+   "imagewidth": 70,
+   "imageheight": 70,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "switch"
+    },
+    {
+     "name": "laserColour",
+     "type": "string",
+     "value": "blue"
+    },
+    {
+     "name": "on",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 44,
+   "image": "src/assets/art/lasers/laser_switch_BlueOff.png",
+   "imagewidth": 70,
+   "imageheight": 70,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "switch"
+    },
+    {
+     "name": "laserColour",
+     "type": "string",
+     "value": "blue"
+    },
+    {
+     "name": "on",
+     "type": "bool",
+     "value": false
+    }
+   ]
+  },
+  {
+   "id": 45,
+   "image": "src/assets/art/lasers/laser_switch_YellowOn.png",
+   "imagewidth": 70,
+   "imageheight": 70,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "switch"
+    },
+    {
+     "name": "laserColour",
+     "type": "string",
+     "value": "yellow"
+    },
+    {
+     "name": "on",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 46,
+   "image": "src/assets/art/lasers/laser_switch_YellowOff.png",
+   "imagewidth": 70,
+   "imageheight": 70,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "switch"
+    },
+    {
+     "name": "laserColour",
+     "type": "string",
+     "value": "yellow"
+    },
+    {
+     "name": "on",
+     "type": "bool",
+     "value": false
+    }
+   ]
+  },
+  {
+   "id": 47,
+   "image": "src/assets/art/decorations/arrow_sign.png",
+   "imagewidth": 140,
+   "imageheight": 140,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "decor"
+    }
+   ]
+  },
+  {
+   "id": 48,
+   "image": "src/assets/art/decorations/warning_sign.png",
+   "imagewidth": 140,
+   "imageheight": 140,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "decor"
+    }
+   ]
+  },
+  {
+   "id": 49,
+   "image": "src/assets/art/obstacles/spikes.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "obstacle"
+    }
+   ]
+  },
+  {
+   "id": 50,
+   "image": "src/assets/art/obstacles/chainsaw_half_1.png",
+   "imagewidth": 140,
+   "imageheight": 140,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "obstacle"
+    }
+   ]
+  },
+  {
+   "id": 51,
+   "image": "src/assets/art/obstacles/chainsaw_full_1.png",
+   "imagewidth": 140,
+   "imageheight": 140,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "obstacle"
+    },
+    {
+     "name": "speed",
+     "type": "float",
+     "value": 160.0
+    },
+    {
+     "name": "direction",
+     "type": "string",
+     "value": "forward"
+    }
+   ]
+  },
+  {
+   "id": 52,
+   "image": "src/assets/art/obstacles/chainsaw_rail.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "rail"
+    },
+    {
+     "name": "railId",
+     "type": "int",
+     "value": 1
+    }
+   ]
+  },
+  {
+   "id": 53,
+   "image": "src/assets/art/obstacles/chainsaw_rail_edge.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "rail"
+    },
+    {
+     "name": "railId",
+     "type": "int",
+     "value": 1
+    }
+   ]
+  },
+  {
+   "id": 54,
+   "image": "src/assets/art/decorations/darkgray.png",
+   "imagewidth": 64,
+   "imageheight": 64,
+   "properties": [
+    {
+     "name": "kind",
+     "type": "string",
+     "value": "decor"
+    }
+   ]
+  }
+ ]
+}
