@@ -85,7 +85,7 @@ export function App() {
 
   return (
     <div className="flex h-full flex-col bg-ground">
-      <header className="flex h-11 shrink-0 items-center gap-2 border-b border-line bg-surface px-2">
+      <header className="safe-top safe-x flex h-11 shrink-0 items-center gap-2 border-b border-line bg-surface px-2">
         <span className="hidden select-none px-1 text-[13px] font-semibold tracking-tight text-accent md:inline">
           tile-editor
         </span>
@@ -136,28 +136,35 @@ export function App() {
         </main>
       </div>
 
-      {/* Compact widths get the tools along the bottom, within thumb reach. */}
-      <footer className="flex h-14 shrink-0 items-center justify-between gap-2 border-t border-line bg-surface px-2 md:h-10">
-        <ToolBar />
-        <div className="flex items-center gap-1 md:hidden">
-          {PANELS.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              type="button"
-              aria-label={label}
-              onClick={() => setPanel(openPanel === id ? null : id)}
-              className={clsx(
-                'hit flex items-center justify-center rounded-md px-1.5',
-                openPanel === id ? 'bg-accent-deep text-accent-ink' : 'text-ink-faint',
-              )}
-            >
-              <Icon size={17} />
-            </button>
-          ))}
+      {/* Compact widths get the tools along the bottom, within thumb reach. The
+          panels move to a second row: twelve 44px targets do not fit across a
+          phone, and squeezing them pushed the panel buttons off the screen. */}
+      <footer className="safe-bottom safe-x shrink-0 border-t border-line bg-surface">
+        <div className="flex h-14 items-center justify-between gap-2 px-2 md:h-10">
+          <ToolBar />
+          <div className="hidden md:block">
+            <StampPreview />
+          </div>
         </div>
-        <div className="hidden md:block">
-          <StampPreview />
-        </div>
+        {compact ? (
+          <nav className="flex items-center justify-around gap-1 border-t border-line/60 px-2" aria-label="Panele">
+            {PANELS.map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                type="button"
+                aria-label={label}
+                aria-pressed={openPanel === id}
+                onClick={() => setPanel(openPanel === id ? null : id)}
+                className={clsx(
+                  'hit flex flex-1 items-center justify-center rounded-md',
+                  openPanel === id ? 'bg-accent-deep text-accent-ink' : 'text-ink-faint',
+                )}
+              >
+                <Icon size={18} />
+              </button>
+            ))}
+          </nav>
+        ) : null}
       </footer>
 
       {compact ? (

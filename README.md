@@ -44,7 +44,8 @@ dodaj `--lan`.
 | **Properties** | mapy, warstwy, obiektu i **kafla** — wszystkie typy skalarne; zmiany kafla zapisują się do tilesetu |
 | **Lint** | sprzeczne typy property, braki względem reszty map, GID-y spoza tilesetu, nieużywane kafle |
 | **Układ** | trzy progi: telefon, tablet w pionie, tablet w poziomie i desktop |
-| **Gesty** | dwa palce = pan i zoom, jeden palec = narzędzie, kółko = zoom do kursora |
+| **Gesty** | dwa palce = pan i zoom, tapnięcie dwoma palcami = cofnij, długie przytrzymanie = menu kontekstowe, kółko = zoom do kursora |
+| **PWA** | manifest, ikony i service worker — instalowalne z ekranu domowego, powłoka działa offline |
 
 ## Wydajność
 
@@ -75,8 +76,20 @@ npm run dev:ui         # Vite dev server; równolegle uruchom npm start <folder>
 ponów · `Ctrl+S` zapisz · `Delete` usuwa zaznaczone obiekty.
 
 Na płótnie: przeciągnięcie dwoma palcami albo `Alt` z myszą przesuwa widok,
-`Alt` podczas przeciągania obiektu wyłącza snapowanie do siatki, a kliknięcie
-w procent zoomu w lewym dolnym rogu dopasowuje mapę do ekranu.
+tapnięcie dwoma palcami cofa ostatnią zmianę, długie przytrzymanie (albo prawy
+przycisk) otwiera menu kontekstowe, `Alt` podczas przeciągania obiektu wyłącza
+snapowanie do siatki, a kliknięcie w procent zoomu w lewym dolnym rogu
+dopasowuje mapę do ekranu.
+
+## Instalacja na ekranie domowym
+
+Otwórz edytor pod adresem `127.0.0.1` i wybierz „Zainstaluj aplikację" w menu
+przeglądarki. Service worker wymaga bezpiecznego kontekstu, a `localhost` się
+nim liczy — adres LAN po zwykłym HTTP już nie, więc przy `--lan` instalacja nie
+będzie oferowana.
+
+Offline działa sama powłoka edytora. Pliki projektu czyta lokalny serwer, więc
+bez niego edytor otworzy się, ale nie pokaże map.
 
 ## Struktura
 

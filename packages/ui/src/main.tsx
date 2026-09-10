@@ -11,3 +11,16 @@ createRoot(container).render(
     <App />
   </StrictMode>,
 )
+
+// Installing the editor is what gets it onto a tablet's home screen, running
+// full-screen without browser chrome. Service workers need a secure context,
+// which localhost counts as - a plain-IP LAN address does not.
+// Only in a built app: in development the worker would serve stale modules
+// back over Vite's own hot reload.
+if (import.meta.env.PROD && 'serviceWorker' in navigator && window.isSecureContext) {
+  window.addEventListener('load', () => {
+    void navigator.serviceWorker.register('/sw.js').catch(() => {
+      // No service worker simply means no offline shell and no install prompt.
+    })
+  })
+}

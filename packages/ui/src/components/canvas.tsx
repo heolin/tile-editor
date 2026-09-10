@@ -3,6 +3,7 @@ import {
   AddObjectCommand, RemoveObjectsCommand, SetTilesCommand, UpdateObjectsCommand,
   tilesetForGid, type MapObject,
 } from '@tile-editor/core'
+import { ContextMenu, type MenuItem } from './context-menu'
 import { floodFill, makeTileObject, paintStamp, useEditor, type Stamp } from '../state/store'
 import { tileObjectAnchor } from '../render/tile-source'
 import { createRenderer, type PixiTileRenderer } from '../render/pixi-renderer'
@@ -18,7 +19,16 @@ type Drag =
   | { kind: 'none' }
   | { kind: 'paint'; command: SetTilesCommand }
   | { kind: 'pan'; lastX: number; lastY: number }
-  | { kind: 'pinch'; startDist: number; startZoom: number; startMid: { x: number; y: number }; startCam: { x: number; y: number } }
+  | {
+      kind: 'pinch'
+      startDist: number
+      startZoom: number
+      startMid: { x: number; y: number }
+      startCam: { x: number; y: number }
+      /** Used to tell a two-finger tap from the start of a pinch. */
+      startedAt: number
+      moved: number
+    }
   | { kind: 'marquee'; x0: number; y0: number; x1: number; y1: number; mode: 'rect' | 'pick' }
   | { kind: 'moveObjects'; objects: MapObject[]; startX: number; startY: number; origin: { x: number; y: number }[] }
 
@@ -47,6 +57,8 @@ export function MapCanvas() {
   const activeLayerId = useEditor((s) => s.activeLayerId)
   const selectedObjectIds = useEditor((s) => s.selectedObjectIds)
   const [hover, setHover] = useState<{ x: number; y: number } | undefined>()
+  const [menu, setMenu] = useState<{ x: number; y: number; items: MenuItem[] } | undefined>()
+  const longPressRef = useRef<{ timer: number; x: number; y: number } | null>(null)
   const [marquee, setMarquee] = useState<Drag & { kind: 'marquee' } | undefined>()
 
   /* ---------------- renderer lifecycle ---------------- */
@@ -247,6 +259,113 @@ export function MapCanvas() {
     state.touch()
   }
 
+  /** Builds the menu for whatever sits under the pointer. */
+  function menuItemsAt(clientX: number, clientY: number): MenuItem[] {
+    const state = useEditor.getState()
+    const renderer = rendererRef.current
+    const cell = tileAt(clientX, clientY)
+    if (!renderer || !cell || !state.doc) return []
+
+    const objectLayer = state.activeObjectLayer()
+    if (objectLayer) {
+      const world = renderer.toWorld(clientX, clientY)
+      const hit = renderer.hitTestObject(objectLayer, world.x, world.y)
+      if (hit) {
+        return [
+          {
+            label: 'Właściwości',
+            onSelect: () => {
+              state.selectObjects([hit.id])
+              state.setPropertyTarget({ kind: 'object', id: hit.id })
+              state.setPanel('properties')
+            },
+          },
+          {
+            label: 'Duplikuj',
+            onSelect: () => {
+              const copy: MapObject = {
+                ...hit,
+                id: state.doc!.map.nextobjectid,
+                x: hit.x + state.doc!.map.tilewidth,
+                properties: hit.properties.map((p) => ({ ...p })),
+              }
+              state.history.run(new AddObjectCommand(objectLayer, copy, state.doc!.map))
+              state.selectObjects([copy.id])
+              state.touch()
+            },
+          },
+          {
+            label: 'Usuń obiekt',
+            danger: true,
+            hint: 'Del',
+            onSelect: () => {
+              state.history.run(new RemoveObjectsCommand(objectLayer, [hit]))
+              state.selectObjects([])
+              state.touch()
+            },
+          },
+        ]
+      }
+      return state.stamp
+        ? [{ label: 'Postaw obiekt tutaj', onSelect: () => placeObject(clientX, clientY) }]
+        : []
+    }
+
+    const tileLayer = state.activeTileLayer()
+    if (!tileLayer || !inBounds(cell)) return []
+    const gid = tileLayer.data.get(cell.x, cell.y)
+    const items: MenuItem[] = []
+    if (gid !== 0) {
+      items.push({
+        label: 'Pobierz kafel',
+        hint: 'I',
+        onSelect: () => {
+          state.setStamp({ width: 1, height: 1, gids: [gid] })
+          state.setTool('brush')
+        },
+      })
+      items.push({
+        label: 'Wyczyść kafel',
+        danger: true,
+        onSelect: () => {
+          strokeRef.current += 1
+          const command = new SetTilesCommand('Wymaż', tileLayer, String(strokeRef.current))
+          command.add(cell.x, cell.y, 0)
+          if (!command.empty) {
+            state.history.run(command)
+            state.touch()
+          }
+        },
+      })
+    }
+    items.push({
+      label: 'Wypełnij tym kaflem',
+      hint: 'F',
+      onSelect: () => {
+        strokeRef.current += 1
+        const command = new SetTilesCommand('Wypełnij', tileLayer, String(strokeRef.current))
+        floodFill(tileLayer, cell.x, cell.y, state.stamp?.gids[0] ?? 0, command)
+        if (!command.empty) {
+          state.history.run(command)
+          state.touch()
+        }
+      },
+    })
+    return items
+  }
+
+  function openMenu(clientX: number, clientY: number): void {
+    const items = menuItemsAt(clientX, clientY)
+    if (items.length > 0) setMenu({ x: clientX, y: clientY, items })
+  }
+
+  function cancelLongPress(): void {
+    if (longPressRef.current) {
+      window.clearTimeout(longPressRef.current.timer)
+      longPressRef.current = null
+    }
+  }
+
   function beginSelect(clientX: number, clientY: number): boolean {
     const state = useEditor.getState()
     const layer = state.activeObjectLayer()
@@ -284,7 +403,11 @@ export function MapCanvas() {
   function onPointerDown(event: React.PointerEvent): void {
     const host = hostRef.current
     if (!host) return
-    host.setPointerCapture(event.pointerId)
+    try {
+      host.setPointerCapture(event.pointerId)
+    } catch {
+      // Capture is an optimisation; losing it must not abort the gesture.
+    }
     pointersRef.current.set(event.pointerId, {
       id: event.pointerId,
       type: event.pointerType,
@@ -305,10 +428,35 @@ export function MapCanvas() {
         startZoom: state.camera.zoom,
         startMid: midpoint(a, b),
         startCam: { x: state.camera.x, y: state.camera.y },
+        startedAt: performance.now(),
+        moved: 0,
       }
       return
     }
     if (pointers.length > 2) return
+
+    if (event.button === 2) {
+      openMenu(event.clientX, event.clientY)
+      return
+    }
+
+    // A press held in place opens the context menu, since a tablet has no
+    // right button. Anything the press already started is rolled back first.
+    if (event.pointerType === 'touch') {
+      const { clientX, clientY } = event
+      cancelLongPress()
+      longPressRef.current = {
+        x: clientX,
+        y: clientY,
+        timer: window.setTimeout(() => {
+          longPressRef.current = null
+          const state = useEditor.getState()
+          if (dragRef.current.kind === 'paint') state.undo()
+          cancelDrag()
+          openMenu(clientX, clientY)
+        }, 480),
+      }
+    }
 
     const panning = event.button === 1 || event.altKey || useEditor.getState().tool === 'select' && event.shiftKey
     if (panning) {
@@ -340,7 +488,11 @@ export function MapCanvas() {
     const state = useEditor.getState()
     const drag = dragRef.current
 
+    const press = longPressRef.current
+    if (press && Math.hypot(event.clientX - press.x, event.clientY - press.y) > 8) cancelLongPress()
+
     if (drag.kind === 'pinch') {
+      drag.moved += Math.abs(event.movementX ?? 0) + Math.abs(event.movementY ?? 0)
       const pointers = [...pointersRef.current.values()]
       if (pointers.length < 2) return
       const [a, b] = pointers as [PointerRecord, PointerRecord]
@@ -421,6 +573,16 @@ export function MapCanvas() {
     const state = useEditor.getState()
     const drag = dragRef.current
     pointersRef.current.delete(event.pointerId)
+    cancelLongPress()
+
+    // Two fingers down and straight back up is the undo gesture; the same two
+    // fingers held and moved is a pan and zoom.
+    if (drag.kind === 'pinch' && performance.now() - drag.startedAt < 260 && drag.moved < 16) {
+      state.undo()
+      dragRef.current = { kind: 'none' }
+      pointersRef.current.clear()
+      return
+    }
 
     if (drag.kind === 'marquee') {
       const layer = state.activeTileLayer()
@@ -472,6 +634,7 @@ export function MapCanvas() {
       onWheel={onWheel}
       onContextMenu={(e) => e.preventDefault()}
     >
+      {menu ? <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={() => setMenu(undefined)} /> : null}
       {!doc ? (
         <div className="flex h-full items-center justify-center text-[13px] text-ink-faint">
           Wybierz mapę z panelu projektu.

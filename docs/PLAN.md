@@ -274,7 +274,7 @@ Każdy kończy się czymś, co da się uruchomić na telefonie.
 | **M2** | Narzędzia: pędzel, gumka, wypełnienie, prostokąt, pipeta, zaznaczenie. Panel warstw (kolejność, widoczność, opacity). Stos undo/redo. Zapis | Pełna pętla edycji kafli i zapis | **gotowe** |
 | **M3** | Obiekty kaflowe: stawianie, przesuwanie, **rozciąganie, obrót, flip, `objectalignment`**. Pozostałe kształty. Edytor properties mapy, warstwy, obiektu i kafla. **Lint** — sprzeczne typy property, braki względem reszty map, GID-y spoza tilesetu, nieużywane kafle | **v1** | **gotowe** |
 | **M4** | Menedżer tilesetów, import grafik, edytor tilesetu (kolizje, animacje), mapy nieskończone | Praca z tilesetami bez wychodzenia do Tileda | **gotowe poza kolizjami kafla** |
-| **M5** | Dopracowanie mobile UX, PWA (installable, offline), wydajność na słabszych telefonach | Instalowalne z ekranu domowego, działa offline | — |
+| **M5** | Dopracowanie mobile UX, PWA (installable, offline), wydajność na słabszych telefonach | Instalowalne z ekranu domowego, działa offline | **gotowe** |
 | **M6** | Autotiling (Wang sets + reguły w stylu LDtk), command palette, wyszukiwanie w projekcie, lint mapy | Funkcje, których Tiled nie ma albo ma gorsze | lint już w v1 |
 | **M7** | Capacitor 7, `CapacitorProjectFS` przez SAF, pipeline APK w GitHub Actions | Podpisany APK do pobrania z Actions | — |
 

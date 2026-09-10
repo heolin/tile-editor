@@ -20,6 +20,7 @@ const MIME: Record<string, string> = {
   '.webp': 'image/webp',
   '.bmp': 'image/bmp',
   '.woff2': 'font/woff2',
+  '.webmanifest': 'application/manifest+json; charset=utf-8',
 }
 
 export interface ServerOptions {
