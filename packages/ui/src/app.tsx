@@ -10,6 +10,7 @@ import { PropertiesPanel } from './components/properties-panel'
 import { TilesetPanel } from './components/tileset-panel'
 import { HistoryControls, ToolBar, ViewControls } from './components/toolbar'
 import { CommandPalette } from './components/command-palette'
+import { ConnectScreen } from './components/connect-screen'
 import { NewMapDialog } from './components/new-map-dialog'
 import { AddTilesetDialog } from './components/tileset-dialogs'
 import { Button, Sheet, Toast } from './components/ui'
@@ -72,17 +73,7 @@ export function App() {
   useKeyboardShortcuts()
   useDirtyGuard(dirty)
 
-  if (status === 'error') {
-    return (
-      <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center">
-        <h1 className="text-lg font-semibold">Nie udało się otworzyć projektu</h1>
-        <p className="max-w-md text-[13px] text-ink-dim">{error}</p>
-        <p className="max-w-md text-[12px] text-ink-faint">
-          Uruchom serwer poleceniem <code className="rounded bg-surface px-1">npx tile-editor .</code> w folderze projektu.
-        </p>
-      </div>
-    )
-  }
+  if (status === 'error') return <ConnectScreen error={error} />
 
   // On medium and wide the docked panel always shows something; on compact the
   // panels are sheets, so nothing is docked.

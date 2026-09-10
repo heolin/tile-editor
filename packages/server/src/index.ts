@@ -29,6 +29,13 @@ export interface ServerOptions {
   host?: string
   /** Folder holding the built UI. Omitted during UI development. */
   uiDir?: string
+  /**
+   * Origins allowed to call the API from another origin. Empty by default:
+   * this server reads and writes files, so any page that could reach it would
+   * be able to read and write the user's project. A packaged app runs on its
+   * own origin and has to be allowed explicitly.
+   */
+  allowOrigins?: string[]
 }
 
 function sendJson(res: ServerResponse, status: number, body: unknown): void {
@@ -57,6 +64,17 @@ export async function startServer(options: ServerOptions) {
   const port = options.port ?? 4173
   const host = options.host ?? '127.0.0.1'
   const projectFs = new NodeProjectFS(root)
+  const allowed = new Set(options.allowOrigins ?? [])
+
+  /** Adds CORS headers when, and only when, the caller's origin was allowed. */
+  const applyCors = (req: IncomingMessage, res: ServerResponse): void => {
+    const origin = req.headers.origin
+    if (!origin || !allowed.has(origin)) return
+    res.setHeader('access-control-allow-origin', origin)
+    res.setHeader('access-control-allow-methods', 'GET, PUT, POST, OPTIONS')
+    res.setHeader('access-control-allow-headers', 'content-type')
+    res.setHeader('vary', 'origin')
+  }
 
   /** Connected browsers, notified when a file changes underneath them. */
   const listeners = new Set<ServerResponse>()
@@ -105,6 +123,13 @@ export async function startServer(options: ServerOptions) {
   async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> {
     const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`)
     const path = decodeURIComponent(url.pathname)
+    applyCors(req, res)
+
+    if (req.method === 'OPTIONS') {
+      res.writeHead(res.getHeader('access-control-allow-origin') ? 204 : 403)
+      res.end()
+      return
+    }
 
     if (path === '/api/project') {
       const contents = await scanProject(projectFs)

@@ -80,7 +80,7 @@ z czterema implementacjami:
 | Adapter | Target | Mechanizm |
 |---|---|---|
 | `HttpProjectFS` | **Termux (główny)** | REST + SSE do serwera Fastify |
-| `CapacitorProjectFS` | APK | `@capacitor/filesystem` + folder wybrany przez SAF |
+| `HttpProjectFS` | APK | Ten sam adapter: powłoka łączy się z serwerem w Termuxie po localhoście, zamiast walczyć z uprawnieniami SAF |
 | `FsaProjectFS` | Desktop Chrome bez serwera | File System Access API |
 | `MemoryProjectFS` | Testy, demo online | W pamięci, seed z ZIP-a |
 
@@ -276,7 +276,7 @@ Każdy kończy się czymś, co da się uruchomić na telefonie.
 | **M4** | Menedżer tilesetów, import grafik, edytor tilesetu (kolizje, animacje), mapy nieskończone | Praca z tilesetami bez wychodzenia do Tileda | **gotowe poza kolizjami kafla** |
 | **M5** | Dopracowanie mobile UX, PWA (installable, offline), wydajność na słabszych telefonach | Instalowalne z ekranu domowego, działa offline | **gotowe** |
 | **M6** | Autotiling (Wang sets + reguły w stylu LDtk), command palette, wyszukiwanie w projekcie, lint mapy | Funkcje, których Tiled nie ma albo ma gorsze | lint, paleta i wyszukiwanie gotowe; autotiling odłożony |
-| **M7** | Capacitor 7, `CapacitorProjectFS` przez SAF, pipeline APK w GitHub Actions | Podpisany APK do pobrania z Actions | — |
+| **M7** | Capacitor 7, `CapacitorProjectFS` przez SAF, pipeline APK w GitHub Actions | Podpisany APK do pobrania z Actions | **gotowe** |
 
 ## 9. Ryzyka
 

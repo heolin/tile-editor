@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">tile-editor</string>
+    <string name="title_activity_main">tile-editor</string>
+    <string name="package_name">dev.tileeditor.app</string>
+    <string name="custom_url_scheme">dev.tileeditor.app</string>
+</resources>

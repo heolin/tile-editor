@@ -66,6 +66,7 @@ npm start <folder>     # serwer + edytor
 npm test               # złote testy round-tripu na korpusie examples/
 npm run smoke          # test end-to-end w przeglądarce (wymaga playwright)
 npm run bench          # benchmark renderera na wygenerowanych dużych mapach
+npm run android:sync   # zbuduj UI i skopiuj do projektu natywnego
 npm run typecheck
 npm run dev:ui         # Vite dev server; równolegle uruchom npm start <folder>
 ```
@@ -81,6 +82,29 @@ tapnięcie dwoma palcami cofa ostatnią zmianę, długie przytrzymanie (albo pra
 przycisk) otwiera menu kontekstowe, `Alt` podczas przeciągania obiektu wyłącza
 snapowanie do siatki, a kliknięcie w procent zoomu w lewym dolnym rogu
 dopasowuje mapę do ekranu.
+
+## Aplikacja na Androida
+
+APK jest natywną powłoką wokół tego samego edytora. **Nie czyta plików sam** —
+łączy się z serwerem uruchomionym obok, zwykle w Termuxie na tym samym
+urządzeniu. To omija labirynt uprawnień do pamięci na Androidzie i sprawia, że
+jest dokładnie jedna implementacja dostępu do plików zamiast dwóch.
+
+```bash
+npx tile-editor . --app       # --app wpuszcza aplikację do API
+```
+
+Przy pierwszym uruchomieniu aplikacja pyta o adres serwera (domyślnie
+`http://127.0.0.1:4173`) i zapamiętuje go.
+
+**API jest domyślnie tylko same-origin.** Serwer czyta i zapisuje Twoje pliki,
+więc każda strona, która by go dosięgła, mogłaby to samo. `--app` wpuszcza
+pochodzenie aplikacji, a `--allow-origin <adres>` dowolne inne.
+
+APK buduje się w GitHub Actions (`.github/workflows/android.yml`, uruchamiany
+ręcznie albo tagiem `v*`) i pobiera jako artefakt. Budowanie na telefonie
+wymagałoby JDK, Android SDK i Gradle'a — dlatego Termux zostaje miejscem
+uruchamiania, nie budowania.
 
 ## Wyszukiwanie w projekcie
 
@@ -114,6 +138,7 @@ packages/core     model, kodeki JSON, komendy i undo, lint, skanowanie projektu
 packages/server   serwer HTTP na czystym node:http, API plikowe, SSE
 packages/cli      tile-editor <folder>
 packages/ui       React + PixiJS
+android/          powłoka Capacitora, budowana w CI
 examples/         korpus referencyjny: 110 map z dwóch gier
 ```
 

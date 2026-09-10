@@ -12,9 +12,12 @@
     "start": "node packages/cli/bin/tile-editor.mjs",
     "dev:ui": "npm run dev -w @tile-editor/ui",
     "typecheck": "tsc -p packages/core/tsconfig.json --noEmit && tsc -p packages/server/tsconfig.json --noEmit && tsc -p packages/ui/tsconfig.json --noEmit",
-    "bench": "node scripts/bench.mjs"
+    "bench": "node scripts/bench.mjs",
+    "android:sync": "npm run build && npx cap sync android",
+    "android:open": "npx cap open android"
   },
   "devDependencies": {
+    "@capacitor/cli": "^7.6.9",
     "@types/node": "^24.7.0",
     "playwright": "^1.63.0",
     "typescript": "^5.9.3",
@@ -22,5 +25,9 @@
   },
   "allowScripts": {
     "esbuild@0.28.2": true
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.6.9",
+    "@capacitor/core": "^7.6.9"
   }
 }

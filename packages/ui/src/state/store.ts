@@ -98,6 +98,7 @@ interface EditorState {
   toast?: { text: string; tone: 'ok' | 'error' }
 
   init(): Promise<void>
+  connectTo(base: string): Promise<void>
   openMap(path: string): Promise<void>
   createMap(options: NewMapRequest): Promise<void>
   refreshProject(): Promise<void>
@@ -158,6 +159,12 @@ export const useEditor = create<EditorState>((set, get) => ({
   propertyTarget: { kind: 'map' },
   lint: [],
   lintRunning: false,
+
+  async connectTo(base) {
+    fs.setBase(base)
+    set({ status: 'loading', error: undefined })
+    await get().init()
+  },
 
   async init() {
     try {
