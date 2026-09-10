@@ -187,16 +187,28 @@ będzie oferowana.
 Offline działa sama powłoka edytora. Pliki projektu czyta lokalny serwer, więc
 bez niego edytor otworzy się, ale nie pokaże map.
 
-## Paleta
+## Motywy
 
-Interfejs korzysta z palety **Monokai Pro** — ciepła, lekko fioletowa ciemność
-zamiast chłodnej szarości, z cyjanem jako akcentem zaznaczenia i uchwytów.
+Cztery do wyboru — przycisk pędzla w pasku górnym albo `Ctrl+K` → „Motyw".
+Wybór zapamiętuje się w przeglądarce i jest odtwarzany przed pierwszym
+rysowaniem, więc nie ma mignięcia.
 
-Kolory są zapisane **wyłącznie** w `packages/ui/src/styles.css`, w bloku
-`@theme static`. Płótno rysuje w WebGL i nie może użyć CSS-a, więc
+| Motyw | |
+|---|---|
+| **Monokai Pro** | ciepła fioletowa ciemność, cyjan — domyślny |
+| **Gruvbox Dark** | brąz i żółć, retro |
+| **Gruvbox Light** | kremowy papier, granat |
+| **Nord** | chłodny błękitny szary |
+
+Kolory są zapisane **wyłącznie** w `packages/ui/src/styles.css`: blok
+`@theme static` opisuje domyślny, a każdy kolejny motyw to jeden blok
+przestawiający te same tokeny. Płótno rysuje w WebGL i nie może użyć CSS-a, więc
 `packages/ui/src/theme.ts` odczytuje te same custom properties w czasie
-działania i podaje je Pixi jako liczby. Dzięki temu warstwa WebGL i DOM nie
-mogą się rozjechać, a zmiana motywu w przyszłości to jeden blok.
+działania i podaje je Pixi jako liczby — warstwa WebGL i DOM nie mogą się
+rozjechać. Kafelki podglądu w oknie wyboru też nie mają własnych kolorów: każdy
+ustawia swoje `data-theme` i maluje się arkuszem stylów.
+
+Dodanie motywu to jeden blok w `styles.css` i jeden wpis w `THEMES`.
 
 `@theme static` jest tu istotne: zwykłe `@theme` wycina tokeny, których żadna
 klasa Tailwinda nie używa, i po cichu ukryło `--color-shape` przed płótnem.

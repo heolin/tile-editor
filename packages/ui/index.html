@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pl" class="dark">
+<html lang="pl" data-theme="monokai-pro">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
@@ -13,6 +13,14 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // Applied before the first paint: reading the choice after React mounts
+      // would flash the default theme first.
+      try {
+        var saved = localStorage.getItem('tile-editor:theme')
+        if (saved) document.documentElement.dataset.theme = saved
+      } catch (error) {}
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

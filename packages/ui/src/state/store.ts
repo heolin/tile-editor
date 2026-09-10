@@ -12,6 +12,7 @@ import {
   type TilesetRef, type TypeSuggestion,
 } from '@tile-editor/core'
 import { HttpProjectFS } from '../fs/http-fs'
+import { DEFAULT_THEME, applyTheme, storedTheme } from '../theme'
 import { buildTileSourceIndex, type TileSourceIndex } from '../render/tile-source'
 
 export type ToolId = 'brush' | 'eraser' | 'fill' | 'rect' | 'picker' | 'select' | 'object'
@@ -92,8 +93,10 @@ interface EditorState {
   animate: boolean
 
   openPanel: PanelId | null
+  /** Id of the active colour theme; see theme.ts for the list. */
+  theme: string
   /** Modal dialogs live here so the command palette can open them too. */
-  dialog: 'new-map' | 'add-tileset' | 'property-types' | 'palette' | null
+  dialog: 'new-map' | 'add-tileset' | 'property-types' | 'palette' | 'theme' | null
   propertyTarget: PropertyOwner
   lint: LintFinding[]
   lintRunning: boolean
@@ -128,7 +131,8 @@ interface EditorState {
   selectObjects(ids: number[]): void
   setCamera(camera: Partial<Camera>): void
   setPanel(panel: PanelId | null): void
-  setDialog(dialog: 'new-map' | 'add-tileset' | 'property-types' | 'palette' | null): void
+  setDialog(dialog: 'new-map' | 'add-tileset' | 'property-types' | 'palette' | 'theme' | null): void
+  setTheme(id: string): void
   setPropertyTarget(target: PropertyOwner): void
   toggleGrid(): void
   toggleObjects(): void
@@ -168,6 +172,7 @@ export const useEditor = create<EditorState>((set, get) => ({
   animate: false,
   openPanel: null,
   dialog: null,
+  theme: typeof window === 'undefined' ? DEFAULT_THEME : storedTheme(),
   propertyTarget: { kind: 'map' },
   lint: [],
   lintRunning: false,
@@ -553,6 +558,11 @@ export const useEditor = create<EditorState>((set, get) => ({
   setCamera: (camera) => set({ camera: { ...get().camera, ...camera } }),
   setPanel: (openPanel) => set({ openPanel }),
   setDialog: (dialog) => set({ dialog }),
+  setTheme: (id) => {
+    // The canvas reads its colours from the same tokens, so a repaint has to
+    // follow the swap: bumping the revision is what triggers it.
+    set({ theme: applyTheme(id), revision: get().revision + 1 })
+  },
   setPropertyTarget: (propertyTarget) => set({ propertyTarget }),
   toggleGrid: () => set({ showGrid: !get().showGrid }),
   toggleObjects: () => set({ showObjects: !get().showObjects }),

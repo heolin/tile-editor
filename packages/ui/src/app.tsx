@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import clsx from 'clsx'
-import { Command, FolderTree, Layers, Palette, ShieldCheck, SlidersHorizontal } from 'lucide-react'
+import { Command, FolderTree, Layers, Palette, Paintbrush, ShieldCheck, SlidersHorizontal } from 'lucide-react'
 import { RemoveObjectsCommand, mapTitle } from '@tile-editor/core'
 import { MapCanvas } from './components/canvas'
 import { LayersPanel } from './components/layers-panel'
@@ -14,6 +14,7 @@ import { ConnectScreen } from './components/connect-screen'
 import { NewMapDialog } from './components/new-map-dialog'
 import { AddTilesetDialog } from './components/tileset-dialogs'
 import { PropertyTypesDialog } from './components/property-types-dialog'
+import { ThemeDialog } from './components/theme-dialog'
 import { Button, Sheet, Toast } from './components/ui'
 import { useEditor, type PanelId } from './state/store'
 
@@ -98,6 +99,14 @@ export function App() {
         >
           <Command size={15} />
           <span className="num hidden text-[11px] wide:inline">Ctrl K</span>
+        </Button>
+        <Button
+          onClick={() => setDialog('theme')}
+          title="Motyw kolorów"
+          aria-label="Motyw kolorów"
+          className="hidden md:inline-flex"
+        >
+          <Paintbrush size={15} />
         </Button>
         <div className="hidden md:block">
           <ViewControls />
@@ -186,6 +195,7 @@ export function App() {
       <NewMapDialog open={dialog === 'new-map'} onClose={() => setDialog(null)} />
       <AddTilesetDialog open={dialog === 'add-tileset'} onClose={() => setDialog(null)} />
       <PropertyTypesDialog open={dialog === 'property-types'} onClose={() => setDialog(null)} />
+      <ThemeDialog open={dialog === 'theme'} onClose={() => setDialog(null)} />
 
       {toast ? <Toast text={toast.text} tone={toast.tone} /> : null}
     </div>

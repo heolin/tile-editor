@@ -51,7 +51,124 @@
   --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
 
+/**
+ * Alternate themes.
+ *
+ * The block above is what Tailwind compiles its utilities against, so it stays
+ * the default. Each theme below simply re-points the same tokens; nothing in
+ * the app knows a theme exists beyond reading them. `html[data-theme=...]`
+ * outranks the `:root` the theme block emits, which is why the selector is not
+ * just `[data-theme=...]`.
+ */
+
+/* The default, repeated here only so a nested swatch can preview it. */
+[data-theme="monokai-pro"] {
+  --color-ground: #19181a;
+  --color-surface: #2d2a2e;
+  --color-line: #3b383c;
+  --color-ink: #fcfcfa;
+  --color-accent: #78dce8;
+  --color-danger: #ff6188;
+  --color-warn: #fc9867;
+  --color-ok: #a9dc76;
+}
+
+/* Gruvbox Dark — warm brown, yellow selection. */
+html[data-theme="gruvbox-dark"],
+[data-theme="gruvbox-dark"] {
+  color-scheme: dark;
+
+  --color-ground: #1d2021;
+  --color-surface: #282828;
+  --color-raised: #3c3836;
+  --color-hover: #32302f;
+  --color-line: #3c3836;
+  --color-line-strong: #665c54;
+
+  --color-ink: #ebdbb2;
+  --color-ink-dim: #bdae93;
+  --color-ink-faint: #928374;
+
+  --color-accent: #fabd2f;
+  --color-accent-deep: #3d3420;
+  --color-accent-ink: #fbdd8c;
+
+  --color-danger: #fb4934;
+  --color-danger-deep: #40211d;
+  --color-warn: #fe8019;
+  --color-warn-deep: #3d2a15;
+  --color-ok: #b8bb26;
+  --color-ok-deep: #2f3318;
+
+  --color-shape: #d3869b;
+}
+
+/* Gruvbox Light — cream paper, deep blue selection. Panels sit lighter than
+   the ground here, the reverse of every dark theme. */
+html[data-theme="gruvbox-light"],
+[data-theme="gruvbox-light"] {
+  color-scheme: light;
+
+  --color-ground: #ebdbb2;
+  --color-surface: #fbf1c7;
+  --color-raised: #f9f5d7;
+  --color-hover: #f2e5bc;
+  --color-line: #d5c4a1;
+  --color-line-strong: #bdae93;
+
+  --color-ink: #282828;
+  --color-ink-dim: #504945;
+  --color-ink-faint: #7c6f64;
+
+  --color-accent: #076678;
+  --color-accent-deep: #cfe3e7;
+  --color-accent-ink: #05505d;
+
+  --color-danger: #9d0006;
+  --color-danger-deep: #f6d8d3;
+  --color-warn: #af3a03;
+  --color-warn-deep: #f7e2cd;
+  --color-ok: #79740e;
+  --color-ok-deep: #e9e8c2;
+
+  --color-shape: #8f3f71;
+}
+
+/* Nord — cool blue-grey, for when the warm ones get tiring. */
+html[data-theme="nord"],
+[data-theme="nord"] {
+  color-scheme: dark;
+
+  --color-ground: #242933;
+  --color-surface: #2e3440;
+  --color-raised: #3b4252;
+  --color-hover: #3b4252;
+  --color-line: #39404e;
+  --color-line-strong: #4c566a;
+
+  --color-ink: #eceff4;
+  --color-ink-dim: #d8dee9;
+  --color-ink-faint: #8892a4;
+
+  --color-accent: #88c0d0;
+  --color-accent-deep: #2b3d47;
+  --color-accent-ink: #a3d0dd;
+
+  --color-danger: #bf616a;
+  --color-danger-deep: #3a2a2e;
+  --color-warn: #d08770;
+  --color-warn-deep: #3a2f2b;
+  --color-ok: #a3be8c;
+  --color-ok-deep: #2f3830;
+
+  --color-shape: #b48ead;
+}
+
 @layer base {
+  :root {
+    color-scheme: dark;
+  }
+
   html,
   body,
   #root {

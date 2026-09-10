@@ -6,6 +6,7 @@ import {
   ShieldCheck, SlidersHorizontal, Square, StickyNote, Undo2,
 } from 'lucide-react'
 import { allObjects, mapFolder, mapTitle, type TileMap } from '@tile-editor/core'
+import { THEMES } from '../theme'
 import { useEditor } from '../state/store'
 
 interface Entry {
@@ -73,6 +74,15 @@ export function CommandPalette() {
       { id: 'panel-layers', label: 'Panel: warstwy', group: 'Panele', icon: Layers, run: () => useEditor.getState().setPanel('layers') },
       { id: 'panel-tilesets', label: 'Panel: tilesety', group: 'Panele', icon: Palette, run: () => useEditor.getState().setPanel('tilesets') },
       { id: 'panel-props', label: 'Panel: properties', group: 'Panele', icon: SlidersHorizontal, run: () => useEditor.getState().setPanel('properties') },
+      { id: 'theme', label: 'Motyw…', group: 'Widok', icon: Palette, run: () => useEditor.getState().setDialog('theme') },
+      ...THEMES.map((theme): Entry => ({
+        id: `theme:${theme.id}`,
+        label: `Motyw: ${theme.label}`,
+        group: 'Widok',
+        icon: Palette,
+        detail: theme.note,
+        run: () => useEditor.getState().setTheme(theme.id),
+      })),
     ]
   }, [])
 
