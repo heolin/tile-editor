@@ -43,6 +43,7 @@ export function MapCanvas() {
   const stamp = useEditor((s) => s.stamp)
   const showGrid = useEditor((s) => s.showGrid)
   const showObjects = useEditor((s) => s.showObjects)
+  const animate = useEditor((s) => s.animate)
   const activeLayerId = useEditor((s) => s.activeLayerId)
   const selectedObjectIds = useEditor((s) => s.selectedObjectIds)
   const [hover, setHover] = useState<{ x: number; y: number } | undefined>()
@@ -113,13 +114,27 @@ export function MapCanvas() {
       showObjects: state.showObjects,
       activeLayerId: state.activeLayerId,
       hover,
+      timeMs: state.animate ? performance.now() : undefined,
       hoverStamp: state.tool === 'brush' || state.tool === 'object' ? state.stamp : undefined,
       selectedObjectIds: state.selectedObjectIds,
       marquee: marquee ? { x0: marquee.x0, y0: marquee.y0, x1: marquee.x1, y1: marquee.y1 } : undefined,
     })
   }
 
-  useEffect(redraw, [revision, camera, showGrid, showObjects, hover, marquee, selectedObjectIds, tool, stamp, mounted])
+  useEffect(redraw, [revision, camera, showGrid, showObjects, animate, hover, marquee, selectedObjectIds, tool, stamp, mounted])
+
+  // Animation is the one thing that needs a running clock. Everything else
+  // draws on demand, so the loop exists only while the toggle is on.
+  useEffect(() => {
+    if (!animate || !mounted) return
+    let frame = 0
+    const tick = () => {
+      redraw()
+      frame = requestAnimationFrame(tick)
+    }
+    frame = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame)
+  }, [animate, mounted, revision])
 
   function fitToView(): void {
     const host = hostRef.current

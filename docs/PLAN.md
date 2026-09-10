@@ -171,8 +171,8 @@ kształty obiektów · tileset atlasowy · `data` w base64 z gzip/zlib ·
 Bez tego edytor nie otworzy cudzych map, ale nie da się tego zweryfikować
 na Waszych plikach — stąd osobna pozycja w rejestrze ryzyk.
 
-**v1.1:** `animation` · kolizje kafla · szablony `.tx` · custom types
-(`propertyTypes`) · zstd.
+**v1.1:** ~~`animation`~~ (zrobione w M4) · kolizje kafla · szablony `.tx` ·
+custom types (`propertyTypes`) · zstd.
 
 **Zrealizowane wcześniej niż planowano:** mapy nieskończone i chunki —
 w korpusie ich nie ma, ale przykładowa mapa Tileda na nich stanęła, a odczyt
@@ -273,7 +273,7 @@ Każdy kończy się czymś, co da się uruchomić na telefonie.
 | **M1** | **`XmlCodec` (TMX/TSX)**, `TileRenderer` na Pixi, pan/zoom, siatka, warstwy kafli i obiekty kaflowe read-only, tilesety-kolekcje, drzewo projektu | Otwierasz sokobana i tilt-balla na Tab S7 i płynnie po nich nawigujesz | **gotowe** |
 | **M2** | Narzędzia: pędzel, gumka, wypełnienie, prostokąt, pipeta, zaznaczenie. Panel warstw (kolejność, widoczność, opacity). Stos undo/redo. Zapis | Pełna pętla edycji kafli i zapis | **gotowe** |
 | **M3** | Obiekty kaflowe: stawianie, przesuwanie, **rozciąganie, obrót, flip, `objectalignment`**. Pozostałe kształty. Edytor properties mapy, warstwy, obiektu i kafla. **Lint** — sprzeczne typy property, braki względem reszty map, GID-y spoza tilesetu, nieużywane kafle | **v1** | **gotowe** |
-| **M4** | Menedżer tilesetów, import grafik, edytor tilesetu (kolizje, animacje), mapy nieskończone | Praca z tilesetami bez wychodzenia do Tileda | zapis properties kafli gotowy |
+| **M4** | Menedżer tilesetów, import grafik, edytor tilesetu (kolizje, animacje), mapy nieskończone | Praca z tilesetami bez wychodzenia do Tileda | **gotowe poza kolizjami kafla** |
 | **M5** | Dopracowanie mobile UX, PWA (installable, offline), wydajność na słabszych telefonach | Instalowalne z ekranu domowego, działa offline | — |
 | **M6** | Autotiling (Wang sets + reguły w stylu LDtk), command palette, wyszukiwanie w projekcie, lint mapy | Funkcje, których Tiled nie ma albo ma gorsze | lint już w v1 |
 | **M7** | Capacitor 7, `CapacitorProjectFS` przez SAF, pipeline APK w GitHub Actions | Podpisany APK do pobrania z Actions | — |

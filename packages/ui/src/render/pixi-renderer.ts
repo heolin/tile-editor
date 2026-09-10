@@ -46,6 +46,10 @@ export class PixiTileRenderer implements TileRenderer {
   private ready = false
   /** Document revision the tile and object geometry was last built for. */
   private builtRevision = -1
+  /** gid -> animation frames, for the few tiles that declare one. */
+  private animations = new Map<number, { gids: number[]; durations: number[]; total: number }>()
+  /** Which animation frame each animated tile was last drawn at. */
+  private builtFrameKey = ''
 
   async init(): Promise<void> {
     const app = new Application()
@@ -105,6 +109,20 @@ export class PixiTileRenderer implements TileRenderer {
       const url = urls[i]!
       if (result.status === 'fulfilled') this.textures.set(url, result.value)
     })
+    // Animated tiles step through sibling tiles in the same tileset, so the
+    // frame list is resolved to global ids once rather than per draw.
+    this.animations.clear()
+    for (const ref of map.tilesets) {
+      for (const tile of ref.tileset?.tiles ?? []) {
+        if (!tile.animation || tile.animation.length === 0) continue
+        this.animations.set(ref.firstgid + tile.id, {
+          gids: tile.animation.map((frame) => ref.firstgid + frame.tileid),
+          durations: tile.animation.map((frame) => Math.max(1, frame.duration)),
+          total: tile.animation.reduce((sum, frame) => sum + Math.max(1, frame.duration), 0),
+        })
+      }
+    }
+
     // An atlas tileset packs many tiles into one image, so each gid needs its
     // own cropped view of that image rather than the whole thing.
     this.tileTextures.clear()
@@ -135,6 +153,32 @@ export class PixiTileRenderer implements TileRenderer {
     return this.tileTextures.get(tileId(gid))
   }
 
+  /** True when anything in this map declares an animation. */
+  get hasAnimations(): boolean {
+    return this.animations.size > 0
+  }
+
+  /** Resolves an animated tile to the frame showing at this moment. */
+  private animatedGid(gid: number, timeMs: number | undefined): number {
+    const animation = this.animations.get(tileId(gid))
+    if (!animation) return gid
+    if (timeMs === undefined) return (animation.gids[0] ?? gid) | (gid & 0xe0000000)
+    let remaining = timeMs % animation.total
+    for (let i = 0; i < animation.gids.length; i++) {
+      remaining -= animation.durations[i]!
+      if (remaining < 0) return (animation.gids[i] ?? gid) | (gid & 0xe0000000)
+    }
+    return (animation.gids[0] ?? gid) | (gid & 0xe0000000)
+  }
+
+  /** A signature of every animation's current frame, to spot a needed rebuild. */
+  private frameKey(timeMs: number | undefined): string {
+    if (this.animations.size === 0) return ''
+    const parts: string[] = []
+    for (const gid of this.animations.keys()) parts.push(String(this.animatedGid(gid, timeMs)))
+    return parts.join(',')
+  }
+
   private borrowSprite(): Sprite {
     const sprite = this.spritePool.pop() ?? new Sprite()
     sprite.visible = true
@@ -157,7 +201,8 @@ export class PixiTileRenderer implements TileRenderer {
       tilemap.alpha = layer.opacity
       tilemap.position.set(layer.offsetx, layer.offsety)
 
-      layer.data.forEach((x, y, gid) => {
+      layer.data.forEach((x, y, rawGid) => {
+        const gid = this.animatedGid(rawGid, options.timeMs)
         const texture = this.textureFor(gid)
         if (!texture) return
         const { flipH, flipV, flipD } = parseGid(gid)
@@ -286,12 +331,13 @@ export class PixiTileRenderer implements TileRenderer {
           }
           continue
         }
-        const texture = this.textureFor(obj.gid)
-        const frame = this.source?.frame(obj.gid)
+        const gid = this.animatedGid(obj.gid, options.timeMs)
+        const texture = this.textureFor(gid)
+        const frame = this.source?.frame(gid)
         if (!texture || !frame) continue
 
-        const { flipH, flipV } = parseGid(obj.gid)
-        const { ax, ay } = tileObjectAnchor(tilesetOf(map, obj.gid))
+        const { flipH, flipV } = parseGid(gid)
+        const { ax, ay } = tileObjectAnchor(tilesetOf(map, gid))
         const sprite = this.borrowSprite()
         sprite.texture = texture
         sprite.anchor.set(0, 0)
@@ -478,12 +524,15 @@ export class PixiTileRenderer implements TileRenderer {
     this.world.position.set(camera.x, camera.y)
     this.world.scale.set(camera.zoom)
     this.drawGrid(options)
-    // Tile and object geometry depends only on the document. Rebuilding it for
-    // a pan or zoom cost 156 ms a frame on a 50x50 map before this check.
-    if (options.revision !== this.builtRevision) {
+    // Tile and object geometry depends only on the document, plus whichever
+    // animation frame is showing. Rebuilding it for a pan or zoom cost 156 ms
+    // a frame on a 50x50 map before this check.
+    const frameKey = this.frameKey(options.timeMs)
+    if (options.revision !== this.builtRevision || frameKey !== this.builtFrameKey) {
       this.drawTileLayers(options)
       this.drawObjects(options)
       this.builtRevision = options.revision
+      this.builtFrameKey = frameKey
     }
     this.drawOverlay(options)
     this.app.render()

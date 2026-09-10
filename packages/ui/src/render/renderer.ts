@@ -20,6 +20,8 @@ export interface RenderOptions {
    * which lets the renderer keep the tile geometry it already built.
    */
   revision: number
+  /** Milliseconds for animated tiles. Omit to hold every animation at frame 0. */
+  timeMs?: number
   showGrid: boolean
   showObjects: boolean
   activeLayerId?: number

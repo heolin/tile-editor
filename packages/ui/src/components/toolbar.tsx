@@ -1,6 +1,6 @@
 import clsx from 'clsx'
 import {
-  Brush, Eraser, Grid3x3, PaintBucket, Pipette, Redo2, Save, Shapes,
+  Brush, Eraser, Grid3x3, PaintBucket, Pipette, Play, Redo2, Save, Shapes,
   Square, MousePointer2, StickyNote, Undo2,
 } from 'lucide-react'
 import { Button } from './ui'
@@ -60,8 +60,10 @@ export function ToolBar() {
 export function ViewControls() {
   const showGrid = useEditor((s) => s.showGrid)
   const showObjects = useEditor((s) => s.showObjects)
+  const animate = useEditor((s) => s.animate)
   const toggleGrid = useEditor((s) => s.toggleGrid)
   const toggleObjects = useEditor((s) => s.toggleObjects)
+  const toggleAnimate = useEditor((s) => s.toggleAnimate)
   return (
     <div className="flex items-center gap-0.5">
       <Button active={showGrid} onClick={toggleGrid} title="Siatka (G)" aria-label="Siatka">
@@ -69,6 +71,14 @@ export function ViewControls() {
       </Button>
       <Button active={showObjects} onClick={toggleObjects} title="Obiekty (O)" aria-label="Obiekty">
         <Shapes size={16} />
+      </Button>
+      <Button
+        active={animate}
+        onClick={toggleAnimate}
+        title="Odtwarzaj animacje kafli (P) — rysuje w sposób ciągły"
+        aria-label="Animacje"
+      >
+        <Play size={16} />
       </Button>
     </div>
   )

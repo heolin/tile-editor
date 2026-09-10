@@ -34,7 +34,8 @@ dodaj `--lan`.
 |---|---|
 | **Formaty** | JSON (`.tmj` / `.tsj`) **i XML (`.tmx` / `.tsx`)**, plus `.tiled-project` |
 | **Wierność zapisu** | 85 ze 110 map z `examples/` zapisuje się bajtowo identycznie; każdy kolejny zapis jest bajtowo stabilny |
-| **Tilesety** | atlasy ze spacing i margin oraz kolekcje obrazków |
+| **Tilesety** | atlasy ze spacing i margin oraz kolekcje obrazków; podłączanie, tworzenie, dodawanie obrazków jako kafli, odłączanie |
+| **Animacje kafli** | edytor klatek; odtwarzanie jako przełącznik, domyślnie wyłączony |
 | **Mapy nieskończone** | odczyt i zapis chunków w obu formatach |
 | **Edycja kafli** | pędzel, gumka, wypełnienie, prostokąt, pipeta, cofanie ze scalaniem pociągnięć |
 | **Tworzenie map** | pusta mapa albo na podstawie szablonu, z przepisaniem ścieżek do tilesetów |
@@ -70,7 +71,7 @@ npm run dev:ui         # Vite dev server; równolegle uruchom npm start <folder>
 ## Skróty klawiszowe
 
 `B` pędzel · `E` gumka · `F` wypełnienie · `R` prostokąt · `I` pipeta ·
-`V` zaznaczanie · `A` stawianie obiektów · `G` siatka · `O` obiekty · `Ctrl+Z` / `Ctrl+Shift+Z` cofnij i
+`V` zaznaczanie · `A` stawianie obiektów · `G` siatka · `O` obiekty · `P` animacje · `Ctrl+Z` / `Ctrl+Shift+Z` cofnij i
 ponów · `Ctrl+S` zapisz · `Delete` usuwa zaznaczone obiekty.
 
 Na płótnie: przeciągnięcie dwoma palcami albo `Alt` z myszą przesuwa widok,

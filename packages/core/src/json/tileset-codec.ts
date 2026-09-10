@@ -48,7 +48,10 @@ function emitTile(tile: Tile): Record<string, unknown> {
     imagewidth: tile.imagewidth,
     imageheight: tile.imageheight,
     properties: emitProperties(tile.properties),
-    animation: tile.animation?.map((f) => emitOrdered(f, { tileid: f.tileid, duration: f.duration })),
+    // An empty frame list means "not animated"; Tiled omits the key entirely.
+    animation: tile.animation && tile.animation.length > 0
+      ? tile.animation.map((f) => emitOrdered(f, { tileid: f.tileid, duration: f.duration }))
+      : undefined,
     objectgroup: tile.objectgroup as unknown,
   })
 }

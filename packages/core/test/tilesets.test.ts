@@ -105,3 +105,36 @@ describe('image-collection tilesets', () => {
     expect(tileLabel(tileset.tiles[0]!)).toBe('ground_green')
   })
 })
+
+describe('tile animations', () => {
+  it('survives a save and reload in both formats', async () => {
+    const { parseTilesetXml, serializeTilesetXml } = await import('../src/xml/tileset-codec.js')
+    const tileset = createTileset({ name: 'anim', tilewidth: 32, tileheight: 32 })
+    addImagesToTileset(tileset, 'a.tsj', ['x.png', 'y.png'])
+    tileset.tiles[0]!.animation = [
+      { tileid: 0, duration: 100 },
+      { tileid: 1, duration: 250 },
+    ]
+
+    const frames = (t: { animation?: { tileid: number; duration: number }[] }) =>
+      t.animation?.map((f) => ({ tileid: f.tileid, duration: f.duration }))
+    const expected = [
+      { tileid: 0, duration: 100 },
+      { tileid: 1, duration: 250 },
+    ]
+
+    const json = parseTilesetJson(serializeTilesetJson(tileset, DEFAULT_HINTS), 'a.tsj').tileset
+    expect(frames(json.tiles[0]!)).toEqual(expected)
+
+    const xml = parseTilesetXml(serializeTilesetXml(tileset), 'a.tsx').tileset
+    expect(frames(xml.tiles[0]!)).toEqual(expected)
+  })
+
+  it('drops an empty animation rather than writing an empty element', async () => {
+    const tileset = createTileset({ name: 'anim', tilewidth: 32, tileheight: 32 })
+    addImagesToTileset(tileset, 'a.tsj', ['x.png'])
+    tileset.tiles[0]!.animation = []
+    const text = serializeTilesetJson(tileset, DEFAULT_HINTS)
+    expect(text).not.toContain('animation')
+  })
+})

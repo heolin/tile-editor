@@ -86,6 +86,8 @@ interface EditorState {
   camera: Camera
   showGrid: boolean
   showObjects: boolean
+  /** Off by default: animating means redrawing continuously, which costs battery. */
+  animate: boolean
 
   openPanel: PanelId | null
   propertyTarget: PropertyOwner
@@ -116,6 +118,7 @@ interface EditorState {
   setPropertyTarget(target: PropertyOwner): void
   toggleGrid(): void
   toggleObjects(): void
+  toggleAnimate(): void
   notify(text: string, tone?: 'ok' | 'error'): void
 
   undo(): void
@@ -146,6 +149,7 @@ export const useEditor = create<EditorState>((set, get) => ({
   camera: { x: 0, y: 0, zoom: 1 },
   showGrid: true,
   showObjects: true,
+  animate: false,
   openPanel: null,
   propertyTarget: { kind: 'map' },
   lint: [],
@@ -445,6 +449,7 @@ export const useEditor = create<EditorState>((set, get) => ({
   setPropertyTarget: (propertyTarget) => set({ propertyTarget }),
   toggleGrid: () => set({ showGrid: !get().showGrid }),
   toggleObjects: () => set({ showObjects: !get().showObjects }),
+  toggleAnimate: () => set({ animate: !get().animate }),
   notify: (text, tone = 'ok') => {
     set({ toast: { text, tone } })
     setTimeout(() => {

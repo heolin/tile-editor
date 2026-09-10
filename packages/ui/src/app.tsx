@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import clsx from 'clsx'
 import { FolderTree, Layers, Palette, ShieldCheck, SlidersHorizontal } from 'lucide-react'
 import { RemoveObjectsCommand, mapTitle } from '@tile-editor/core'
@@ -30,6 +30,25 @@ function PanelBody({ id }: { id: PanelId }) {
   }
 }
 
+/**
+ * Which layout tier the viewport is in. The panels exist once in the DOM: the
+ * docked column and the bottom sheet are alternatives, not a CSS-hidden pair,
+ * so nothing is subscribed to the store twice or loading images twice.
+ */
+function useCompactLayout(): boolean {
+  const [compact, setCompact] = useState(() =>
+    typeof window === 'undefined' ? false : !window.matchMedia('(min-width: 768px)').matches,
+  )
+  useEffect(() => {
+    const query = window.matchMedia('(min-width: 768px)')
+    const update = () => setCompact(!query.matches)
+    update()
+    query.addEventListener('change', update)
+    return () => query.removeEventListener('change', update)
+  }, [])
+  return compact
+}
+
 export function App() {
   const status = useEditor((s) => s.status)
   const error = useEditor((s) => s.error)
@@ -39,6 +58,7 @@ export function App() {
   const openPanel = useEditor((s) => s.openPanel)
   const setPanel = useEditor((s) => s.setPanel)
   const init = useEditor((s) => s.init)
+  const compact = useCompactLayout()
 
   useEffect(() => {
     void init()
@@ -82,7 +102,7 @@ export function App() {
 
       <div className="flex min-h-0 flex-1">
         {/* Icon rail: the only chrome that survives on a phone. */}
-        <nav className="hidden w-11 shrink-0 flex-col items-center gap-0.5 border-r border-line bg-surface py-1 md:flex">
+        <nav className="hidden w-11 shrink-0 flex-col items-center gap-0.5 border-r border-line bg-surface py-1 md:flex" aria-label="Panele">
           {PANELS.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
@@ -101,9 +121,11 @@ export function App() {
           ))}
         </nav>
 
-        <aside className="hidden w-[240px] shrink-0 border-r border-line md:flex wide:w-[300px]">
-          <PanelBody id={dockedPanel} />
-        </aside>
+        {compact ? null : (
+          <aside className="flex w-[240px] shrink-0 border-r border-line wide:w-[300px]">
+            <PanelBody id={dockedPanel} />
+          </aside>
+        )}
 
         <main className="relative min-w-0 flex-1">
           {status === 'loading' ? (
@@ -138,13 +160,15 @@ export function App() {
         </div>
       </footer>
 
-      <Sheet
-        open={openPanel !== null}
-        onClose={() => setPanel(null)}
-        title={PANELS.find((p) => p.id === openPanel)?.label ?? ''}
-      >
-        {openPanel ? <PanelBody id={openPanel} /> : null}
-      </Sheet>
+      {compact ? (
+        <Sheet
+          open={openPanel !== null}
+          onClose={() => setPanel(null)}
+          title={PANELS.find((p) => p.id === openPanel)?.label ?? ''}
+        >
+          {openPanel ? <PanelBody id={openPanel} /> : null}
+        </Sheet>
+      ) : null}
 
       {toast ? <Toast text={toast.text} tone={toast.tone} /> : null}
     </div>
@@ -215,6 +239,7 @@ function useKeyboardShortcuts(): void {
         case 'a': state.setTool('object'); break
         case 'g': state.toggleGrid(); break
         case 'o': state.toggleObjects(); break
+        case 'p': state.toggleAnimate(); break
       }
     }
     window.addEventListener('keydown', handler)

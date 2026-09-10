@@ -1,10 +1,9 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
-import { useState } from 'react'
 import {
-  FLIP_H, FLIP_V, ResizeMapCommand, SetPropertyCommand, UpdateLayerCommand,
-  UpdateObjectsCommand, parseGid, walkLayers,
-  type Property, type PropertyType,
+  FLIP_H, FLIP_V, ResizeMapCommand, SetAnimationCommand, SetPropertyCommand,
+  UpdateLayerCommand, UpdateObjectsCommand, parseGid, tileLabel, walkLayers,
+  type Frame, type Property, type PropertyType, type Tile, type Tileset,
 } from '@tile-editor/core'
 import { Button, Empty, Field, Panel, Select, TextInput } from './ui'
 import { useEditor, type PropertyOwner } from '../state/store'
@@ -180,13 +179,16 @@ function resolveOwner(target: PropertyOwner): ResolvedOwner | undefined {
     title: `Kafel #${tile.id}`,
     node: tile,
     header: (
-      <p className="border-b border-line px-3 py-2 text-[11px] text-ink-faint">
-        {entry.tileset.name} · {tile.image?.split('/').pop() ?? `id ${tile.id}`}
-        <br />
-        <span className="text-ink-faint">
-          Zmiany zapisują się do {entry.tileset.sourcePath ?? 'tilesetu'} razem z mapą.
-        </span>
-      </p>
+      <div className="border-b border-line">
+        <p className="px-3 py-2 text-[11px] text-ink-faint">
+          {entry.tileset.name} · {tile.image?.split('/').pop() ?? `id ${tile.id}`}
+          <br />
+          <span className="text-ink-faint">
+            Zmiany zapisują się do {entry.tileset.sourcePath ?? 'tilesetu'} razem z mapą.
+          </span>
+        </p>
+        <TileAnimationEditor tilesetPath={target.tilesetPath} tileset={entry.tileset} tile={tile} />
+      </div>
     ),
   }
 }
@@ -320,6 +322,105 @@ function ObjectHeader({ id }: { id: number }) {
           </div>
         </Field>
       ) : null}
+    </div>
+  )
+}
+
+/**
+ * Animation frames point at sibling tiles in the same tileset. Nothing in the
+ * corpus animates yet, but the format supports it and the editor should not be
+ * the reason a project cannot use it.
+ */
+function TileAnimationEditor({ tilesetPath, tileset, tile }: {
+  tilesetPath: string
+  tileset: Tileset
+  tile: Tile
+}) {
+  const state = useEditor.getState()
+  const animate = useEditor((s) => s.animate)
+  const frames = tile.animation ?? []
+
+  const commit = (next: Frame[]) => {
+    state.history.run(new SetAnimationCommand(tile, next))
+    state.markTilesetDirty(tilesetPath)
+    state.rebuildSource()
+    state.touch()
+  }
+
+  const setFrame = (index: number, patch: Partial<Frame>) =>
+    commit(frames.map((f, i) => (i === index ? { ...f, ...patch } : { ...f })))
+
+  return (
+    <div className="border-t border-line px-3 py-2">
+      <div className="flex items-center justify-between">
+        <span className="text-[11px] font-medium tracking-wide text-ink-faint">Animacja</span>
+        <div className="flex items-center gap-1">
+          {frames.length > 0 ? (
+            <Button
+              size="sm"
+              variant="outline"
+              active={animate}
+              onClick={() => state.toggleAnimate()}
+              title="Odtwarzanie animacji na mapie"
+            >
+              {animate ? 'Odtwarza' : 'Podgląd'}
+            </Button>
+          ) : null}
+          <Button
+            size="sm"
+            title="Dodaj klatkę"
+            aria-label="Dodaj klatkę animacji"
+            onClick={() => commit([...frames, { tileid: tile.id, duration: 100 }])}
+          >
+            <Plus size={14} />
+          </Button>
+        </div>
+      </div>
+
+      {frames.length === 0 ? (
+        <p className="pt-1 text-[11px] text-ink-faint">
+          Kafel nie jest animowany. Dodaj klatkę, żeby zaczął przełączać się między kaflami tego tilesetu.
+        </p>
+      ) : (
+        <ul className="flex flex-col gap-1 pt-1.5">
+          {frames.map((frame, index) => (
+            <li key={index} className="grid grid-cols-[minmax(0,1fr)_72px_auto] items-center gap-1.5">
+              <Select
+                value={String(frame.tileid)}
+                aria-label={`Kafel klatki ${index + 1}`}
+                onChange={(e) => setFrame(index, { tileid: Number(e.target.value) })}
+              >
+                {tileset.tiles.map((candidate) => (
+                  <option key={candidate.id} value={candidate.id}>
+                    {tileLabel(candidate)}
+                  </option>
+                ))}
+              </Select>
+              <TextInput
+                className="num"
+                type="number"
+                min={1}
+                step={10}
+                aria-label={`Czas klatki ${index + 1} w ms`}
+                value={frame.duration}
+                onChange={(e) => setFrame(index, { duration: Math.max(1, Number(e.target.value)) })}
+              />
+              <button
+                type="button"
+                className="hit shrink-0 px-1 text-ink-faint hover:text-danger"
+                title="Usuń klatkę"
+                aria-label={`Usuń klatkę ${index + 1}`}
+                onClick={() => commit(frames.filter((_, i) => i !== index))}
+              >
+                <Trash2 size={14} />
+              </button>
+            </li>
+          ))}
+          <li className="num pt-0.5 text-right text-[10.5px] text-ink-faint">
+            {frames.reduce((sum, f) => sum + f.duration, 0)} ms na pętlę
+          </li>
+        </ul>
+      )}
     </div>
   )
 }
