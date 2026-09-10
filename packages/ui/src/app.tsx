@@ -20,7 +20,7 @@ import { PropertyTypesDialog } from './components/property-types-dialog'
 import { ThemeDialog } from './components/theme-dialog'
 import { Button, Sheet, Toast } from './components/ui'
 import { useEditor, type PanelId } from './state/store'
-import { canInstall, onInstallabilityChange } from './pwa'
+import { canOfferInstall, installOffered, onInstallabilityChange } from './pwa'
 
 const PANELS: { id: PanelId; label: string; icon: typeof Layers }[] = [
   { id: 'project', label: 'Projekt', icon: FolderTree },
@@ -208,26 +208,27 @@ export function App() {
 }
 
 /**
- * Only appears when the browser has actually offered installation. A control
- * that is always visible and usually does nothing teaches people to ignore it;
- * the command palette carries the entry the rest of the time, and explains why.
+ * Visible on the web wherever a shortcut could exist, and gone inside the
+ * packaged app or once the editor already runs from one. It stands out only
+ * while the browser is actually offering to install; otherwise it is quiet and
+ * pressing it explains what is in the way.
  */
 function InstallButton() {
   const addToHomeScreen = useEditor((s) => s.addToHomeScreen)
-  const [available, setAvailable] = useState(canInstall)
+  const [offered, setOffered] = useState(installOffered)
 
-  useEffect(() => onInstallabilityChange(() => setAvailable(canInstall())), [])
-  if (!available) return null
+  useEffect(() => onInstallabilityChange(() => setOffered(installOffered())), [])
+  if (!canOfferInstall()) return null
 
   return (
     <Button
-      variant="outline"
+      variant={offered ? 'outline' : 'ghost'}
       onClick={() => void addToHomeScreen()}
-      title="Dodaj skrót do ekranu głównego"
+      title={offered ? 'Dodaj skrót do ekranu głównego' : 'Skrót na ekranie głównym — sprawdź, czy się da'}
       aria-label="Dodaj do ekranu głównego"
     >
       <Smartphone size={15} />
-      <span className="hidden wide:inline">Dodaj skrót</span>
+      <span className={offered ? 'hidden wide:inline' : 'sr-only'}>Dodaj skrót</span>
     </Button>
   )
 }

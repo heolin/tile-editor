@@ -179,10 +179,13 @@ Wynik otwiera mapę i zaznacza obiekt.
 
 ## Skrót na ekranie głównym
 
-Gdy przeglądarka zaproponuje instalację, w pasku górnym pojawia się przycisk
-**Dodaj skrót**; to samo polecenie jest zawsze w palecie (`Ctrl+K` → „Dodaj do
-ekranu głównego"). Przycisk nie pokazuje się, gdy instalacja i tak jest
-niemożliwa — polecenie w palecie wtedy tłumaczy dlaczego.
+Przycisk z ikoną telefonu w pasku górnym, na lewo od pędzla. To samo polecenie
+jest w palecie (`Ctrl+K` → „Dodaj do ekranu głównego").
+
+Gdy przeglądarka aktywnie proponuje instalację, przycisk dostaje ramkę i podpis
+„Dodaj skrót". Poza tym jest wyciszony, a kliknięcie mówi, co stoi na
+przeszkodzie. Znika tylko tam, gdzie nie ma o czym mówić: w aplikacji natywnej
+i gdy edytor już działa ze skrótu.
 
 Działa w Chrome i Edge, na Androidzie i na desktopie. Safari i Firefox nie
 udostępniają tego mechanizmu: w Safari trzeba użyć Udostępnij → Do ekranu

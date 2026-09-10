@@ -33,8 +33,20 @@ export function isStandalone(): boolean {
   return (window.navigator as unknown as { standalone?: boolean }).standalone === true
 }
 
-export function canInstall(): boolean {
+/** The browser has offered installation and is waiting to be taken up on it. */
+export function installOffered(): boolean {
   return !isNativeShell() && !isStandalone() && deferred() !== null
+}
+
+/**
+ * Whether to show the control at all. Deliberately wider than
+ * `installOffered()`: hiding it until Chrome fires its event left people with
+ * nothing to look for and no way to find out why. It stays hidden only where
+ * there is genuinely nothing to say - inside the packaged app, or when the
+ * editor is already running from a home-screen icon.
+ */
+export function canOfferInstall(): boolean {
+  return !isNativeShell() && !isStandalone()
 }
 
 /** Fires whenever the answer to `canInstall()` may have changed. */
