@@ -4,28 +4,43 @@
  * Editor palette. Dark-first, because that is where a map editor lives, with a
  * neutral biased slightly toward the accent so nothing reads as flat grey.
  */
-@theme {
-  --color-ground: #0b1112;
-  --color-surface: #121b1c;
-  --color-raised: #182325;
-  --color-hover: #1f2d2f;
-  --color-line: #24322f;
-  --color-line-strong: #33443f;
+/* `static` keeps every token in the output. Tailwind drops unused ones by
+   default, which silently hid --color-shape from the canvas. */
+@theme static {
+  /**
+   * Monokai Pro. A warm, slightly purple dark ramp with six saturated accents,
+   * rather than the cool grey most editors settle on. The neutrals below are
+   * the palette's own; only the three "deep" tones are derived, as backgrounds
+   * for accented chips that have to sit on --color-surface.
+   *
+   * This block is the only place a colour is written down. The canvas reads
+   * these same tokens at runtime through theme.ts, so the WebGL layer and the
+   * DOM cannot drift apart.
+   */
+  --color-ground: #19181a;
+  --color-surface: #2d2a2e;
+  --color-raised: #403e41;
+  --color-hover: #403e41;
+  --color-line: #3b383c;
+  --color-line-strong: #5b595c;
 
-  --color-ink: #e7edec;
-  --color-ink-dim: #a6b5b3;
-  --color-ink-faint: #6f807e;
+  --color-ink: #fcfcfa;
+  --color-ink-dim: #c1c0c0;
+  --color-ink-faint: #939293;
 
-  --color-accent: #4fd6bc;
-  --color-accent-deep: #0f3330;
-  --color-accent-ink: #7ce4cf;
+  --color-accent: #78dce8;
+  --color-accent-deep: #26383c;
+  --color-accent-ink: #a5e9f1;
 
-  --color-danger: #ee8195;
-  --color-danger-deep: #38191f;
-  --color-warn: #e0a552;
-  --color-warn-deep: #31250f;
-  --color-ok: #6fcb86;
-  --color-ok-deep: #122c19;
+  --color-danger: #ff6188;
+  --color-danger-deep: #3e222a;
+  --color-warn: #fc9867;
+  --color-warn-deep: #3b2a21;
+  --color-ok: #a9dc76;
+  --color-ok-deep: #2c3a24;
+
+  /** Outlines for objects with no art of their own, kept apart from selection. */
+  --color-shape: #ab9df2;
 
   /* Three tiers, chosen so a Galaxy Tab S7 keeps the docked layout in both
      orientations and only collapses its rails when turned upright. */

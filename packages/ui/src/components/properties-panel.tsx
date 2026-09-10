@@ -12,6 +12,7 @@ import {
 } from '@tile-editor/core'
 import { Button, Empty, Field, Panel, Select, TextInput } from './ui'
 import { useEditor, type PropertyOwner } from '../state/store'
+import { themeColor } from '../theme'
 
 const TYPES: PropertyType[] = ['string', 'int', 'float', 'bool', 'color', 'file']
 
@@ -230,7 +231,9 @@ function PropertyValue({ prop, definition, onChange }: {
     )
   }
   if (prop.type === 'color') {
-    const value = typeof prop.value === 'string' && prop.value ? toHex(prop.value) : '#4fd6bc'
+    // An unset colour opens on the theme's accent rather than a colour written
+    // down a second time.
+    const value = typeof prop.value === 'string' && prop.value ? toHex(prop.value) : accentHex()
     return (
       <div className="flex items-center gap-2">
         <input
@@ -601,13 +604,23 @@ function ObjectHeader({ id }: { id: number }) {
         <Field label="Wysokość"><TextInput type="number" className="num" value={obj.height} onChange={(e) => patch({ height: Number(e.target.value) })} /></Field>
       </div>
       <Field label="Obrót (stopnie)">
-        <div className="flex items-center gap-1">
-          {[0, 90, 180, 270].map((deg) => (
-            <Button key={deg} size="sm" variant="outline" active={obj.rotation === deg} onClick={() => patch({ rotation: deg })}>
-              {deg}°
-            </Button>
-          ))}
-          <TextInput type="number" className="num flex-1" value={obj.rotation} onChange={(e) => patch({ rotation: Number(e.target.value) })} />
+        {/* Four preset buttons and a free field do not fit across a 240px panel;
+            squeezed onto one row the field collapsed to nothing. */}
+        <div className="flex flex-col gap-1.5">
+          <div className="grid grid-cols-4 gap-1">
+            {[0, 90, 180, 270].map((deg) => (
+              <Button key={deg} size="sm" variant="outline" active={obj.rotation === deg} onClick={() => patch({ rotation: deg })}>
+                {deg}°
+              </Button>
+            ))}
+          </div>
+          <TextInput
+            type="number"
+            aria-label="Obrót w stopniach"
+            className="num"
+            value={obj.rotation}
+            onChange={(e) => patch({ rotation: Number(e.target.value) })}
+          />
         </div>
       </Field>
       {obj.gid !== undefined ? (
@@ -776,6 +789,11 @@ function Stat({ label, value }: { label: string; value: string }) {
       <dd className="num text-right text-ink-dim">{value}</dd>
     </>
   )
+}
+
+/** The accent as a #rrggbb string, for inputs that will not take a token. */
+function accentHex(): string {
+  return '#' + themeColor('accent', 0x78dce8).toString(16).padStart(6, '0')
 }
 
 function uniqueName(props: Property[]): string {

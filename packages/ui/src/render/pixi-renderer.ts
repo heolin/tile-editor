@@ -5,6 +5,7 @@ import {
   type Anchor, type Box, type HandleId, type Layer, type MapObject, type TileMap,
 } from '@tile-editor/core'
 import type { RenderOptions, TileRenderer } from './renderer'
+import { canvasTheme } from '../theme'
 import { tileObjectAnchor, tilesetOf, type TileSourceIndex } from './tile-source'
 
 /**
@@ -225,11 +226,11 @@ export class PixiTileRenderer implements TileRenderer {
   /** Tiled colours an object layer through an optional `color` attribute. */
   private layerColor(layer: { extra?: Record<string, unknown> }): number {
     const raw = layer.extra?.color
-    if (typeof raw !== 'string') return 0x4fd6bc
+    if (typeof raw !== 'string') return canvasTheme.shape
     const hex = raw.replace('#', '')
     const rgb = hex.length === 8 ? hex.slice(2) : hex
     const value = Number.parseInt(rgb, 16)
-    return Number.isFinite(value) ? value : 0x4fd6bc
+    return Number.isFinite(value) ? value : canvasTheme.shape
   }
 
   /**
@@ -286,7 +287,7 @@ export class PixiTileRenderer implements TileRenderer {
   }
 
   private borrowLabel(): Text {
-    const label = this.labelPool.pop() ?? new Text({ text: '', style: { fontSize: 12, fill: 0xe7edec } })
+    const label = this.labelPool.pop() ?? new Text({ text: '', style: { fontSize: 12, fill: canvasTheme.ink } })
     label.visible = true
     return label
   }
@@ -381,10 +382,10 @@ export class PixiTileRenderer implements TileRenderer {
     this.background.clear()
     const w = map.width * map.tilewidth
     const h = map.height * map.tileheight
-    this.background.rect(0, 0, w, h).fill({ color: 0x0b1112, alpha: 0.85 })
+    this.background.rect(0, 0, w, h).fill({ color: canvasTheme.ground, alpha: 0.85 })
     const width = 1 / options.camera.zoom
     // The map's own edge is always worth showing, grid or not.
-    this.grid.rect(0, 0, w, h).stroke({ color: 0x4fd6bc, width: width * 1.5, alpha: 0.5 })
+    this.grid.rect(0, 0, w, h).stroke({ color: canvasTheme.accent, width: width * 1.5, alpha: 0.5 })
     if (!options.showGrid) return
 
     // A grid drawn at full strength over 16-pixel tiles washes the artwork out,
@@ -427,7 +428,7 @@ export class PixiTileRenderer implements TileRenderer {
       const h = (stamp?.height ?? 1) * map.tileheight
       this.overlay
         .rect(options.hover.x * map.tilewidth, options.hover.y * map.tileheight, w, h)
-        .stroke({ color: 0x4fd6bc, width: line, alpha: 0.9 })
+        .stroke({ color: canvasTheme.accent, width: line, alpha: 0.9 })
     }
 
     if (options.marquee) {
@@ -438,8 +439,8 @@ export class PixiTileRenderer implements TileRenderer {
       const height = (Math.abs(y1 - y0) + 1) * map.tileheight
       this.overlay
         .rect(left, top, width, height)
-        .fill({ color: 0x4fd6bc, alpha: 0.12 })
-        .stroke({ color: 0x4fd6bc, width: line })
+        .fill({ color: canvasTheme.accent, alpha: 0.12 })
+        .stroke({ color: canvasTheme.accent, width: line })
     }
 
     if (options.selectedObjectIds.length > 0) {
@@ -460,8 +461,8 @@ export class PixiTileRenderer implements TileRenderer {
       const { x0, y0, x1, y1 } = options.selectionRect
       this.overlay
         .rect(Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0), Math.abs(y1 - y0))
-        .fill({ color: 0x4fd6bc, alpha: 0.1 })
-        .stroke({ color: 0x4fd6bc, width: line, alpha: 0.9 })
+        .fill({ color: canvasTheme.accent, alpha: 0.1 })
+        .stroke({ color: canvasTheme.accent, width: line, alpha: 0.9 })
     }
   }
 
@@ -503,7 +504,7 @@ export class PixiTileRenderer implements TileRenderer {
     const first = corners[0]!
     this.overlay.moveTo(first.x, first.y)
     for (const point of corners.slice(1)) this.overlay.lineTo(point.x, point.y)
-    this.overlay.closePath().stroke({ color: 0x4fd6bc, width })
+    this.overlay.closePath().stroke({ color: canvasTheme.accent, width })
     if (!withHandles) return
 
     // The stalk to the rotation handle, so it reads as attached to the box.
@@ -515,21 +516,21 @@ export class PixiTileRenderer implements TileRenderer {
     this.overlay
       .moveTo(topMid.x, topMid.y)
       .lineTo(rotateAt.x, rotateAt.y)
-      .stroke({ color: 0x4fd6bc, width: width * 0.6, alpha: 0.7 })
+      .stroke({ color: canvasTheme.accent, width: width * 0.6, alpha: 0.7 })
 
     const size = width * 3
     for (const handle of handlePositions(box, anchor, this.rotateOffset)) {
       if (handle.id === 'rotate') {
         this.overlay
           .circle(handle.point.x, handle.point.y, size * 0.9)
-          .fill({ color: 0x0b1112 })
-          .stroke({ color: 0x4fd6bc, width })
+          .fill({ color: canvasTheme.ground })
+          .stroke({ color: canvasTheme.accent, width })
         continue
       }
       this.overlay
         .rect(handle.point.x - size, handle.point.y - size, size * 2, size * 2)
-        .fill({ color: 0x0b1112 })
-        .stroke({ color: 0x4fd6bc, width })
+        .fill({ color: canvasTheme.ground })
+        .stroke({ color: canvasTheme.accent, width })
     }
   }
 

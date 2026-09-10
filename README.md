@@ -187,6 +187,20 @@ będzie oferowana.
 Offline działa sama powłoka edytora. Pliki projektu czyta lokalny serwer, więc
 bez niego edytor otworzy się, ale nie pokaże map.
 
+## Paleta
+
+Interfejs korzysta z palety **Monokai Pro** — ciepła, lekko fioletowa ciemność
+zamiast chłodnej szarości, z cyjanem jako akcentem zaznaczenia i uchwytów.
+
+Kolory są zapisane **wyłącznie** w `packages/ui/src/styles.css`, w bloku
+`@theme static`. Płótno rysuje w WebGL i nie może użyć CSS-a, więc
+`packages/ui/src/theme.ts` odczytuje te same custom properties w czasie
+działania i podaje je Pixi jako liczby. Dzięki temu warstwa WebGL i DOM nie
+mogą się rozjechać, a zmiana motywu w przyszłości to jeden blok.
+
+`@theme static` jest tu istotne: zwykłe `@theme` wycina tokeny, których żadna
+klasa Tailwinda nie używa, i po cichu ukryło `--color-shape` przed płótnem.
+
 ## Struktura
 
 ```
