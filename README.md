@@ -47,7 +47,7 @@ dodaj `--lan`.
 | **Lint** | sprzeczne typy property, braki względem reszty map, GID-y spoza tilesetu, nieużywane kafle, wartości spoza typu; część zgłoszeń z naprawą jednym kliknięciem |
 | **Układ** | trzy progi: telefon, tablet w pionie, tablet w poziomie i desktop |
 | **Gesty** | dwa palce = pan i zoom, tapnięcie dwoma palcami = cofnij, długie przytrzymanie = menu kontekstowe, kółko = zoom do kursora |
-| **PWA** | manifest, ikony i service worker — instalowalne z ekranu domowego, powłoka działa offline |
+| **PWA** | manifest, ikony i service worker — instalowalne z ekranu domowego, powłoka działa offline i wraca sama, gdy serwer zniknie |
 
 ## Wydajność
 
@@ -67,7 +67,6 @@ npm start <folder>     # serwer + edytor
 npm test               # złote testy round-tripu na korpusie examples/
 npm run smoke          # test end-to-end w przeglądarce (wymaga playwright)
 npm run bench          # benchmark renderera na wygenerowanych dużych mapach
-npm run android:sync   # zbuduj UI i skopiuj do projektu natywnego
 npm run typecheck
 npm run dev:ui         # Vite dev server; równolegle uruchom npm start <folder>
 ```
@@ -91,82 +90,6 @@ tapnięcie dwoma palcami cofa ostatnią zmianę, długie przytrzymanie (albo pra
 przycisk) otwiera menu kontekstowe, `Alt` podczas przeciągania obiektu wyłącza
 snapowanie do siatki, a kliknięcie w procent zoomu w lewym dolnym rogu
 dopasowuje mapę do ekranu.
-
-## Aplikacja na Androida
-
-APK jest natywną powłoką wokół tego samego edytora. **Nie czyta plików sam** —
-łączy się z serwerem uruchomionym obok, zwykle w Termuxie na tym samym
-urządzeniu. To omija labirynt uprawnień do pamięci na Androidzie i sprawia, że
-jest dokładnie jedna implementacja dostępu do plików zamiast dwóch.
-
-```bash
-npx tile-editor . --app       # --app wpuszcza aplikację do API
-```
-
-Aplikacja szuka serwera pod `http://127.0.0.1:4173` sama — jeśli tam stoi,
-otworzy projekt bez pytania. Inny adres wpiszesz na ekranie połączenia i
-zostanie zapamiętany.
-
-**`--app` jest konieczne.** Aplikacja działa na własnym adresie
-`http://localhost`, więc sięga do serwera z zewnątrz, a ten domyślnie odpowiada
-tylko własnej stronie. Bez tej flagi zobaczysz ekran połączenia, choć serwer
-działa.
-
-**API jest domyślnie tylko same-origin.** Serwer czyta i zapisuje Twoje pliki,
-więc każda strona, która by go dosięgła, mogłaby to samo. `--app` wpuszcza
-pochodzenie aplikacji, a `--allow-origin <adres>` dowolne inne.
-
-APK buduje się w GitHub Actions (`.github/workflows/android.yml`, uruchamiany
-ręcznie albo tagiem `v*`) i pobiera jako artefakt. Budowanie na telefonie
-wymagałoby JDK, Android SDK i Gradle'a — dlatego Termux zostaje miejscem
-uruchamiania, nie budowania.
-
-## Lint z naprawą
-
-Zgłoszenie, którego poprawny wynik jest jednoznaczny, dostaje przycisk
-naprawy. Najczęstszy przypadek: property używana z dwoma typami naraz.
-Dodając property, Tiled i ten edytor dają jej domyślnie typ `string`, więc
-`railId` wpisany raz ręcznie zostaje tekstem obok pięćdziesięciu kilku
-liczbowych.
-
-Naprawa przenosi mniejszość na typ, na który zgadza się większość, zachowując
-wartości — `"3"` staje się `3`. Wartość, której nie da się przekonwertować,
-zostaje nietknięta, żeby naprawa niczego nie zniszczyła po cichu. Remis nie
-dostaje przycisku: to decyzja dla człowieka, nie dla głosowania.
-
-Od strony zapobiegania: pole nazwy property podpowiada nazwy używane już w
-projekcie, a gdy typ się rozjeżdża z resztą, pokazuje ostrzeżenie z
-przyciskiem przyjęcia właściwego typu.
-
-Naprawa zapisuje pliki bezpośrednio i **nie da się jej cofnąć w edytorze**.
-
-## Typy własne
-
-Projekt może zadeklarować typy properties — enumy i klasy — w pliku
-`.tiled-project`, dokładnie w formacie Tileda. Property z przypisanym typem
-przestaje być polem tekstowym: enum dostaje listę wyboru, enum flagowy
-checkboxy, a klasa rozwija się na swoje pola. Lint zgłasza wartość spoza typu.
-
-Klasa może też być typem samego węzła — mapy, warstwy, obiektu albo kafla.
-Wtedy jej pola pokazują się jako pola tego węzła, z wypełnionymi wartościami
-domyślnymi. Pole zostawione na wartości domyślnej **nie trafia do pliku**,
-dokładnie jak w Tiledzie: zapisana mapa notuje decyzje, które ktoś podjął, a
-nie te, których nie ruszył.
-
-Typów nie trzeba wypisywać ręcznie. **Paleta → „Typy projektu" → „Zaproponuj
-z projektu"** przegląda wszystkie mapy i szuka properties tekstowych, które w
-praktyce przyjmują tylko kilka powtarzających się wartości — czyli enumów,
-których projekt już używa, tylko nigdzie ich nie zapisał. Na `examples/`
-znajduje `mode`, `edges` i `laserColour`.
-
-Świadomie **nie proponuje** typu, gdy wszystkie wartości wyglądają jak liczby:
-to zwykle liczba zapisana jako tekst, a nie zbiór wyborów. Enum zacementowałby
-pomyłkę zamiast ją pokazać — od zgłaszania takich przypadków jest reguła
-`conflicting-property-type`.
-
-Zaznaczona opcja „przypisz do istniejących properties" zapisuje pliki
-bezpośrednio we wszystkich mapach i **nie da się jej cofnąć w edytorze** —
-cofniesz to gitem.
 
 ## Wyszukiwanie w projekcie
 
@@ -247,7 +170,6 @@ packages/core     model, kodeki JSON, komendy i undo, lint, skanowanie projektu
 packages/server   serwer HTTP na czystym node:http, API plikowe, SSE
 packages/cli      tile-editor <folder>
 packages/ui       React + PixiJS
-android/          powłoka Capacitora, budowana w CI
 examples/         korpus referencyjny: 115 map z trzech gier
 ```
 

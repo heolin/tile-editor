@@ -3,14 +3,14 @@ import { normalizePath } from '@tile-editor/core'
 
 /**
  * Talks to the tile-editor server running in Termux. This is the primary
- * adapter; Capacitor and File System Access implementations slot in beside it
- * without anything above noticing (docs/PLAN.md section 4.1).
+ * adapter; a File System Access implementation slots in beside it without
+ * anything above noticing (docs/PLAN.md section 4.1).
  */
 /**
  * Where the editor's server lives. Empty means "same origin", which is the case
- * when the page was served by that server. A packaged app has no server of its
- * own, so it points at one running elsewhere - typically Termux on the same
- * device, over localhost.
+ * when the page was served by that server. A page opened from somewhere else -
+ * an installed shortcut, another device on the LAN - points at one running
+ * elsewhere.
  */
 const BASE_KEY = 'tile-editor:server'
 
@@ -31,23 +31,12 @@ export function storeServerBase(base: string): void {
   }
 }
 
-/** The packaged Android shell, which serves the app from its own local origin. */
-export function isPackagedShell(): boolean {
-  return typeof window !== 'undefined' && 'Capacitor' in window
-}
-
-/**
- * True when nothing is listening on the page's own origin, so an address has to
- * be entered. The Android shell counts: Capacitor serves the app from
- * `http://localhost` itself, so the protocol looks ordinary while there is no
- * project server behind it.
- */
+/** True when the page was not served over http, so there is no same origin. */
 export function needsExplicitServer(): boolean {
-  if (isPackagedShell()) return true
   return typeof location !== 'undefined' && !location.protocol.startsWith('http')
 }
 
-/** Where the Termux server listens by default, and where the shell looks first. */
+/** Where the server listens unless told otherwise. */
 export const DEFAULT_SERVER = 'http://127.0.0.1:4173'
 
 export class HttpProjectFS implements ProjectFS {
@@ -55,10 +44,7 @@ export class HttpProjectFS implements ProjectFS {
   private base: string
 
   constructor(base?: string) {
-    // The packaged app has no server of its own, so rather than asking the
-    // same origin and failing, it starts by looking where Termux listens.
-    this.base = base ?? storedServerBase() ?? ''
-    if (!this.base && isPackagedShell()) this.base = DEFAULT_SERVER
+    this.base = base ?? storedServerBase()
   }
 
   /** Points this adapter at a different server and forgets what it cached. */

@@ -15,15 +15,11 @@ const { values, positionals } = parseArgs({
     lan: { type: 'boolean', default: false },
     open: { type: 'boolean', default: false },
     'allow-origin': { type: 'string', multiple: true, default: [] },
-    app: { type: 'boolean', default: false },
     help: { type: 'boolean', short: 'h', default: false },
   },
 })
 
-// Origins a Capacitor build runs on. Allowing them lets the packaged app talk
-// to this server; nothing else is allowed unless it is named explicitly.
-const APP_ORIGINS = ['http://localhost', 'https://localhost', 'capacitor://localhost']
-const allowOrigins = [...values['allow-origin'], ...(values.app ? APP_ORIGINS : [])]
+const allowOrigins = values['allow-origin']
 
 if (values.help) {
   console.log(`
@@ -32,13 +28,12 @@ if (values.help) {
     -p, --port <n>        port to listen on (default 4173)
         --host <ip>       interface to bind (default 127.0.0.1)
         --lan             bind 0.0.0.0 so other devices on the network can connect
-        --app             let the packaged Android app connect to this server
-        --allow-origin <o>  allow one more origin to call the API (repeatable)
+        --allow-origin <o>  allow one origin to call the API (repeatable)
     -h, --help            show this message
 
   The API is same-origin only by default: it reads and writes your project
-  files, so any page able to reach it could too. --app and --allow-origin are
-  how you opt a specific origin in.
+  files, so any page able to reach it could too. --allow-origin is how you opt
+  a specific origin in.
 
   Serves the editor for a Tiled project folder. Designed to run inside Termux:
   start it, then open the printed address in the phone's browser.

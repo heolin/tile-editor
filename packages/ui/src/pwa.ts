@@ -11,7 +11,7 @@
  * has no service worker and cannot be installed at all. Each of those gets its
  * own answer rather than a button that quietly does nothing.
  */
-export type InstallOutcome = 'accepted' | 'dismissed' | 'already' | 'native' | 'insecure' | 'unsupported'
+export type InstallOutcome = 'accepted' | 'dismissed' | 'already' | 'insecure' | 'unsupported'
 
 interface DeferredPrompt extends Event {
   prompt(): Promise<void>
@@ -20,11 +20,6 @@ interface DeferredPrompt extends Event {
 
 const deferred = (): DeferredPrompt | null =>
   (window as unknown as { __tileEditorInstall?: DeferredPrompt | null }).__tileEditorInstall ?? null
-
-/** True inside the Capacitor shell, which is already an installed app. */
-export function isNativeShell(): boolean {
-  return 'Capacitor' in window
-}
 
 /** True when the page is already running from a home-screen icon. */
 export function isStandalone(): boolean {
@@ -35,18 +30,18 @@ export function isStandalone(): boolean {
 
 /** The browser has offered installation and is waiting to be taken up on it. */
 export function installOffered(): boolean {
-  return !isNativeShell() && !isStandalone() && deferred() !== null
+  return !isStandalone() && deferred() !== null
 }
 
 /**
  * Whether to show the control at all. Deliberately wider than
  * `installOffered()`: hiding it until Chrome fires its event left people with
  * nothing to look for and no way to find out why. It stays hidden only where
- * there is genuinely nothing to say - inside the packaged app, or when the
- * editor is already running from a home-screen icon.
+ * there is genuinely nothing to say - when the editor already runs from a
+ * home-screen icon.
  */
 export function canOfferInstall(): boolean {
-  return !isNativeShell() && !isStandalone()
+  return !isStandalone()
 }
 
 /** Fires whenever the answer to `canInstall()` may have changed. */
@@ -56,7 +51,6 @@ export function onInstallabilityChange(listener: () => void): () => void {
 }
 
 export async function promptInstall(): Promise<InstallOutcome> {
-  if (isNativeShell()) return 'native'
   if (isStandalone()) return 'already'
   const event = deferred()
   if (!event) return window.isSecureContext ? 'unsupported' : 'insecure'
@@ -73,7 +67,6 @@ export async function promptInstall(): Promise<InstallOutcome> {
 export const INSTALL_MESSAGES: Record<Exclude<InstallOutcome, 'accepted'>, string> = {
   dismissed: 'Anulowano dodawanie skrótu.',
   already: 'Edytor już działa jako zainstalowana aplikacja.',
-  native: 'To jest aplikacja natywna — skrót masz już na ekranie.',
   insecure:
     'Instalacja wymaga bezpiecznego połączenia. Otwórz edytor pod 127.0.0.1 zamiast adresu sieciowego.',
   unsupported:

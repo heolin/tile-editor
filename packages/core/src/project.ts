@@ -9,8 +9,8 @@ import { basename, dirname, extname, normalizePath, resolveFrom } from './paths.
 
 /**
  * Everything above this interface is unaware of where files come from: a Node
- * server over HTTP in Termux, the Android SAF through Capacitor, or the File
- * System Access API on desktop. See docs/PLAN.md section 4.1.
+ * server over HTTP in Termux, or the File System Access API on desktop. See
+ * docs/PLAN.md section 4.1.
  */
 export interface FsEntry {
   /** Project-relative POSIX path. */

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Plug, RefreshCw, ServerCrash } from 'lucide-react'
 import { Button, TextInput } from './ui'
-import { DEFAULT_SERVER, isPackagedShell, needsExplicitServer, storedServerBase } from '../fs/http-fs'
+import { DEFAULT_SERVER, needsExplicitServer, storedServerBase } from '../fs/http-fs'
 import { isStandalone } from '../pwa'
 import { useEditor } from '../state/store'
 
@@ -20,11 +20,8 @@ export function ConnectScreen({ error }: { error?: string }) {
   // Start from the address actually in use, not a guess: showing one address
   // while trying another is how a working setup looks broken.
   // Start from the address actually in use, not a guess: showing one address
-  // while trying another is how a working setup looks broken. The packaged app
-  // never means its own origin, so it starts at Termux's.
-  const [address, setAddress] = useState(
-    storedServerBase() || (isPackagedShell() ? DEFAULT_SERVER : fs.origin) || SUGGESTIONS[0]!,
-  )
+  // while trying another is how a working setup looks broken.
+  const [address, setAddress] = useState(storedServerBase() || fs.origin || SUGGESTIONS[0]!)
   const [busy, setBusy] = useState(false)
   const [attempts, setAttempts] = useState(0)
 
@@ -72,17 +69,8 @@ export function ConnectScreen({ error }: { error?: string }) {
         </p>
 
         <code className="rounded-md border border-line bg-surface px-3 py-2 text-[12.5px] text-accent-ink">
-          npx tile-editor .{packaged ? ' --app' : ''}
+          npx tile-editor .
         </code>
-
-        {packaged ? (
-          <p className="text-[11.5px] leading-relaxed text-ink-faint">
-            <code className="text-ink-dim">--app</code> jest tu konieczne. Aplikacja działa na
-            własnym adresie <code className="text-ink-dim">http://localhost</code>, więc sięga do
-            serwera z zewnątrz, a ten domyślnie odpowiada tylko własnej stronie — czyta i zapisuje
-            Wasze pliki, więc nie wpuszcza nikogo bez wskazania.
-          </p>
-        ) : null}
 
         {error ? (
           <p className="rounded-md border border-danger/40 bg-danger-deep px-3 py-2 text-[12px] text-danger">{error}</p>

@@ -2,7 +2,7 @@
 
 Nowoczesna alternatywa dla Tiled: edytor map 2D działający w przeglądarce,
 z pierwszorzędnym wsparciem dla Androida/Termuxa, pełną obsługą TMX
-i opcjonalnym wydaniem jako APK.
+i wydaniem jako PWA.
 
 Status: planowanie. Data: 2026-09-09.
 
@@ -18,13 +18,13 @@ Edytor map do gier 2D, który:
 - rozumie **projekt** = folder z mapami, które współdzielą tilesety i grafiki,
 - pozwala tworzyć mapy, warstwy, obiekty i properties,
 - wygląda i działa jak narzędzie zaprojektowane w latach 20., nie w 2008,
-- da się opcjonalnie wydać jako PWA i APK.
+- da się zainstalować jako PWA i skrót na ekranie głównym.
 
 ## 2. Ograniczenia, które kształtują architekturę
 
 | Ograniczenie | Konsekwencja projektowa |
 |---|---|
-| Brak Electrona i realnego Android SDK w Termuxie | APK budowany wyłącznie w CI (GitHub Actions), nigdy na urządzeniu |
+| Brak Electrona i realnego Android SDK w Termuxie | Dystrybucja przez PWA, a nie natywny pakiet — nic do zbudowania na urządzeniu |
 | Chrome Android nie udostępnia `showDirectoryPicker` | Przeglądarka nie dosięgnie folderu projektu — dostęp do plików daje lokalny serwer Node |
 | `node-gyp` / moduły natywne zawodne na aarch64 | Wyłącznie zależności pure-JS. Zero binarek w ścieżce krytycznej |
 | Android ubija procesy w tle | Serwer startuje jednym poleceniem, wstaje w <1s, stan trzymany w plikach |
@@ -68,23 +68,20 @@ packages/
   ui/          React SPA (Vite) — cały interfejs
   server/      node:http: statyki + API plikowe + SSE. To działa w Termuxie
   cli/         `npx tile-editor .` — startuje serwer, drukuje URL
-apps/
-  android/     Capacitor 7, budowany wyłącznie w GitHub Actions
 ```
 
 ### 4.1. `ProjectFS` — kluczowa abstrakcja
 
 Jeden interfejs (`list`, `read`, `write`, `watch`, `resolve`, `stat`)
-z czterema implementacjami:
+z trzema implementacjami:
 
 | Adapter | Target | Mechanizm |
 |---|---|---|
 | `HttpProjectFS` | **Termux (główny)** | REST + SSE do serwera Fastify |
-| `HttpProjectFS` | APK | Ten sam adapter: powłoka łączy się z serwerem w Termuxie po localhoście, zamiast walczyć z uprawnieniami SAF |
 | `FsaProjectFS` | Desktop Chrome bez serwera | File System Access API |
 | `MemoryProjectFS` | Testy, demo online | W pamięci, seed z ZIP-a |
 
-To ta jedna abstrakcja sprawia, że web, Termux i APK to ten sam kod. Nic
+To ta jedna abstrakcja sprawia, że web i Termux to ten sam kod. Nic
 powyżej `ProjectFS` nie wie, skąd biorą się pliki.
 
 ### 4.2. Zależności runtime (wszystkie pure-JS)
@@ -277,7 +274,25 @@ Każdy kończy się czymś, co da się uruchomić na telefonie.
 | **M4** | Menedżer tilesetów, import grafik, edytor tilesetu (kolizje, animacje), mapy nieskończone | Praca z tilesetami bez wychodzenia do Tileda | **gotowe poza kolizjami kafla** |
 | **M5** | Dopracowanie mobile UX, PWA (installable, offline), wydajność na słabszych telefonach | Instalowalne z ekranu domowego, działa offline | **gotowe** |
 | **M6** | Autotiling (Wang sets + reguły w stylu LDtk), command palette, wyszukiwanie w projekcie, lint mapy | Funkcje, których Tiled nie ma albo ma gorsze | lint, paleta i wyszukiwanie gotowe; autotiling odłożony |
-| **M7** | Capacitor 7, `CapacitorProjectFS` przez SAF, pipeline APK w GitHub Actions | Podpisany APK do pobrania z Actions | **gotowe** |
+| **M7** | Capacitor 7, `CapacitorProjectFS` przez SAF, pipeline APK w GitHub Actions | Podpisany APK do pobrania z Actions | **wycofane** — patrz niżej |
+
+### M7 wycofane — 10 września 2026
+
+Powłoka Capacitora nie dawała nic, czego nie daje skrót PWA. To był błąd
+projektowy w samym M7: żeby ominąć labirynt uprawnień do pamięci na Androidzie,
+`CapacitorProjectFS` przez SAF zastąpiłem powłoką, która i tak łączy się
+z serwerem w Termuxie po localhoście. Wtedy APK jest tylko drugim opakowaniem
+tego samego `HttpProjectFS` — z własnym pipeline'em w CI, keystorem, konfiguracją
+CORS i drugą ścieżką połączenia do utrzymania. Ktoś, kto zainstalowałby taki APK
+bez Termuxa, dostałby ekran „uruchom serwer" i nic więcej.
+
+Zostaje PWA: `Dodaj do ekranu głównego` daje tę samą ikonę i to samo okno bez
+paska adresu, a serwer w Termuxie i tak jest wymagany w obu wariantach. Usunięte:
+`android/`, `capacitor.config.ts`, `.github/workflows/android.yml`, zależności
+Capacitora, flaga `--app` w CLI i związana z nią lista dozwolonych originów.
+Gdyby kiedyś wrócił sensowny powód na natywną wersję, wracać trzeba do
+`CapacitorProjectFS` przez SAF — czyli do prawdziwego dostępu do plików bez
+serwera, a nie do powłoki wokół niego.
 
 ## 9. Ryzyka
 
