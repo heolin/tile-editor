@@ -134,6 +134,42 @@ html[data-theme="gruvbox-light"],
   --color-shape: #8f3f71;
 }
 
+/* Piatto Light — white panels, blue accent, after the Sublime theme of the
+   same name. Its own neutrals are pure greys; the ground is nudged a shade
+   cool so the whole thing reads white-blue rather than white-grey.
+
+   Two values depart from the source, both for contrast on white: the accent is
+   darkened from #3498db so a solid button can carry light text, and the faint
+   ink from #8c8c8c, which lands under 3.5:1 against #ffffff. */
+html[data-theme="piatto"],
+[data-theme="piatto"] {
+  color-scheme: light;
+
+  --color-ground: #eceff3;
+  --color-surface: #ffffff;
+  --color-raised: #f7f9fb;
+  --color-hover: #eaeef3;
+  --color-line: #dfe4ea;
+  --color-line-strong: #c3cbd4;
+
+  --color-ink: #505050;
+  --color-ink-dim: #63676c;
+  --color-ink-faint: #71757a;
+
+  --color-accent: #1d6fa8;
+  --color-accent-deep: #dceaf7;
+  --color-accent-ink: #185f90;
+
+  --color-danger: #d33682;
+  --color-danger-deep: #fadfee;
+  --color-warn: #d1620f;
+  --color-warn-deep: #fbe6d5;
+  --color-ok: #667c00;
+  --color-ok-deep: #e9edcd;
+
+  --color-shape: #8757ad;
+}
+
 /* Nord — cool blue-grey, for when the warm ones get tiring. */
 html[data-theme="nord"],
 [data-theme="nord"] {

@@ -198,7 +198,12 @@ rysowaniem, więc nie ma mignięcia.
 | **Monokai Pro** | ciepła fioletowa ciemność, cyjan — domyślny |
 | **Gruvbox Dark** | brąz i żółć, retro |
 | **Gruvbox Light** | kremowy papier, granat |
+| **Piatto Light** | biel i błękit, płasko — za motywem z Sublime Text |
 | **Nord** | chłodny błękitny szary |
+
+Piatto odbiega od źródła w dwóch wartościach, obie dla kontrastu na bieli:
+akcent przyciemniony z `#3498db` (biały tekst na przycisku dawał 2,7:1) i tekst
+pomocniczy z `#8c8c8c` (3,4:1 na bieli).
 
 Kolory są zapisane **wyłącznie** w `packages/ui/src/styles.css`: blok
 `@theme static` opisuje domyślny, a każdy kolejny motyw to jeden blok

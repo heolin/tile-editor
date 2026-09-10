@@ -78,6 +78,7 @@ export const THEMES: ThemeOption[] = [
   { id: 'monokai-pro', label: 'Monokai Pro', kind: 'dark', note: 'ciepła fioletowa ciemność, cyjan' },
   { id: 'gruvbox-dark', label: 'Gruvbox Dark', kind: 'dark', note: 'brąz i żółć, retro' },
   { id: 'gruvbox-light', label: 'Gruvbox Light', kind: 'light', note: 'kremowy papier, granat' },
+  { id: 'piatto', label: 'Piatto Light', kind: 'light', note: 'biel i błękit, płasko' },
   { id: 'nord', label: 'Nord', kind: 'dark', note: 'chłodny błękitny szary' },
 ]
 
