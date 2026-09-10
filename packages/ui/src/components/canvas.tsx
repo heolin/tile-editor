@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   AddObjectCommand, RemoveObjectsCommand, SetTilesCommand, UpdateObjectsCommand,
-  tilesetForGid, type MapObject,
+  boxBounds, boundsIntersect, resizeBox, rotationTowards, tilesetForGid,
+  type Anchor, type Box, type HandleId, type MapObject,
 } from '@tile-editor/core'
 import { ContextMenu, type MenuItem } from './context-menu'
 import { floodFill, makeTileObject, paintStamp, useEditor, type Stamp } from '../state/store'
@@ -31,6 +32,9 @@ type Drag =
     }
   | { kind: 'marquee'; x0: number; y0: number; x1: number; y1: number; mode: 'rect' | 'pick' }
   | { kind: 'moveObjects'; objects: MapObject[]; startX: number; startY: number; origin: { x: number; y: number }[] }
+  | { kind: 'resizeObject'; object: MapObject; handle: Exclude<HandleId, 'rotate'>; anchor: Anchor; start: Box }
+  | { kind: 'rotateObject'; object: MapObject; start: Box }
+  | { kind: 'selectBox'; x0: number; y0: number; x1: number; y1: number; additive: boolean }
 
 /**
  * The map canvas. Owns all pointer input, because the tablet needs gestures the
@@ -60,6 +64,7 @@ export function MapCanvas() {
   const [menu, setMenu] = useState<{ x: number; y: number; items: MenuItem[] } | undefined>()
   const longPressRef = useRef<{ timer: number; x: number; y: number } | null>(null)
   const [marquee, setMarquee] = useState<Drag & { kind: 'marquee' } | undefined>()
+  const [selectBox, setSelectBox] = useState<{ x0: number; y0: number; x1: number; y1: number } | undefined>()
 
   /* ---------------- renderer lifecycle ---------------- */
 
@@ -73,9 +78,11 @@ export function MapCanvas() {
       }
       renderer = created
       rendererRef.current = created
-      // Diagnostic handle used by scripts/bench.mjs to time draws directly
-      // rather than inferring cost from frame scheduling.
-      ;(window as unknown as { __tileEditor?: unknown }).__tileEditor = created
+      // Diagnostic handle used by scripts/bench.mjs and scripts/smoke.mjs, to
+      // measure the renderer and read editor state directly rather than
+      // inferring either from the DOM.
+      ;(window as unknown as { __tileEditor?: unknown }).__tileEditor =
+        Object.assign(created, { state: () => useEditor.getState() })
       if (hostRef.current) created.mount(hostRef.current)
       setMounted(true)
     })
@@ -125,15 +132,19 @@ export function MapCanvas() {
       showGrid: state.showGrid,
       showObjects: state.showObjects,
       activeLayerId: state.activeLayerId,
-      hover,
       timeMs: state.animate ? performance.now() : undefined,
+      // The tile cursor means nothing while picking objects, and sits on top of
+      // the very handles the user is aiming at.
+      hover: state.tool === 'select' ? undefined : hover,
       hoverStamp: state.tool === 'brush' || state.tool === 'object' ? state.stamp : undefined,
       selectedObjectIds: state.selectedObjectIds,
+      showHandles: selectBox === undefined,
+      selectionRect: selectBox,
       marquee: marquee ? { x0: marquee.x0, y0: marquee.y0, x1: marquee.x1, y1: marquee.y1 } : undefined,
     })
   }
 
-  useEffect(redraw, [revision, camera, showGrid, showObjects, animate, hover, marquee, selectedObjectIds, tool, stamp, mounted])
+  useEffect(redraw, [revision, camera, showGrid, showObjects, animate, hover, marquee, selectBox, selectedObjectIds, tool, stamp, mounted])
 
   // Animation is the one thing that needs a running clock. Everything else
   // draws on demand, so the loop exists only while the toggle is on.
@@ -366,16 +377,65 @@ export function MapCanvas() {
     }
   }
 
+  /** A handle under the pointer, tested in screen space so it stays grabbable. */
+  function handleAt(clientX: number, clientY: number): { id: HandleId; object: MapObject } | undefined {
+    const state = useEditor.getState()
+    const renderer = rendererRef.current
+    if (!renderer || state.selectedObjectIds.length !== 1) return undefined
+    const layer = state.activeObjectLayer()
+    const object = layer?.objects.find((o) => o.id === state.selectedObjectIds[0])
+    if (!object) return undefined
+
+    const coarse = window.matchMedia('(pointer: coarse)').matches
+    const tolerance = coarse ? 22 : 11
+    for (const handle of renderer.handlesFor(object)) {
+      const screen = renderer.toScreen(handle.point.x, handle.point.y)
+      const host = hostRef.current!.getBoundingClientRect()
+      if (Math.hypot(screen.x - (clientX - host.left), screen.y - (clientY - host.top)) <= tolerance) {
+        return { id: handle.id, object }
+      }
+    }
+    return undefined
+  }
+
   function beginSelect(clientX: number, clientY: number): boolean {
     const state = useEditor.getState()
     const layer = state.activeObjectLayer()
     const renderer = rendererRef.current
     if (!layer || !renderer) return false
+
+    // Handles win over everything: they sit on top of the object they belong to.
+    const grabbed = handleAt(clientX, clientY)
+    if (grabbed) {
+      const start = renderer.boxOf(grabbed.object)
+      dragRef.current =
+        grabbed.id === 'rotate'
+          ? { kind: 'rotateObject', object: grabbed.object, start }
+          : {
+              kind: 'resizeObject',
+              object: grabbed.object,
+              handle: grabbed.id,
+              anchor: renderer.anchorOf(grabbed.object),
+              start,
+            }
+      return true
+    }
+
     const world = renderer.toWorld(clientX, clientY)
     const hit = renderer.hitTestObject(layer, world.x, world.y)
     if (!hit) {
-      state.selectObjects([])
-      return false
+      // Empty space starts a rubber band rather than clearing straight away, so
+      // a stray tap does not lose the selection until the drag is over.
+      dragRef.current = {
+        kind: 'selectBox',
+        x0: world.x,
+        y0: world.y,
+        x1: world.x,
+        y1: world.y,
+        additive: false,
+      }
+      setSelectBox({ x0: world.x, y0: world.y, x1: world.x, y1: world.y })
+      return true
     }
     const already = state.selectedObjectIds.includes(hit.id)
     const objects = already ? state.selectedObjects() : [hit]
@@ -466,6 +526,12 @@ export function MapCanvas() {
 
     const state = useEditor.getState()
     if (state.tool === 'object') {
+      // A handle stays grabbable even with the placing tool active, so the
+      // object just put down can be sized without switching tools.
+      if (handleAt(event.clientX, event.clientY)) {
+        beginSelect(event.clientX, event.clientY)
+        return
+      }
       placeObject(event.clientX, event.clientY)
       return
     }
@@ -540,6 +606,46 @@ export function MapCanvas() {
       return
     }
 
+    if (drag.kind === 'resizeObject') {
+      const renderer = rendererRef.current!
+      const map = state.doc!.map
+      const pointer = renderer.toWorld(event.clientX, event.clientY)
+      const next = resizeBox(drag.start, drag.anchor, drag.handle, pointer, {
+        snap: event.altKey ? undefined : { x: map.tilewidth, y: map.tileheight },
+        minimum: 1,
+      })
+      state.history.run(
+        new UpdateObjectsCommand(
+          'Zmień rozmiar obiektu',
+          [drag.object],
+          [{ x: next.x, y: next.y, width: next.width, height: next.height }],
+          `resize:${drag.object.id}`,
+        ),
+      )
+      state.touch()
+      return
+    }
+
+    if (drag.kind === 'rotateObject') {
+      const renderer = rendererRef.current!
+      const pointer = renderer.toWorld(event.clientX, event.clientY)
+      const rotation = rotationTowards(drag.start, pointer, event.altKey ? 0 : 15)
+      state.history.run(
+        new UpdateObjectsCommand('Obróć obiekt', [drag.object], [{ rotation }], `rotate:${drag.object.id}`),
+      )
+      state.touch()
+      return
+    }
+
+    if (drag.kind === 'selectBox') {
+      const renderer = rendererRef.current!
+      const pointer = renderer.toWorld(event.clientX, event.clientY)
+      drag.x1 = pointer.x
+      drag.y1 = pointer.y
+      setSelectBox({ x0: drag.x0, y0: drag.y0, x1: pointer.x, y1: pointer.y })
+      return
+    }
+
     if (drag.kind === 'moveObjects') {
       const renderer = rendererRef.current!
       const world = renderer.toWorld(event.clientX, event.clientY)
@@ -567,6 +673,7 @@ export function MapCanvas() {
   function cancelDrag(): void {
     dragRef.current = { kind: 'none' }
     setMarquee(undefined)
+    setSelectBox(undefined)
   }
 
   function onPointerUp(event: React.PointerEvent): void {
@@ -582,6 +689,28 @@ export function MapCanvas() {
       dragRef.current = { kind: 'none' }
       pointersRef.current.clear()
       return
+    }
+
+    if (drag.kind === 'selectBox') {
+      const renderer = rendererRef.current
+      const layer = state.activeObjectLayer()
+      const bounds = {
+        left: Math.min(drag.x0, drag.x1),
+        top: Math.min(drag.y0, drag.y1),
+        right: Math.max(drag.x0, drag.x1),
+        bottom: Math.max(drag.y0, drag.y1),
+      }
+      // A band barely dragged is a click on empty space: clear the selection.
+      const tiny = bounds.right - bounds.left < 3 && bounds.bottom - bounds.top < 3
+      if (layer && renderer && !tiny) {
+        const caught = layer.objects.filter(
+          (obj) => obj.visible && boundsIntersect(boxBounds(renderer.boxOf(obj), renderer.anchorOf(obj)), bounds),
+        )
+        state.selectObjects(caught.map((obj) => obj.id))
+      } else {
+        state.selectObjects([])
+      }
+      setSelectBox(undefined)
     }
 
     if (drag.kind === 'marquee') {

@@ -40,7 +40,7 @@ dodaj `--lan`.
 | **Edycja kafli** | pędzel, gumka, wypełnienie, prostokąt, pipeta, cofanie ze scalaniem pociągnięć |
 | **Tworzenie map** | pusta mapa albo na podstawie szablonu, z przepisaniem ścieżek do tilesetów |
 | **Warstwy** | kolejność, widoczność, krycie, dodawanie i usuwanie |
-| **Obiekty** | stawianie, zaznaczanie, przesuwanie ze snapowaniem, kasowanie; render z rozciąganiem, obrotem, flipem i `objectalignment` |
+| **Obiekty** | stawianie, zaznaczanie ramką, przeciąganie uchwytów do skalowania i obrotu, przesuwanie ze snapowaniem, kasowanie; render z rozciąganiem, obrotem, flipem i `objectalignment` |
 | **Properties** | mapy, warstwy, obiektu i **kafla** — wszystkie typy skalarne; zmiany kafla zapisują się do tilesetu |
 | **Typy własne** | enumy i klasy w `.tiled-project`; enum staje się listą wyboru, flagi checkboxami, klasa rozwija się na pola |
 | **Paleta poleceń** | `Ctrl+K` — polecenia, skok do mapy i wyszukiwanie po properties w całym projekcie |
@@ -77,6 +77,14 @@ npm run dev:ui         # Vite dev server; równolegle uruchom npm start <folder>
 `B` pędzel · `E` gumka · `F` wypełnienie · `R` prostokąt · `I` pipeta ·
 `V` zaznaczanie · `A` stawianie obiektów · `G` siatka · `O` obiekty · `P` animacje · `Ctrl+Z` / `Ctrl+Shift+Z` cofnij i
 ponów · `Ctrl+S` zapisz · `Ctrl+K` paleta poleceń · `Delete` usuwa zaznaczone obiekty.
+
+**Obiekty na płótnie.** Zaznaczony pojedynczy obiekt dostaje osiem uchwytów
+skalowania i uchwyt obrotu nad górną krawędzią. Przeciągnięcie uchwytu trzyma
+przeciwległy bok w miejscu, więc gest przypomina chwytanie krawędzi, a nie
+przesuwanie całości — i działa tak samo na obiekcie obróconym, bo przeciągnięcie
+jest odczytywane w jego własnym układzie. Rozmiar snapuje się do kafla, obrót do
+15°; `Alt` wyłącza jedno i drugie. Przeciągnięcie po pustym miejscu zaznacza
+ramką.
 
 Na płótnie: przeciągnięcie dwoma palcami albo `Alt` z myszą przesuwa widok,
 tapnięcie dwoma palcami cofa ostatnią zmianę, długie przytrzymanie (albo prawy

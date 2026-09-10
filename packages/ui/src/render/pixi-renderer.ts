@@ -1,6 +1,9 @@
 import { Application, Assets, Container, Graphics, Rectangle, Sprite, Text, Texture } from 'pixi.js'
 import { CompositeTilemap } from '@pixi/tilemap'
-import { parseGid, tileId, walkLayers, type Layer, type MapObject, type TileMap } from '@tile-editor/core'
+import {
+  anchorFor, boxCorners, handlePositions, parseGid, tileId, walkLayers,
+  type Anchor, type Box, type HandleId, type Layer, type MapObject, type TileMap,
+} from '@tile-editor/core'
 import type { RenderOptions, TileRenderer } from './renderer'
 import { tileObjectAnchor, tilesetOf, type TileSourceIndex } from './tile-source'
 
@@ -441,49 +444,92 @@ export class PixiTileRenderer implements TileRenderer {
 
     if (options.selectedObjectIds.length > 0) {
       const selected = new Set(options.selectedObjectIds)
+      // Handles only make sense on a single object; several at once get an
+      // outline each, because dragging a corner of "all of them" means nothing.
+      const single = options.selectedObjectIds.length === 1
       for (const layer of walkLayers(map.layers)) {
         if (layer.kind !== 'objectgroup') continue
         for (const obj of layer.objects) {
           if (!selected.has(obj.id)) continue
-          this.strokeObjectBox(obj, line)
+          this.strokeObjectBox(obj, line, single && options.showHandles !== false)
         }
       }
+    }
+
+    if (options.selectionRect) {
+      const { x0, y0, x1, y1 } = options.selectionRect
+      this.overlay
+        .rect(Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0), Math.abs(y1 - y0))
+        .fill({ color: 0x4fd6bc, alpha: 0.1 })
+        .stroke({ color: 0x4fd6bc, width: line, alpha: 0.9 })
+    }
+  }
+
+  /** The anchor an object's box hangs from, per its tileset's alignment. */
+  anchorOf(obj: MapObject): Anchor {
+    if (obj.gid === undefined) return { ax: 0, ay: 0 }
+    return anchorFor(tilesetOf(this.map!, obj.gid)?.objectalignment)
+  }
+
+  /** An object as a plain box, with the map's tile size standing in if unsized. */
+  boxOf(obj: MapObject): Box {
+    const map = this.map!
+    return {
+      x: obj.x,
+      y: obj.y,
+      width: obj.width || map.tilewidth,
+      height: obj.height || map.tileheight,
+      rotation: obj.rotation,
     }
   }
 
   /** Traces an object's box through its own rotation and anchor. */
   private objectCorners(obj: MapObject): { x: number; y: number }[] {
-    const map = this.map!
-    const { ax, ay } =
-      obj.gid !== undefined ? tileObjectAnchor(tilesetOf(map, obj.gid)) : { ax: 0, ay: 0 }
-    const w = obj.width || map.tilewidth
-    const h = obj.height || map.tileheight
-    const left = -ax * w
-    const top = -ay * h
-    const radians = (obj.rotation * Math.PI) / 180
-    const cos = Math.cos(radians)
-    const sin = Math.sin(radians)
-    return [
-      [left, top],
-      [left + w, top],
-      [left + w, top + h],
-      [left, top + h],
-    ].map(([lx, ly]) => ({
-      x: obj.x + lx! * cos - ly! * sin,
-      y: obj.y + lx! * sin + ly! * cos,
-    }))
+    return boxCorners(this.boxOf(obj), this.anchorOf(obj))
   }
 
-  private strokeObjectBox(obj: MapObject, width: number): void {
+  /** Where each drag handle sits, in world coordinates. */
+  handlesFor(obj: MapObject): { id: HandleId; point: { x: number; y: number } }[] {
+    return handlePositions(this.boxOf(obj), this.anchorOf(obj), this.rotateOffset)
+  }
+
+  /** Kept in world units but derived from a fixed distance on screen. */
+  private rotateOffset = 28
+
+  private strokeObjectBox(obj: MapObject, width: number, withHandles: boolean): void {
+    // `width` is one screen pixel expressed in world units, so this is 28 of them.
+    this.rotateOffset = width * 14
     const corners = this.objectCorners(obj)
     const first = corners[0]!
     this.overlay.moveTo(first.x, first.y)
     for (const point of corners.slice(1)) this.overlay.lineTo(point.x, point.y)
+    this.overlay.closePath().stroke({ color: 0x4fd6bc, width })
+    if (!withHandles) return
+
+    // The stalk to the rotation handle, so it reads as attached to the box.
+    const box = this.boxOf(obj)
+    const anchor = this.anchorOf(obj)
+    const top = boxCorners(box, anchor)
+    const topMid = { x: (top[0]!.x + top[1]!.x) / 2, y: (top[0]!.y + top[1]!.y) / 2 }
+    const rotateAt = handlePositions(box, anchor, this.rotateOffset).find((h) => h.id === 'rotate')!.point
     this.overlay
-      .closePath()
-      .stroke({ color: 0x4fd6bc, width })
-    for (const point of corners) {
-      this.overlay.circle(point.x, point.y, width * 2.5).fill({ color: 0x4fd6bc })
+      .moveTo(topMid.x, topMid.y)
+      .lineTo(rotateAt.x, rotateAt.y)
+      .stroke({ color: 0x4fd6bc, width: width * 0.6, alpha: 0.7 })
+
+    const size = width * 3
+    for (const handle of handlePositions(box, anchor, this.rotateOffset)) {
+      if (handle.id === 'rotate') {
+        this.overlay
+          .circle(handle.point.x, handle.point.y, size * 0.9)
+          .fill({ color: 0x0b1112 })
+          .stroke({ color: 0x4fd6bc, width })
+        continue
+      }
+      this.overlay
+        .rect(handle.point.x - size, handle.point.y - size, size * 2, size * 2)
+        .fill({ color: 0x0b1112 })
+        .stroke({ color: 0x4fd6bc, width })
     }
   }
 

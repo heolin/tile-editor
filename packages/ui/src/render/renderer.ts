@@ -29,6 +29,10 @@ export interface RenderOptions {
   hover?: { x: number; y: number }
   hoverStamp?: Stamp
   selectedObjectIds: readonly number[]
+  /** Suppressed while a drag is in progress, so handles do not chase the pointer. */
+  showHandles?: boolean
+  /** Rubber band for selecting objects, in world coordinates. */
+  selectionRect?: { x0: number; y0: number; x1: number; y1: number }
   /** Rectangle being dragged out by the rectangle tool, in tile coordinates. */
   marquee?: { x0: number; y0: number; x1: number; y1: number }
 }
