@@ -42,6 +42,7 @@ dodaj `--lan`.
 | **Warstwy** | kolejność, widoczność, krycie, dodawanie i usuwanie |
 | **Obiekty** | stawianie, zaznaczanie, przesuwanie ze snapowaniem, kasowanie; render z rozciąganiem, obrotem, flipem i `objectalignment` |
 | **Properties** | mapy, warstwy, obiektu i **kafla** — wszystkie typy skalarne; zmiany kafla zapisują się do tilesetu |
+| **Paleta poleceń** | `Ctrl+K` — polecenia, skok do mapy i wyszukiwanie po properties w całym projekcie |
 | **Lint** | sprzeczne typy property, braki względem reszty map, GID-y spoza tilesetu, nieużywane kafle |
 | **Układ** | trzy progi: telefon, tablet w pionie, tablet w poziomie i desktop |
 | **Gesty** | dwa palce = pan i zoom, tapnięcie dwoma palcami = cofnij, długie przytrzymanie = menu kontekstowe, kółko = zoom do kursora |
@@ -73,13 +74,28 @@ npm run dev:ui         # Vite dev server; równolegle uruchom npm start <folder>
 
 `B` pędzel · `E` gumka · `F` wypełnienie · `R` prostokąt · `I` pipeta ·
 `V` zaznaczanie · `A` stawianie obiektów · `G` siatka · `O` obiekty · `P` animacje · `Ctrl+Z` / `Ctrl+Shift+Z` cofnij i
-ponów · `Ctrl+S` zapisz · `Delete` usuwa zaznaczone obiekty.
+ponów · `Ctrl+S` zapisz · `Ctrl+K` paleta poleceń · `Delete` usuwa zaznaczone obiekty.
 
 Na płótnie: przeciągnięcie dwoma palcami albo `Alt` z myszą przesuwa widok,
 tapnięcie dwoma palcami cofa ostatnią zmianę, długie przytrzymanie (albo prawy
 przycisk) otwiera menu kontekstowe, `Alt` podczas przeciągania obiektu wyłącza
 snapowanie do siatki, a kliknięcie w procent zoomu w lewym dolnym rogu
 dopasowuje mapę do ekranu.
+
+## Wyszukiwanie w projekcie
+
+W palecie (`Ctrl+K`) zwykły tekst filtruje polecenia i mapy, a dwa prefiksy
+przeszukują cały folder:
+
+```
+#mode=versus      mapy, których property "mode" ma wartość "versus"
+#seed             mapy, które w ogóle mają property "seed"
+@laserColour      obiekty z tą property, w dowolnej mapie
+@railId=3         obiekty o konkretnej wartości
+@title~boss       dopasowanie fragmentu zamiast równości
+```
+
+Wynik otwiera mapę i zaznacza obiekt.
 
 ## Instalacja na ekranie domowym
 

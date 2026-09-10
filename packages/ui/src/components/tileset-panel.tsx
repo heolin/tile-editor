@@ -3,7 +3,7 @@ import clsx from 'clsx'
 import { ImagePlus, Plus, Unlink } from 'lucide-react'
 import { isImageCollection, resolveFrom, tileLabel, type Tileset, type TilesetRef } from '@tile-editor/core'
 import { Button, Empty, Panel } from './ui'
-import { AddImagesDialog, AddTilesetDialog } from './tileset-dialogs'
+import { AddImagesDialog } from './tileset-dialogs'
 import { useEditor } from '../state/store'
 import type { TileSourceIndex } from '../render/tile-source'
 
@@ -57,7 +57,7 @@ export function TilesetPanel() {
   const setPropertyTarget = useEditor((s) => s.setPropertyTarget)
   const detachTileset = useEditor((s) => s.detachTileset)
   const [filter, setFilter] = useState('')
-  const [adding, setAdding] = useState(false)
+  const setDialog = useEditor((s) => s.setDialog)
   const [imagesFor, setImagesFor] = useState<string | null>(null)
 
   const sections = useMemo(() => {
@@ -96,12 +96,11 @@ export function TilesetPanel() {
     <Panel
       title={`Tilesety · ${total}`}
       actions={
-        <Button size="sm" title="Dodaj tileset" aria-label="Dodaj tileset" onClick={() => setAdding(true)}>
+        <Button size="sm" title="Dodaj tileset" aria-label="Dodaj tileset" onClick={() => setDialog('add-tileset')}>
           <Plus size={14} />
         </Button>
       }
     >
-      <AddTilesetDialog open={adding} onClose={() => setAdding(false)} />
       {imagesFor ? (
         <AddImagesDialog tilesetPath={imagesFor} open onClose={() => setImagesFor(null)} />
       ) : null}

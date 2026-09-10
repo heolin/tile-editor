@@ -90,6 +90,8 @@ interface EditorState {
   animate: boolean
 
   openPanel: PanelId | null
+  /** Modal dialogs live here so the command palette can open them too. */
+  dialog: 'new-map' | 'add-tileset' | 'palette' | null
   propertyTarget: PropertyOwner
   lint: LintFinding[]
   lintRunning: boolean
@@ -115,6 +117,7 @@ interface EditorState {
   selectObjects(ids: number[]): void
   setCamera(camera: Partial<Camera>): void
   setPanel(panel: PanelId | null): void
+  setDialog(dialog: 'new-map' | 'add-tileset' | 'palette' | null): void
   setPropertyTarget(target: PropertyOwner): void
   toggleGrid(): void
   toggleObjects(): void
@@ -151,6 +154,7 @@ export const useEditor = create<EditorState>((set, get) => ({
   showObjects: true,
   animate: false,
   openPanel: null,
+  dialog: null,
   propertyTarget: { kind: 'map' },
   lint: [],
   lintRunning: false,
@@ -446,6 +450,7 @@ export const useEditor = create<EditorState>((set, get) => ({
     }),
   setCamera: (camera) => set({ camera: { ...get().camera, ...camera } }),
   setPanel: (openPanel) => set({ openPanel }),
+  setDialog: (dialog) => set({ dialog }),
   setPropertyTarget: (propertyTarget) => set({ propertyTarget }),
   toggleGrid: () => set({ showGrid: !get().showGrid }),
   toggleObjects: () => set({ showObjects: !get().showObjects }),

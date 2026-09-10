@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import clsx from 'clsx'
-import { FolderTree, Layers, Palette, ShieldCheck, SlidersHorizontal } from 'lucide-react'
+import { Command, FolderTree, Layers, Palette, ShieldCheck, SlidersHorizontal } from 'lucide-react'
 import { RemoveObjectsCommand, mapTitle } from '@tile-editor/core'
 import { MapCanvas } from './components/canvas'
 import { LayersPanel } from './components/layers-panel'
@@ -9,7 +9,10 @@ import { ProjectPanel } from './components/project-panel'
 import { PropertiesPanel } from './components/properties-panel'
 import { TilesetPanel } from './components/tileset-panel'
 import { HistoryControls, ToolBar, ViewControls } from './components/toolbar'
-import { Sheet, Toast } from './components/ui'
+import { CommandPalette } from './components/command-palette'
+import { NewMapDialog } from './components/new-map-dialog'
+import { AddTilesetDialog } from './components/tileset-dialogs'
+import { Button, Sheet, Toast } from './components/ui'
 import { useEditor, type PanelId } from './state/store'
 
 const PANELS: { id: PanelId; label: string; icon: typeof Layers }[] = [
@@ -58,6 +61,8 @@ export function App() {
   const openPanel = useEditor((s) => s.openPanel)
   const setPanel = useEditor((s) => s.setPanel)
   const init = useEditor((s) => s.init)
+  const dialog = useEditor((s) => s.dialog)
+  const setDialog = useEditor((s) => s.setDialog)
   const compact = useCompactLayout()
 
   useEffect(() => {
@@ -94,6 +99,14 @@ export function App() {
           {doc ? mapTitle(doc.path) : 'brak mapy'}
           {dirty ? <span className="ml-1 text-warn">•</span> : null}
         </span>
+        <Button
+          onClick={() => setDialog('palette')}
+          title="Paleta poleceń (Ctrl+K)"
+          aria-label="Paleta poleceń"
+        >
+          <Command size={15} />
+          <span className="num hidden text-[11px] wide:inline">Ctrl K</span>
+        </Button>
         <div className="hidden md:block">
           <ViewControls />
         </div>
@@ -177,6 +190,10 @@ export function App() {
         </Sheet>
       ) : null}
 
+      <CommandPalette />
+      <NewMapDialog open={dialog === 'new-map'} onClose={() => setDialog(null)} />
+      <AddTilesetDialog open={dialog === 'add-tileset'} onClose={() => setDialog(null)} />
+
       {toast ? <Toast text={toast.text} tone={toast.tone} /> : null}
     </div>
   )
@@ -207,6 +224,11 @@ function useKeyboardShortcuts(): void {
       const state = useEditor.getState()
       const mod = event.ctrlKey || event.metaKey
 
+      if (mod && event.key.toLowerCase() === 'k') {
+        event.preventDefault()
+        state.setDialog(state.dialog === 'palette' ? null : 'palette')
+        return
+      }
       if (mod && event.key.toLowerCase() === 's') {
         event.preventDefault()
         void state.save()

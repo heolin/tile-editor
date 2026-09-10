@@ -3,7 +3,6 @@ import clsx from 'clsx'
 import { FileText, Folder, Plus } from 'lucide-react'
 import { mapFolder, mapTitle } from '@tile-editor/core'
 import { Button, Empty, Panel } from './ui'
-import { NewMapDialog } from './new-map-dialog'
 import { useEditor } from '../state/store'
 
 /** The project is a folder of maps sharing tilesets, so this lists it by folder. */
@@ -14,7 +13,7 @@ export function ProjectPanel() {
   const openMap = useEditor((s) => s.openMap)
   const setPanel = useEditor((s) => s.setPanel)
   const [filter, setFilter] = useState('')
-  const [creating, setCreating] = useState(false)
+  const setDialog = useEditor((s) => s.setDialog)
 
   const grouped = useMemo(() => {
     const groups = new Map<string, string[]>()
@@ -34,12 +33,11 @@ export function ProjectPanel() {
     <Panel
       title={`Projekt · ${total} map`}
       actions={
-        <Button size="sm" title="Nowa mapa" aria-label="Nowa mapa" onClick={() => setCreating(true)}>
+        <Button size="sm" title="Nowa mapa" aria-label="Nowa mapa" onClick={() => setDialog('new-map')}>
           <Plus size={14} />
         </Button>
       }
     >
-      <NewMapDialog open={creating} onClose={() => setCreating(false)} />
       <div className="sticky top-0 z-10 border-b border-line bg-surface px-2 py-1.5">
         <input
           value={filter}
