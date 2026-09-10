@@ -168,7 +168,7 @@ packages/server   serwer HTTP na czystym node:http, API plikowe, SSE
 packages/cli      tile-editor <folder>
 packages/ui       React + PixiJS
 android/          powłoka Capacitora, budowana w CI
-examples/         korpus referencyjny: 110 map z dwóch gier
+examples/         korpus referencyjny: 115 map z trzech gier
 ```
 
 ## Wierność zapisu

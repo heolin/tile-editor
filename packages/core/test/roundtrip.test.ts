@@ -7,6 +7,8 @@ import { parseProjectJson, serializeProjectJson } from '../src/json/project-code
 const maps = globSync('examples/*/levels/*.tmj').sort()
 const tilesets = globSync('examples/*/*.tsj').sort()
 const projects = globSync('examples/*/*.tiled-project').sort()
+/** Racing keeps its maps beside the project file rather than in levels/. */
+const flatMaps = globSync('examples/racing/*.tmj').sort()
 
 /** Strips the model down to what a save must reproduce, ignoring class identity. */
 function shape(value: unknown): unknown {
@@ -28,8 +30,35 @@ function shape(value: unknown): unknown {
 describe('golden round-trip on the examples/ corpus', () => {
   it('finds the corpus', () => {
     expect(maps.length).toBe(110)
-    expect(tilesets.length).toBe(2)
-    expect(projects.length).toBe(2)
+    expect(flatMaps.length).toBe(5)
+    expect(tilesets.length).toBe(4)
+    expect(projects.length).toBe(3)
+  })
+
+  it('round-trips every project file byte for byte, whatever its indentation', () => {
+    for (const path of projects) {
+      const original = readFileSync(path, 'utf8')
+      expect(serializeProjectJson(parseProjectJson(original)), path).toBe(original)
+    }
+    // The three differ: two are indented one space, racing four.
+    const indents = projects.map((p) => /\n(\s*)"/.exec(readFileSync(p, 'utf8'))?.[1]?.length)
+    expect(new Set(indents).size).toBeGreaterThan(1)
+  })
+
+  it('loses nothing from the racing maps either', () => {
+    for (const path of flatMaps) {
+      const first = parseMapJson(readFileSync(path, 'utf8'))
+      const once = serializeMapJson(first.map, first.hints)
+      const second = parseMapJson(once)
+      expect(shape(second.map), `model drift in ${path}`).toEqual(shape(first.map))
+      expect(serializeMapJson(second.map, second.hints), `unstable output for ${path}`).toBe(once)
+    }
+  })
+
+  it('resolves gids across a map that uses two tilesets', () => {
+    const { map } = parseMapJson(readFileSync('examples/racing/track1.tmj', 'utf8'))
+    expect(map.tilesets).toHaveLength(2)
+    expect(map.tilesets.map((t) => t.firstgid)).toEqual([1, 133])
   })
 
   it('loses nothing from any map', () => {

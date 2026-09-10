@@ -1,6 +1,6 @@
 import type { TiledProject } from '../model.js'
 import { parsePropertyTypes, serializePropertyTypes, unrecognizedPropertyTypes } from '../property-types.js'
-import { emitOrdered, takePreserved } from './common.js'
+import { DEFAULT_PROJECT_HINTS, detectProjectHints, emitOrdered, takePreserved, type ProjectFormatHints } from './common.js'
 import { PROJECT_STYLE, writeJson } from './writer.js'
 
 const PROJECT_KEYS = ['folders', 'automappingRulesFile', 'commands', 'extensionsPath', 'propertyTypes'] as const
@@ -8,6 +8,7 @@ const PROJECT_KEYS = ['folders', 'automappingRulesFile', 'commands', 'extensions
 export function parseProjectJson(text: string): TiledProject {
   const raw = JSON.parse(text) as Record<string, unknown>
   return {
+    formatHints: detectProjectHints(text),
     folders: Array.isArray(raw.folders) ? raw.folders.map(String) : ['.'],
     automappingRulesFile: raw.automappingRulesFile as string | undefined,
     commands: raw.commands as unknown[] | undefined,
@@ -18,7 +19,8 @@ export function parseProjectJson(text: string): TiledProject {
   }
 }
 
-export function serializeProjectJson(project: TiledProject): string {
+export function serializeProjectJson(project: TiledProject, hints?: ProjectFormatHints): string {
+  const layout = hints ?? project.formatHints ?? DEFAULT_PROJECT_HINTS
   const out = emitOrdered(project, {
     automappingRulesFile: project.automappingRulesFile ?? '',
     commands: project.commands ?? [],
@@ -26,5 +28,11 @@ export function serializeProjectJson(project: TiledProject): string {
     folders: project.folders,
     propertyTypes: [...serializePropertyTypes(project.propertyTypes), ...(project.unknownPropertyTypes ?? [])],
   })
-  return writeJson(out, PROJECT_STYLE)
+  return writeJson(out, {
+    ...PROJECT_STYLE,
+    objectIndent: layout.indent,
+    arrayIndent: layout.indent,
+    breakEmptyArrays: layout.breakEmptyArrays,
+    trailingNewline: layout.trailingNewline,
+  })
 }

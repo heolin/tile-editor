@@ -28,6 +28,8 @@ export interface JsonStyle {
   arrayBreakAlways: boolean
   /** Put an array's closing bracket on its own line at the key's indent. */
   arrayCloseNewline: boolean
+  /** Write an empty array across two lines rather than as `[]`. */
+  breakEmptyArrays: boolean
   /** Tiled escapes '/' as '\/'; most other writers do not. */
   escapeSlash: boolean
   /** Tiled puts the first root member on the opening brace's line. */
@@ -43,6 +45,7 @@ export const TILED_STYLE: JsonStyle = {
   arraySeparator: ', ',
   arrayBreakAlways: false,
   arrayCloseNewline: false,
+  breakEmptyArrays: false,
   escapeSlash: true,
   rootBraceInline: true,
   trailingNewline: false,
@@ -61,6 +64,7 @@ export const PLAIN_STYLE: JsonStyle = {
   arraySeparator: ',',
   arrayBreakAlways: true,
   arrayCloseNewline: true,
+  breakEmptyArrays: false,
   escapeSlash: false,
   rootBraceInline: false,
   trailingNewline: true,
@@ -123,7 +127,9 @@ function writeValue(value: unknown, indent: number, style: JsonStyle, isRoot: bo
   }
 
   if (Array.isArray(value)) {
-    if (value.length === 0) return '[]'
+    if (value.length === 0) {
+      return style.breakEmptyArrays ? '[\n' + ' '.repeat(indent) + ']' : '[]'
+    }
     const inner = indent + style.arrayIndent
     const pad = ' '.repeat(inner)
     const parts = value.map((item) => writeValue(item, inner, style, false))

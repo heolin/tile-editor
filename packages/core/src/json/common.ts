@@ -29,6 +29,32 @@ export function detectHints(text: string): FormatHints {
 export const DEFAULT_HINTS: FormatHints = { dialect: 'tiled', rootBraceInline: true, trailingNewline: false }
 
 /**
+ * Project files are always written in the plain dialect, but Tiled versions
+ * disagree on how far to indent and whether an empty array takes two lines.
+ * Both are measured from the file rather than assumed.
+ */
+export interface ProjectFormatHints {
+  indent: number
+  breakEmptyArrays: boolean
+  trailingNewline: boolean
+}
+
+export const DEFAULT_PROJECT_HINTS: ProjectFormatHints = {
+  indent: 1,
+  breakEmptyArrays: false,
+  trailingNewline: true,
+}
+
+export function detectProjectHints(text: string): ProjectFormatHints {
+  const firstMember = /\n(\s*)"/.exec(text)
+  return {
+    indent: firstMember?.[1]?.length ?? 1,
+    breakEmptyArrays: /\[\s*\n\s*\]/.test(text),
+    trailingNewline: text.endsWith('\n'),
+  }
+}
+
+/**
  * Splits a source object into the keys the model understands and the rest,
  * remembering the order so a save can put everything back where it was.
  */

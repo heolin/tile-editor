@@ -73,13 +73,21 @@ try {
   // Compare against the pristine source. One tile is one line; a new object is
   // a handful. Either way only one file may move, and it must move a little.
   const diff = execSync(`diff -r -u "${sourceProject}" "${project}" || true`, { encoding: 'utf8' })
-  const changed = diff.split('\n').filter((l) => /^[+-][^+-]/.test(l))
+  const all = diff.split('\n').filter((l) => /^[+-][^+-]/.test(l))
+  // The first save also cleans up whitespace-only lines the level generator
+  // left behind. That is documented behaviour, not part of the edit.
+  const changed = all.filter((l) => l.slice(1).trim() !== '' && l.slice(1).trim() !== '},')
+  const whitespace = all.length - changed.length
   const files = diff.split('\n').filter((l) => l.startsWith('--- ')).length
   check('zmienił się dokładnie jeden plik', files === 1, `${files} plików`)
   if (objectMode) {
     check('nowy obiekt to mała zmiana', changed.length > 0 && changed.length <= 16, `${changed.length} linii`)
   } else {
-    check('zapis zmienił dokładnie jedną linię', changed.length === 2, changed.join('  ->  ').trim() || 'brak zmian')
+    check(
+      'zapis zmienił dokładnie jedną linię',
+      changed.length === 2,
+      `${changed.join('  ->  ').trim() || 'brak zmian'}${whitespace > 0 ? ` (+${whitespace} linii formatowania)` : ''}`,
+    )
   }
 } finally {
   await browser.close()

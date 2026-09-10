@@ -1,5 +1,6 @@
 import type { LayerData } from './layer-data.js'
 import type { PropertyTypeDef } from './property-types.js'
+import type { ProjectFormatHints } from './json/common.js'
 
 /**
  * The document model is format-agnostic: nothing here knows about JSON or XML.
@@ -216,6 +217,8 @@ export interface TiledProject extends Preserving {
   propertyTypes: PropertyTypeDef[]
   /** Entries in the source list this editor did not recognise, kept verbatim. */
   unknownPropertyTypes?: unknown[]
+  /** Indentation measured from the file, so a save does not reformat it. */
+  formatHints?: ProjectFormatHints
 }
 
 /* ------------------------------------------------------------------ */
