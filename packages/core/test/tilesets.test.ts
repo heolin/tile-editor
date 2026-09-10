@@ -138,3 +138,64 @@ describe('tile animations', () => {
     expect(text).not.toContain('animation')
   })
 })
+
+describe('tile collision shapes', () => {
+  const withCollision = () => {
+    const tileset = createTileset({ name: 'kolizje', tilewidth: 32, tileheight: 32 })
+    addImagesToTileset(tileset, 'a.tsj', ['x.png'])
+    tileset.tiles[0]!.objectgroup = {
+      kind: 'objectgroup',
+      id: 2,
+      name: '',
+      opacity: 1,
+      visible: true,
+      offsetx: 0,
+      offsety: 0,
+      parallaxx: 1,
+      parallaxy: 1,
+      draworder: 'index',
+      properties: [],
+      objects: [
+        {
+          id: 1, name: '', className: '', x: 4, y: 6, width: 20, height: 18,
+          rotation: 0, visible: true, shape: 'rectangle', properties: [],
+        },
+        {
+          id: 2, name: '', className: '', x: 0, y: 0, width: 0, height: 0,
+          rotation: 0, visible: true, shape: 'polygon', properties: [],
+          polygon: [{ x: 0, y: 0 }, { x: 32, y: 0 }, { x: 32, y: 32 }],
+        },
+      ],
+    }
+    return tileset
+  }
+
+  const shapes = (tileset: { tiles: { objectgroup?: { objects: unknown[] } }[] }) =>
+    (tileset.tiles[0]!.objectgroup?.objects ?? []).map((o) => {
+      const obj = o as Record<string, unknown>
+      return { id: obj.id, shape: obj.shape, x: obj.x, y: obj.y, width: obj.width, polygon: obj.polygon }
+    })
+
+  it('survives a JSON save and reload', () => {
+    const source = withCollision()
+    const reread = parseTilesetJson(serializeTilesetJson(source, DEFAULT_HINTS), 'a.tsj').tileset
+    expect(shapes(reread)).toEqual(shapes(source))
+    expect(reread.tiles[0]!.objectgroup?.draworder).toBe('index')
+  })
+
+  it('survives an XML save and reload', async () => {
+    const { parseTilesetXml, serializeTilesetXml } = await import('../src/xml/tileset-codec.js')
+    const source = withCollision()
+    const text = serializeTilesetXml(source)
+    expect(text).toContain('<objectgroup')
+    expect(text).toContain('<polygon points="0,0 32,0 32,32"/>')
+    const reread = parseTilesetXml(text, 'a.tsx').tileset
+    expect(shapes(reread)).toEqual(shapes(source))
+  })
+
+  it('writes nothing when a tile has no collision shapes', () => {
+    const tileset = createTileset({ name: 'proste', tilewidth: 32, tileheight: 32 })
+    addImagesToTileset(tileset, 'a.tsj', ['x.png'])
+    expect(serializeTilesetJson(tileset, DEFAULT_HINTS)).not.toContain('objectgroup')
+  })
+})

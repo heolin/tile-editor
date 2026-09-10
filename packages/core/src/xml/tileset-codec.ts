@@ -1,5 +1,5 @@
-import type { ObjectAlignment, Tile, Tileset } from '../model.js'
-import { emitPropertiesNode, parsePropertiesNode } from './map-codec.js'
+import type { ObjectAlignment, ObjectLayer, Tile, Tileset } from '../model.js'
+import { emitObjectNode, emitPropertiesNode, parseObjectNode, parsePropertiesNode } from './map-codec.js'
 import { attrNum, attrStr, childNamed, childrenNamed, extraAttrs, parseXml, type XNode } from './reader.js'
 import { writeXml, type XmlElement } from './writer.js'
 
@@ -14,6 +14,9 @@ const TILE_ATTRS = ['id', 'type', 'class', 'probability', 'x', 'y', 'width', 'he
 function parseTile(node: XNode): Tile {
   const image = childNamed(node, 'image')
   const animation = childNamed(node, 'animation')
+  // Collision shapes live in an <objectgroup> nested inside the tile. Skipping
+  // it here would silently drop every collision shape on save.
+  const collision = childNamed(node, 'objectgroup')
   return {
     id: attrNum(node, 'id'),
     className: node.attrs.class ?? node.attrs.type,
@@ -28,6 +31,22 @@ function parseTile(node: XNode): Tile {
           duration: attrNum(frame, 'duration'),
         }))
       : undefined,
+    objectgroup: collision
+      ? ({
+          kind: 'objectgroup',
+          id: attrNum(collision, 'id'),
+          name: attrStr(collision, 'name'),
+          opacity: attrNum(collision, 'opacity', 1),
+          visible: collision.attrs.visible !== '0',
+          offsetx: attrNum(collision, 'offsetx'),
+          offsety: attrNum(collision, 'offsety'),
+          parallaxx: attrNum(collision, 'parallaxx', 1),
+          parallaxy: attrNum(collision, 'parallaxy', 1),
+          draworder: (collision.attrs.draworder as ObjectLayer['draworder']) ?? 'index',
+          objects: childrenNamed(collision, 'object').map(parseObjectNode),
+          properties: parsePropertiesNode(collision),
+        } satisfies ObjectLayer)
+      : undefined,
     extra: extraAttrs(node, TILE_ATTRS),
     keyOrder: Object.keys(node.attrs),
   }
@@ -41,6 +60,18 @@ function emitTile(tile: Tile): XmlElement {
     children.push({
       tag: 'image',
       attrs: { source: tile.image, width: tile.imagewidth, height: tile.imageheight },
+    })
+  }
+  if (tile.objectgroup) {
+    const group = tile.objectgroup
+    children.push({
+      tag: 'objectgroup',
+      attrs: {
+        id: group.id || undefined,
+        // Tiled writes draworder="index" on tile collision groups.
+        draworder: group.draworder === 'index' ? 'index' : undefined,
+      },
+      children: group.objects.map(emitObjectNode),
     })
   }
   if (tile.animation && tile.animation.length > 0) {

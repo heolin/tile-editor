@@ -1,4 +1,5 @@
 import type { ObjectAlignment, ObjectLayer, Tile, Tileset } from '../model.js'
+import { emitLayer, parseLayer } from './map-codec.js'
 import { DEFAULT_HINTS, bool, detectHints, emitOrdered, emitProperties, num, parseProperties, str, takePreserved, type FormatHints } from './common.js'
 import { PLAIN_STYLE, TILED_STYLE, writeJson } from './writer.js'
 
@@ -31,9 +32,12 @@ function parseTile(raw: Record<string, unknown>): Tile {
           return { tileid: num(src.tileid), duration: num(src.duration), ...takePreserved(src, FRAME_KEYS) }
         })
       : undefined,
-    // Tile collision shapes ride along as a raw object layer; the map codec
-    // owns object parsing, so this is kept opaque until v1.1 needs it.
-    objectgroup: raw.objectgroup as unknown as ObjectLayer | undefined,
+    // Tile collision shapes are a nested object layer. Modelling them properly
+    // is what keeps a save from dropping them.
+    objectgroup:
+      raw.objectgroup === undefined
+        ? undefined
+        : (parseLayer({ type: 'objectgroup', ...(raw.objectgroup as Record<string, unknown>) }) as ObjectLayer),
     ...takePreserved(raw, TILE_KEYS),
   }
 }
@@ -52,7 +56,7 @@ function emitTile(tile: Tile): Record<string, unknown> {
     animation: tile.animation && tile.animation.length > 0
       ? tile.animation.map((f) => emitOrdered(f, { tileid: f.tileid, duration: f.duration }))
       : undefined,
-    objectgroup: tile.objectgroup as unknown,
+    objectgroup: tile.objectgroup ? emitLayer(tile.objectgroup) : undefined,
   })
 }
 

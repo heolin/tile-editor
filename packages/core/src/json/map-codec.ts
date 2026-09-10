@@ -192,7 +192,7 @@ function emitObject(obj: MapObject): Record<string, unknown> {
 /* Layers                                                              */
 /* ------------------------------------------------------------------ */
 
-function parseLayer(raw: Record<string, unknown>): Layer {
+export function parseLayer(raw: Record<string, unknown>): Layer {
   const base = {
     id: num(raw.id),
     name: str(raw.name),
@@ -268,7 +268,7 @@ function parseLayer(raw: Record<string, unknown>): Layer {
   }
 }
 
-function emitLayer(layer: Layer): Record<string, unknown> {
+export function emitLayer(layer: Layer): Record<string, unknown> {
   const common: Record<string, unknown> = {
     id: layer.id,
     name: layer.name,
