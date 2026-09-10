@@ -111,11 +111,6 @@ export function serializeTilesetJson(tileset: Tileset, hints: FormatHints = DEFA
   return writeJson(out, { ...base, rootBraceInline: hints.rootBraceInline, trailingNewline: hints.trailingNewline })
 }
 
-/** True when the tileset stores one image per tile rather than an atlas. */
-export function isImageCollection(tileset: Tileset): boolean {
-  return tileset.columns === 0 || tileset.image === undefined
-}
-
 export function findTile(tileset: Tileset, id: number): Tile | undefined {
   return tileset.tiles.find((t) => t.id === id)
 }

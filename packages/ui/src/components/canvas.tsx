@@ -37,6 +37,7 @@ export function MapCanvas() {
 
   const doc = useEditor((s) => s.doc)
   const revision = useEditor((s) => s.revision)
+  const sourceRevision = useEditor((s) => s.sourceRevision)
   const camera = useEditor((s) => s.camera)
   const tool = useEditor((s) => s.tool)
   const stamp = useEditor((s) => s.stamp)
@@ -88,14 +89,18 @@ export function MapCanvas() {
     const renderer = rendererRef.current
     if (!renderer || !doc) return
     let cancelled = false
+    const first = renderer.documentPath !== doc.path
     void renderer.setDocument(doc.map, doc.source).then(() => {
       if (cancelled) return
-      fitToView()
+      // Only re-frame when a different map opened; adding tiles should not
+      // yank the view away from what the user was working on.
+      if (first) fitToView()
+      else redraw()
     })
     return () => {
       cancelled = true
     }
-  }, [doc?.path, mounted])
+  }, [doc?.path, sourceRevision, mounted])
 
   function redraw(): void {
     const renderer = rendererRef.current

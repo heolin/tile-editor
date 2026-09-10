@@ -1,5 +1,5 @@
 import { DenseLayerData } from './layer-data.js'
-import type { Layer, MapObject, Property, TileLayer, TileMap } from './model.js'
+import type { Frame, Layer, MapObject, Property, Tile, TileLayer, TileMap, Tileset, TilesetRef } from './model.js'
 import { walkLayers } from './model.js'
 
 /**
@@ -370,5 +370,97 @@ export class ResizeMapCommand implements EditCommand {
     }
     this.map.width = this.prevSize.width
     this.map.height = this.prevSize.height
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Tileset edits                                                       */
+/* ------------------------------------------------------------------ */
+
+export class AddTilesetCommand implements EditCommand {
+  readonly label = 'Dodaj tileset'
+  constructor(private map: TileMap, private ref: TilesetRef) {}
+
+  apply(): void {
+    if (!this.map.tilesets.includes(this.ref)) this.map.tilesets.push(this.ref)
+  }
+
+  revert(): void {
+    const i = this.map.tilesets.indexOf(this.ref)
+    if (i >= 0) this.map.tilesets.splice(i, 1)
+  }
+}
+
+export class RemoveTilesetCommand implements EditCommand {
+  readonly label = 'Odłącz tileset'
+  private at = -1
+  constructor(private map: TileMap, private ref: TilesetRef) {}
+
+  apply(): void {
+    this.at = this.map.tilesets.indexOf(this.ref)
+    if (this.at >= 0) this.map.tilesets.splice(this.at, 1)
+  }
+
+  revert(): void {
+    if (this.at >= 0) this.map.tilesets.splice(this.at, 0, this.ref)
+  }
+}
+
+/** Appends tiles to a tileset; the tiles themselves are built by the caller. */
+export class AddTilesCommand implements EditCommand {
+  readonly label: string
+  private previousCount: number
+
+  constructor(private tileset: Tileset, private tiles: Tile[]) {
+    this.label = tiles.length === 1 ? 'Dodaj kafel' : `Dodaj ${tiles.length} kafli`
+    this.previousCount = tileset.tilecount
+  }
+
+  apply(): void {
+    for (const tile of this.tiles) {
+      if (!this.tileset.tiles.includes(tile)) this.tileset.tiles.push(tile)
+    }
+    this.tileset.tilecount = this.tileset.tiles.reduce((max, tile) => Math.max(max, tile.id + 1), 0)
+  }
+
+  revert(): void {
+    for (const tile of this.tiles) {
+      const i = this.tileset.tiles.indexOf(tile)
+      if (i >= 0) this.tileset.tiles.splice(i, 1)
+    }
+    this.tileset.tilecount = this.previousCount
+  }
+}
+
+export class RemoveTileCommand implements EditCommand {
+  readonly label = 'Usuń kafel z tilesetu'
+  private at = -1
+  constructor(private tileset: Tileset, private tile: Tile) {}
+
+  apply(): void {
+    this.at = this.tileset.tiles.indexOf(this.tile)
+    if (this.at >= 0) this.tileset.tiles.splice(this.at, 1)
+  }
+
+  revert(): void {
+    if (this.at >= 0) this.tileset.tiles.splice(this.at, 0, this.tile)
+  }
+}
+
+/** Replaces a tile's animation frames. */
+export class SetAnimationCommand implements EditCommand {
+  readonly label = 'Zmień animację kafla'
+  private before: Frame[] | undefined
+
+  constructor(private tile: Tile, private frames: Frame[] | undefined) {
+    this.before = tile.animation?.map((f) => ({ ...f }))
+  }
+
+  apply(): void {
+    this.tile.animation = this.frames && this.frames.length > 0 ? this.frames.map((f) => ({ ...f })) : undefined
+  }
+
+  revert(): void {
+    this.tile.animation = this.before?.map((f) => ({ ...f }))
   }
 }

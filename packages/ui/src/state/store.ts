@@ -1,10 +1,13 @@
 import { create } from 'zustand'
 import {
-  DenseLayerData, History, ProjectLoader, SetTilesCommand,
-  createFromTemplate, createTileMap, lintMap, lintProject,
-  lintUnusedTiles, mapTitle, normalizePath, tileId, walkLayers,
+  AddTilesCommand, AddTilesetCommand, DenseLayerData, History, ProjectLoader,
+  RemoveTilesetCommand, SetTilesCommand,
+  addImagesToTileset, createFromTemplate, createTileMap, createTileset,
+  findTilesetRef, lintMap, lintProject, lintUnusedTiles, mapTitle,
+  nextFirstGid, normalizePath, relativeFrom, tileId, tilesetUsage, walkLayers,
   type DocumentFormat, type FormatHints, type LintFinding, type Layer, type MapObject,
   type ObjectLayer, type ProjectContents, type TileLayer, type TileMap, type Tileset,
+  type TilesetRef,
 } from '@tile-editor/core'
 import { HttpProjectFS } from '../fs/http-fs'
 import { buildTileSourceIndex, type TileSourceIndex } from '../render/tile-source'
@@ -66,6 +69,8 @@ interface EditorState {
   doc?: OpenDocument
   /** Bumped by every mutation so React re-renders and the canvas repaints. */
   revision: number
+  /** Bumped when the tile palette changes, forcing a texture reload. */
+  sourceRevision: number
   dirty: boolean
   saving: boolean
 
@@ -95,6 +100,12 @@ interface EditorState {
   save(): Promise<void>
   touch(): void
   markTilesetDirty(path: string): void
+  rebuildSource(): void
+
+  attachTileset(tilesetPath: string): Promise<void>
+  detachTileset(ref: TilesetRef): void
+  createTilesetFile(options: { fileName: string; folder: string; name: string; tileSize: number }): Promise<void>
+  addImagesToActiveTileset(tilesetPath: string, imagePaths: string[]): Promise<void>
 
   setTool(tool: ToolId): void
   setStamp(stamp: Stamp | undefined): void
@@ -126,6 +137,7 @@ export const useEditor = create<EditorState>((set, get) => ({
   status: 'loading',
   root: '',
   revision: 0,
+  sourceRevision: 0,
   dirty: false,
   saving: false,
   selectedObjectIds: [],
@@ -287,6 +299,123 @@ export const useEditor = create<EditorState>((set, get) => ({
     const next = new Set(get().dirtyTilesets)
     next.add(path)
     set({ dirtyTilesets: next })
+  },
+
+  /** Rebuilds the gid to image mapping after the tile palette changed. */
+  rebuildSource() {
+    const doc = get().doc
+    if (!doc) return
+    const source = buildTileSourceIndex(doc.map, (p) => fs.assetUrl(p))
+    set({ doc: { ...doc, source }, sourceRevision: get().sourceRevision + 1 })
+  },
+
+  async attachTileset(tilesetPath) {
+    const { doc, loader } = get()
+    if (!doc || !loader) return
+    const path = normalizePath(tilesetPath)
+    if (findTilesetRef(doc.map, doc.path, path)) {
+      get().notify('Ta mapa już używa tego tilesetu.', 'error')
+      return
+    }
+    try {
+      const loaded = await loader.loadTileset(path)
+      const ref: TilesetRef = {
+        firstgid: nextFirstGid(doc.map),
+        source: relativeFrom(doc.path, path),
+        tileset: loaded.tileset,
+      }
+      get().history.run(new AddTilesetCommand(doc.map, ref))
+      get().rebuildSource()
+      get().touch()
+      get().notify(`Podłączono ${loaded.tileset.name || path}`)
+    } catch (error) {
+      get().notify(error instanceof Error ? error.message : String(error), 'error')
+    }
+  },
+
+  detachTileset(ref) {
+    const doc = get().doc
+    if (!doc) return
+    const used = tilesetUsage(doc.map, ref)
+    if (used > 0) {
+      // Removing a tileset shifts nothing, but every gid pointing into it would
+      // stop resolving, so the map has to be cleared of it first.
+      get().notify(`Nie można odłączyć: ${used} kafli i obiektów wciąż go używa.`, 'error')
+      return
+    }
+    get().history.run(new RemoveTilesetCommand(doc.map, ref))
+    get().rebuildSource()
+    get().touch()
+  },
+
+  async createTilesetFile(options) {
+    const { loader, doc } = get()
+    if (!loader) return
+    const folder = normalizePath(options.folder)
+    const fileName = options.fileName.endsWith('.tsj') ? options.fileName : `${options.fileName}.tsj`
+    const path = normalizePath(folder ? `${folder}/${fileName}` : fileName)
+    if (await fs.exists(path)) {
+      get().notify(`Plik ${path} już istnieje.`, 'error')
+      return
+    }
+    try {
+      const tileset = createTileset({
+        name: options.name || mapTitle(path),
+        tilewidth: options.tileSize,
+        tileheight: options.tileSize,
+      })
+      await loader.saveTileset(tileset, path, { dialect: 'tiled', rootBraceInline: true, trailingNewline: false })
+      loader.invalidate(path)
+      await get().refreshProject()
+      if (doc) await get().attachTileset(path)
+      get().notify(`Utworzono ${path}`)
+    } catch (error) {
+      get().notify(error instanceof Error ? error.message : String(error), 'error')
+    }
+  },
+
+  async addImagesToActiveTileset(tilesetPath, imagePaths) {
+    const { loader, doc } = get()
+    if (!loader || !doc) return
+    const loaded = loader.tilesets.get(normalizePath(tilesetPath))
+    if (!loaded) {
+      get().notify('Tileset nie jest wczytany.', 'error')
+      return
+    }
+    // Each tile records its own pixel size, so the images have to be measured
+    // before they can be added. The browser is the only thing here that knows.
+    const sizes = new Map<string, { width: number; height: number }>()
+    await Promise.all(
+      imagePaths.map(
+        (path) =>
+          new Promise<void>((resolveImage) => {
+            const image = new Image()
+            image.onload = () => {
+              sizes.set(path, { width: image.naturalWidth, height: image.naturalHeight })
+              resolveImage()
+            }
+            image.onerror = () => resolveImage()
+            image.src = fs.assetUrl(path)
+          }),
+      ),
+    )
+
+    const tiles = addImagesToTileset(loaded.tileset, loaded.path, imagePaths, (p) => sizes.get(p))
+    if (tiles.length === 0) {
+      get().notify('Wszystkie wybrane obrazki są już w tym tilesecie.', 'error')
+      return
+    }
+    // addImagesToTileset already mutated the tileset; the command exists so the
+    // change can be undone, so undo the mutation before handing it over.
+    for (const tile of tiles) {
+      const i = loaded.tileset.tiles.indexOf(tile)
+      if (i >= 0) loaded.tileset.tiles.splice(i, 1)
+    }
+    get().history.run(new AddTilesCommand(loaded.tileset, tiles))
+    get().markTilesetDirty(loaded.path)
+    get().rebuildSource()
+    get().touch()
+    get().notify(`Dodano ${tiles.length} kafli do ${loaded.tileset.name}`)
   },
 
   setTool: (tool) =>

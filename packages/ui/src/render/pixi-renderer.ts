@@ -90,7 +90,10 @@ export class PixiTileRenderer implements TileRenderer {
     this.app.renderer.resize(Math.max(1, rect.width), Math.max(1, rect.height))
   }
 
-  async setDocument(map: TileMap, source: TileSourceIndex): Promise<void> {
+  /** Identifies the document currently loaded, so callers can spot a change. */
+  documentPath?: string
+
+  async setDocument(map: TileMap, source: TileSourceIndex, path?: string): Promise<void> {
     this.map = map
     this.source = source
     const urls = source.urls()
@@ -125,6 +128,7 @@ export class PixiTileRenderer implements TileRenderer {
     this.tilemaps.clear()
     this.tileLayers.removeChildren()
     this.builtRevision = -1
+    this.documentPath = path
   }
 
   private textureFor(gid: number): Texture | undefined {
