@@ -20,6 +20,19 @@
         var saved = localStorage.getItem('tile-editor:theme')
         if (saved) document.documentElement.dataset.theme = saved
       } catch (error) {}
+
+      // The browser offers installation once and does not offer it again, so
+      // the event has to be caught here: by the time React mounts it is gone.
+      window.__tileEditorInstall = null
+      window.addEventListener('beforeinstallprompt', function (event) {
+        event.preventDefault()
+        window.__tileEditorInstall = event
+        window.dispatchEvent(new Event('tile-editor:installable'))
+      })
+      window.addEventListener('appinstalled', function () {
+        window.__tileEditorInstall = null
+        window.dispatchEvent(new Event('tile-editor:installable'))
+      })
     </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>

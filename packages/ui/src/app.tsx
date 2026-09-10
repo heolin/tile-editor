@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import clsx from 'clsx'
-import { Command, FolderTree, Layers, Palette, Paintbrush, ShieldCheck, SlidersHorizontal } from 'lucide-react'
+import {
+  Command, FolderTree, Layers, Palette, Paintbrush, ShieldCheck,
+  SlidersHorizontal, Smartphone,
+} from 'lucide-react'
 import { RemoveObjectsCommand, mapTitle } from '@tile-editor/core'
 import { MapCanvas } from './components/canvas'
 import { LayersPanel } from './components/layers-panel'
@@ -17,6 +20,7 @@ import { PropertyTypesDialog } from './components/property-types-dialog'
 import { ThemeDialog } from './components/theme-dialog'
 import { Button, Sheet, Toast } from './components/ui'
 import { useEditor, type PanelId } from './state/store'
+import { canInstall, onInstallabilityChange } from './pwa'
 
 const PANELS: { id: PanelId; label: string; icon: typeof Layers }[] = [
   { id: 'project', label: 'Projekt', icon: FolderTree },
@@ -100,6 +104,7 @@ export function App() {
           <Command size={15} />
           <span className="num hidden text-[11px] wide:inline">Ctrl K</span>
         </Button>
+        <InstallButton />
         <Button
           onClick={() => setDialog('theme')}
           title="Motyw kolorów"
@@ -199,6 +204,31 @@ export function App() {
 
       {toast ? <Toast text={toast.text} tone={toast.tone} /> : null}
     </div>
+  )
+}
+
+/**
+ * Only appears when the browser has actually offered installation. A control
+ * that is always visible and usually does nothing teaches people to ignore it;
+ * the command palette carries the entry the rest of the time, and explains why.
+ */
+function InstallButton() {
+  const addToHomeScreen = useEditor((s) => s.addToHomeScreen)
+  const [available, setAvailable] = useState(canInstall)
+
+  useEffect(() => onInstallabilityChange(() => setAvailable(canInstall())), [])
+  if (!available) return null
+
+  return (
+    <Button
+      variant="outline"
+      onClick={() => void addToHomeScreen()}
+      title="Dodaj skrót do ekranu głównego"
+      aria-label="Dodaj do ekranu głównego"
+    >
+      <Smartphone size={15} />
+      <span className="hidden wide:inline">Dodaj skrót</span>
+    </Button>
   )
 }
 

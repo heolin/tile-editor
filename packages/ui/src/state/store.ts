@@ -13,6 +13,7 @@ import {
 } from '@tile-editor/core'
 import { HttpProjectFS } from '../fs/http-fs'
 import { DEFAULT_THEME, applyTheme, storedTheme } from '../theme'
+import { INSTALL_MESSAGES, promptInstall } from '../pwa'
 import { buildTileSourceIndex, type TileSourceIndex } from '../render/tile-source'
 
 export type ToolId = 'brush' | 'eraser' | 'fill' | 'rect' | 'picker' | 'select' | 'object'
@@ -133,6 +134,7 @@ interface EditorState {
   setPanel(panel: PanelId | null): void
   setDialog(dialog: 'new-map' | 'add-tileset' | 'property-types' | 'palette' | 'theme' | null): void
   setTheme(id: string): void
+  addToHomeScreen(): Promise<void>
   setPropertyTarget(target: PropertyOwner): void
   toggleGrid(): void
   toggleObjects(): void
@@ -558,6 +560,16 @@ export const useEditor = create<EditorState>((set, get) => ({
   setCamera: (camera) => set({ camera: { ...get().camera, ...camera } }),
   setPanel: (openPanel) => set({ openPanel }),
   setDialog: (dialog) => set({ dialog }),
+  /** Offers the browser's install prompt, or explains why there is not one. */
+  async addToHomeScreen() {
+    const outcome = await promptInstall()
+    if (outcome === 'accepted') {
+      get().notify('Dodano skrót do ekranu głównego')
+      return
+    }
+    get().notify(INSTALL_MESSAGES[outcome], outcome === 'dismissed' ? 'ok' : 'error')
+  },
+
   setTheme: (id) => {
     // The canvas reads its colours from the same tokens, so a repaint has to
     // follow the swap: bumping the revision is what triggers it.

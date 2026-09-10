@@ -177,12 +177,20 @@ przeszukują cały folder:
 
 Wynik otwiera mapę i zaznacza obiekt.
 
-## Instalacja na ekranie domowym
+## Skrót na ekranie głównym
 
-Otwórz edytor pod adresem `127.0.0.1` i wybierz „Zainstaluj aplikację" w menu
-przeglądarki. Service worker wymaga bezpiecznego kontekstu, a `localhost` się
-nim liczy — adres LAN po zwykłym HTTP już nie, więc przy `--lan` instalacja nie
-będzie oferowana.
+Gdy przeglądarka zaproponuje instalację, w pasku górnym pojawia się przycisk
+**Dodaj skrót**; to samo polecenie jest zawsze w palecie (`Ctrl+K` → „Dodaj do
+ekranu głównego"). Przycisk nie pokazuje się, gdy instalacja i tak jest
+niemożliwa — polecenie w palecie wtedy tłumaczy dlaczego.
+
+Działa w Chrome i Edge, na Androidzie i na desktopie. Safari i Firefox nie
+udostępniają tego mechanizmu: w Safari trzeba użyć Udostępnij → Do ekranu
+początkowego.
+
+Instalacja wymaga bezpiecznego kontekstu. `127.0.0.1` się nim liczy, adres LAN
+po zwykłym HTTP już nie — przy `--lan` nie będzie ani service workera, ani
+instalacji.
 
 Offline działa sama powłoka edytora. Pliki projektu czyta lokalny serwer, więc
 bez niego edytor otworzy się, ale nie pokaże map.

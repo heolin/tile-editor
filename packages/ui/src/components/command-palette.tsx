@@ -3,7 +3,7 @@ import clsx from 'clsx'
 import {
   ArrowRight, Brush, Eraser, FileText, Grid3x3, Layers, ListChecks, MousePointer2,
   PaintBucket, Palette, Pipette, Play, Plus, Redo2, Save, Search, Shapes,
-  ShieldCheck, SlidersHorizontal, Square, StickyNote, Undo2,
+  ShieldCheck, SlidersHorizontal, Smartphone, Square, StickyNote, Undo2,
 } from 'lucide-react'
 import { allObjects, mapFolder, mapTitle, type TileMap } from '@tile-editor/core'
 import { THEMES } from '../theme'
@@ -75,6 +75,13 @@ export function CommandPalette() {
       { id: 'panel-tilesets', label: 'Panel: tilesety', group: 'Panele', icon: Palette, run: () => useEditor.getState().setPanel('tilesets') },
       { id: 'panel-props', label: 'Panel: properties', group: 'Panele', icon: SlidersHorizontal, run: () => useEditor.getState().setPanel('properties') },
       { id: 'theme', label: 'Motyw…', group: 'Widok', icon: Palette, run: () => useEditor.getState().setDialog('theme') },
+      {
+        id: 'install',
+        label: 'Dodaj do ekranu głównego',
+        group: 'Widok',
+        icon: Smartphone,
+        run: () => useEditor.getState().addToHomeScreen(),
+      },
       ...THEMES.map((theme): Entry => ({
         id: `theme:${theme.id}`,
         label: `Motyw: ${theme.label}`,
