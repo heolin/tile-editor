@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import clsx from 'clsx'
 import { Plus, Trash2 } from 'lucide-react'
 import {
@@ -29,8 +29,20 @@ export function PropertiesPanel() {
   const owner = useMemo(() => resolveOwner(target), [target, doc, state.revision])
   const registry = state.types()
   const kind = targetKind(target)
+  const propertyIndex = useEditor((s) => s.propertyIndex)
+  const indexProperties = useEditor((s) => s.indexProjectProperties)
+
+  // Learning what the project already calls things is what stops a new
+  // property from silently disagreeing with the same name elsewhere.
+  useEffect(() => {
+    if (propertyIndex.length === 0) void indexProperties()
+  }, [propertyIndex.length, indexProperties])
   const customTypes = registry.usableOn(kind)
   const nodeClass = owner ? classFor(owner.className, registry, kind) : undefined
+  const knownNames = useMemo(
+    () => propertyIndex.filter((entry) => entry.scope === indexScope(target)),
+    [propertyIndex, target],
+  )
 
   if (!doc) return <Panel title="Properties"><Empty>Brak otwartej mapy.</Empty></Panel>
   if (!owner) return <Panel title="Properties"><Empty>Nic nie jest zaznaczone.</Empty></Panel>
@@ -65,6 +77,12 @@ export function PropertiesPanel() {
         <NodeClassSection type={nodeClass} owner={owner} onCommit={commit} />
       ) : null}
 
+      <datalist id="tile-editor-property-names">
+        {knownNames.map((entry) => (
+          <option key={entry.name} value={entry.name}>{entry.type}</option>
+        ))}
+      </datalist>
+
       {propertiesOutsideClass(owner.node.properties, nodeClass).length === 0 ? (
         <Empty>
           {nodeClass
@@ -84,6 +102,7 @@ export function PropertiesPanel() {
                 <TextInput
                   value={prop.name}
                   aria-label="Nazwa property"
+                  list="tile-editor-property-names"
                   onChange={(e) => setAt(index, { name: e.target.value })}
                   className="font-medium"
                 />
@@ -132,12 +151,49 @@ export function PropertiesPanel() {
                 </button>
               </div>
               <PropertyValue prop={prop} definition={registry.get(prop.propertytype)} onChange={(value) => setAt(index, { value })} />
+              <TypeMismatchHint
+                property={prop}
+                known={knownNames.find((entry) => entry.name === prop.name)}
+                onAdopt={(type) => setAt(index, { type, value: coerce(prop.value, type) })}
+              />
             </li>
           ))}
         </ul>
       )}
     </Panel>
   )
+}
+
+/**
+ * Warns when a property disagrees with how the rest of the project spells the
+ * same name. This is the moment the railId problem is created, so it is the
+ * moment to say something about it.
+ */
+function TypeMismatchHint({ property, known, onAdopt }: {
+  property: Property
+  known?: { type: PropertyType; count: number; conflicting?: boolean }
+  onAdopt: (type: PropertyType) => void
+}) {
+  if (!known || property.propertytype || known.type === property.type) return null
+  return (
+    <p className="flex flex-wrap items-center gap-1.5 text-[11px] text-warn">
+      <span>
+        W projekcie „{property.name}" jest typu {known.type} ({known.count}×).
+      </span>
+      <button
+        type="button"
+        className="rounded border border-warn px-1.5 py-0.5 text-warn hover:bg-warn-deep"
+        onClick={() => onAdopt(known.type)}
+      >
+        Użyj {known.type}
+      </button>
+    </p>
+  )
+}
+
+/** Which slice of the property index applies to the node being edited. */
+function indexScope(target: PropertyOwner): 'map' | 'layer' | 'object' {
+  return target.kind === 'map' ? 'map' : target.kind === 'object' ? 'object' : 'layer'
 }
 
 /** Which custom types make sense here, per each class's `useAs`. */

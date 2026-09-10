@@ -1,5 +1,5 @@
 import { tileId } from './gid.js'
-import { allObjects, tilesetForGid, walkLayers, type Property, type TileMap, type Tileset } from './model.js'
+import { allObjects, tilesetForGid, walkLayers, type Property, type PropertyType, type TileMap, type Tileset } from './model.js'
 import { checkProperty, type PropertyTypeRegistry, type PropertyTypeTarget } from './property-types.js'
 
 /**
@@ -17,7 +17,25 @@ export interface LintFinding {
   layerId?: number
   objectId?: number
   tileId?: number
+  /** Present when the editor can repair the finding on its own. */
+  fix?: LintFix
 }
+
+/**
+ * A repair the editor knows how to apply across the whole project. Only
+ * findings whose correct outcome is unambiguous carry one.
+ */
+export type LintFix = {
+  kind: 'normalize-property-type'
+  scope: PropertyScope
+  property: string
+  /** The type the majority of uses already agree on. */
+  to: PropertyType
+  /** How many properties would change. */
+  count: number
+}
+
+export type PropertyScope = 'map' | 'layer' | 'object'
 
 export interface LintTarget {
   path: string
@@ -259,14 +277,28 @@ export function lintProject(targets: LintTarget[], ctx: LintContext = {}): LintF
   }
   for (const [name, byType] of kinds) {
     if (byType.size < 2) continue
-    const summary = [...byType.entries()]
-      .sort((a, b) => b[1].count - a[1].count)
-      .map(([type, e]) => `${type} ×${e.count}`)
-      .join(', ')
+    const ranked = [...byType.entries()].sort((a, b) => b[1].count - a[1].count)
+    const summary = ranked.map(([type, e]) => `${type} ×${e.count}`).join(', ')
+    const [scope, ...rest] = name.split('.')
+    const property = rest.join('.')
+    const [dominant] = ranked
+    const minority = ranked.slice(1).reduce((sum, [, entry]) => sum + entry.count, 0)
     findings.push({
       rule: 'conflicting-property-type',
       severity: 'error',
-      message: `Property „${name.split('.').slice(1).join('.')}" występuje w dwóch typach: ${summary}.`,
+      message: `Property „${property}" występuje w dwóch typach: ${summary}.`,
+      // Repairable only when one type clearly wins; a tie is a decision for a
+      // person, not for a majority vote.
+      fix:
+        dominant && ranked[1] && dominant[1].count > ranked[1][1].count
+          ? {
+              kind: 'normalize-property-type',
+              scope: scope as PropertyScope,
+              property,
+              to: dominant[0] as PropertyType,
+              count: minority,
+            }
+          : undefined,
     })
   }
 
@@ -318,6 +350,107 @@ export function lintUnusedTiles(targets: LintTarget[], tilesets: Map<string, Til
     })
   }
   return findings
+}
+
+/**
+ * Converts a value to a different property type without losing what it meant.
+ * A number written as text becomes that number; anything genuinely unparseable
+ * is left alone so the repair cannot quietly destroy data.
+ */
+export function coercePropertyValue(value: unknown, to: PropertyType): unknown {
+  switch (to) {
+    case 'int': {
+      const parsed = Number(value)
+      return Number.isFinite(parsed) ? Math.trunc(parsed) : value
+    }
+    case 'float': {
+      const parsed = Number(value)
+      return Number.isFinite(parsed) ? parsed : value
+    }
+    case 'bool':
+      if (typeof value === 'boolean') return value
+      if (value === 'true' || value === 1) return true
+      if (value === 'false' || value === 0) return false
+      return value
+    case 'string':
+      return value === undefined || value === null ? '' : String(value)
+    default:
+      return value
+  }
+}
+
+export interface PropertyIndexEntry {
+  scope: PropertyScope
+  name: string
+  /** The type most uses agree on. */
+  type: PropertyType
+  count: number
+  /** Set when the project uses this name with more than one type. */
+  conflicting?: boolean
+}
+
+/**
+ * What property names the project already uses, and with what type. The editor
+ * offers these when a new property is added: a name typed afresh gets whatever
+ * type the editor happened to be in, which is exactly how `railId` ended up an
+ * int in 56 objects and a string in 18.
+ */
+export function indexProperties(targets: LintTarget[]): PropertyIndexEntry[] {
+  const seen = new Map<string, { scope: PropertyScope; name: string; types: Map<PropertyType, number> }>()
+  const record = (scope: PropertyScope, property: Property) => {
+    const key = `${scope}.${property.name}`
+    const entry = seen.get(key) ?? { scope, name: property.name, types: new Map() }
+    entry.types.set(property.type, (entry.types.get(property.type) ?? 0) + 1)
+    seen.set(key, entry)
+  }
+
+  for (const { map } of targets) {
+    for (const property of map.properties) record('map', property)
+    for (const layer of walkLayers(map.layers)) {
+      for (const property of layer.properties) record('layer', property)
+    }
+    for (const object of allObjects(map)) {
+      for (const property of object.properties) record('object', property)
+    }
+  }
+
+  return [...seen.values()]
+    .map((entry) => {
+      const ranked = [...entry.types.entries()].sort((a, b) => b[1] - a[1])
+      return {
+        scope: entry.scope,
+        name: entry.name,
+        type: ranked[0]![0],
+        count: ranked.reduce((sum, [, n]) => sum + n, 0),
+        conflicting: ranked.length > 1 ? true : undefined,
+      }
+    })
+    .sort((a, b) => b.count - a.count)
+}
+
+/** Applies a repair to one map. Returns how many properties changed. */
+export function applyFix(map: TileMap, fix: LintFix): number {
+  if (fix.kind !== 'normalize-property-type') return 0
+  const lists: Property[][] =
+    fix.scope === 'map'
+      ? [map.properties]
+      : fix.scope === 'layer'
+        ? [...walkLayers(map.layers)].map((layer) => layer.properties)
+        : allObjects(map).map((object) => object.properties)
+
+  let changed = 0
+  for (const list of lists) {
+    for (const property of list) {
+      if (property.name !== fix.property || property.type === fix.to) continue
+      const next = coercePropertyValue(property.value, fix.to)
+      // Refuse to change a value the conversion could not make sense of.
+      if (fix.to !== 'string' && typeof next !== typeof (fix.to === 'bool' ? true : 0)) continue
+      property.type = fix.to
+      property.value = next
+      changed++
+    }
+  }
+  return changed
 }
 
 export function summarize(findings: LintFinding[]): Record<LintSeverity, number> {

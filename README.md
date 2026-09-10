@@ -44,7 +44,7 @@ dodaj `--lan`.
 | **Properties** | mapy, warstwy, obiektu i **kafla** — wszystkie typy skalarne; zmiany kafla zapisują się do tilesetu |
 | **Typy własne** | enumy i klasy w `.tiled-project`; enum staje się listą wyboru, flagi checkboxami, klasa rozwija się na pola |
 | **Paleta poleceń** | `Ctrl+K` — polecenia, skok do mapy i wyszukiwanie po properties w całym projekcie |
-| **Lint** | sprzeczne typy property, braki względem reszty map, GID-y spoza tilesetu, nieużywane kafle |
+| **Lint** | sprzeczne typy property, braki względem reszty map, GID-y spoza tilesetu, nieużywane kafle, wartości spoza typu; część zgłoszeń z naprawą jednym kliknięciem |
 | **Układ** | trzy progi: telefon, tablet w pionie, tablet w poziomie i desktop |
 | **Gesty** | dwa palce = pan i zoom, tapnięcie dwoma palcami = cofnij, długie przytrzymanie = menu kontekstowe, kółko = zoom do kursora |
 | **PWA** | manifest, ikony i service worker — instalowalne z ekranu domowego, powłoka działa offline |
@@ -106,6 +106,25 @@ APK buduje się w GitHub Actions (`.github/workflows/android.yml`, uruchamiany
 ręcznie albo tagiem `v*`) i pobiera jako artefakt. Budowanie na telefonie
 wymagałoby JDK, Android SDK i Gradle'a — dlatego Termux zostaje miejscem
 uruchamiania, nie budowania.
+
+## Lint z naprawą
+
+Zgłoszenie, którego poprawny wynik jest jednoznaczny, dostaje przycisk
+naprawy. Najczęstszy przypadek: property używana z dwoma typami naraz.
+Dodając property, Tiled i ten edytor dają jej domyślnie typ `string`, więc
+`railId` wpisany raz ręcznie zostaje tekstem obok pięćdziesięciu kilku
+liczbowych.
+
+Naprawa przenosi mniejszość na typ, na który zgadza się większość, zachowując
+wartości — `"3"` staje się `3`. Wartość, której nie da się przekonwertować,
+zostaje nietknięta, żeby naprawa niczego nie zniszczyła po cichu. Remis nie
+dostaje przycisku: to decyzja dla człowieka, nie dla głosowania.
+
+Od strony zapobiegania: pole nazwy property podpowiada nazwy używane już w
+projekcie, a gdy typ się rozjeżdża z resztą, pokazuje ostrzeżenie z
+przyciskiem przyjęcia właściwego typu.
+
+Naprawa zapisuje pliki bezpośrednio i **nie da się jej cofnąć w edytorze**.
 
 ## Typy własne
 

@@ -1,14 +1,15 @@
 import { create } from 'zustand'
 import {
   AddTilesCommand, AddTilesetCommand, DenseLayerData, History, ProjectLoader,
-  PropertyTypeRegistry, RemoveTilesetCommand, SetTilesCommand, serializeProjectJson,
-  suggestEnums,
+  PropertyTypeRegistry, RemoveTilesetCommand, SetTilesCommand, applyFix,
+  indexProperties, serializeProjectJson, suggestEnums,
   addImagesToTileset, createFromTemplate, createTileMap, createTileset,
   findTilesetRef, lintMap, lintProject, lintUnusedTiles, mapTitle,
   nextFirstGid, normalizePath, relativeFrom, tileId, tilesetUsage, walkLayers,
   type DocumentFormat, type FormatHints, type LintFinding, type Layer, type MapObject,
-  type ObjectLayer, type ProjectContents, type PropertyTypeDef, type TileLayer,
-  type TileMap, type Tileset, type TilesetRef, type TypeSuggestion,
+  type LintFix, type ObjectLayer, type ProjectContents, type PropertyIndexEntry,
+  type PropertyTypeDef, type TileLayer, type TileMap, type Tileset,
+  type TilesetRef, type TypeSuggestion,
 } from '@tile-editor/core'
 import { HttpProjectFS } from '../fs/http-fs'
 import { buildTileSourceIndex, type TileSourceIndex } from '../render/tile-source'
@@ -96,6 +97,8 @@ interface EditorState {
   propertyTarget: PropertyOwner
   lint: LintFinding[]
   lintRunning: boolean
+  /** Property names the project already uses; drives the name suggestions. */
+  propertyIndex: PropertyIndexEntry[]
   toast?: { text: string; tone: 'ok' | 'error' }
 
   init(): Promise<void>
@@ -135,6 +138,8 @@ interface EditorState {
   undo(): void
   redo(): void
   runLint(): Promise<void>
+  indexProjectProperties(): Promise<void>
+  applyLintFix(fix: LintFix): Promise<void>
 
   activeLayer(): Layer | undefined
   activeTileLayer(): TileLayer | undefined
@@ -166,6 +171,7 @@ export const useEditor = create<EditorState>((set, get) => ({
   propertyTarget: { kind: 'map' },
   lint: [],
   lintRunning: false,
+  propertyIndex: [],
 
   async connectTo(base) {
     fs.setBase(base)
@@ -567,6 +573,53 @@ export const useEditor = create<EditorState>((set, get) => ({
     get().touch()
   },
 
+  /** Reads every map to learn which property names exist and with what type. */
+  async indexProjectProperties() {
+    const { loader, project, doc } = get()
+    if (!loader || !project) return
+    const targets: { path: string; map: TileMap }[] = []
+    for (const path of project.maps) {
+      try {
+        targets.push({ path, map: doc && doc.path === path ? doc.map : (await loader.loadMap(path)).map })
+      } catch {
+        // A map that will not parse contributes nothing to the index.
+      }
+    }
+    set({ propertyIndex: indexProperties(targets) })
+  },
+
+  /**
+   * Applies a lint repair across the project. Like the type assignment, this
+   * writes files directly rather than through the undo stack: it spans the
+   * whole folder, and undo is per-document.
+   */
+  async applyLintFix(fix) {
+    const { loader, project, doc } = get()
+    if (!loader || !project) return
+    let maps = 0
+    let changed = 0
+    for (const path of project.maps) {
+      let loaded
+      try {
+        loaded = doc && doc.path === path ? { map: doc.map, hints: doc.hints } : await loader.loadMap(path)
+      } catch {
+        continue
+      }
+      const touched = applyFix(loaded.map, fix)
+      if (touched === 0) continue
+      maps++
+      changed += touched
+      await loader.saveMap(loaded.map, path, loaded.hints)
+    }
+    if (doc) get().touch()
+    get().notify(
+      changed === 0
+        ? 'Nie było czego naprawić.'
+        : `Poprawiono ${changed} properties w ${maps} mapach na typ ${fix.to}`,
+    )
+    await get().runLint()
+  },
+
   async runLint() {
     const { loader, project, doc } = get()
     if (!loader || !project) return
@@ -588,7 +641,7 @@ export const useEditor = create<EditorState>((set, get) => ({
         ...lintProject(targets, { registry: get().types() }),
         ...lintUnusedTiles(targets, tilesetsByRef),
       ]
-      set({ lint: findings, lintRunning: false })
+      set({ lint: findings, lintRunning: false, propertyIndex: indexProperties(targets) })
     } catch (error) {
       set({ lintRunning: false })
       get().notify(error instanceof Error ? error.message : String(error), 'error')
