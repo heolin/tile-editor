@@ -1,0 +1,34 @@
+{
+  "controls.steer": "Prowadź samochód",
+  "controls.action": "Cofnij czas po wypadku",
+
+  "menu.tracks": "TRASY",
+  "menu.races": "WYŚCIGI",
+  "menu.laps": "OKRĄŻENIA",
+  "menu.difficulty": "POZIOM",
+  "menu.start": "START",
+
+  "hud.race": "Wyścig {race}/{total}\nTrasa {track} · {laps} okrążeń",
+
+  "powerup.speed": "PRZYSPIESZENIE",
+  "powerup.freeze": "ZAMROŻENIE",
+  "powerup.oil": "OLEJ",
+  "powerup.swap": "ZAMIANA",
+
+  "results.standings": "WYŚCIG {race} ZA NAMI",
+  "results.final": "KLASYFIKACJA KOŃCOWA",
+  "results.points": "{points} pkt",
+  "results.continue": "Dalej",
+  "results.finish": "Zakończ",
+  "results.menu": "Menu",
+
+  "setup.title": "RACING",
+  "howto.1.title": "Ustaw serię",
+  "howto.1.body": "Wybierz trasy w kolejności, w jakiej chcesz je jechać, a potem liczbę wyścigów i okrążeń.",
+  "howto.2.title": "Jedź",
+  "howto.2.body": "Obracaj kontroler jak kierownicę, żeby skręcać, i przechyl go do przodu, żeby przyspieszyć.",
+  "howto.3.title": "Wygraj serię",
+  "howto.3.body": "Każdy wyścig daje punkty za miejsce na mecie. Kto prowadzi po ostatnim, bierze serię.",
+  "milestones.daily": "Ukończ dziś jeden wyścig",
+  "milestones.track": "Ukończ trasę {number}"
+}

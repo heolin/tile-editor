@@ -1,0 +1,34 @@
+{
+  "controls.steer": "Dein Auto lenken",
+  "controls.action": "Zurückspulen, wenn du crashst",
+
+  "menu.tracks": "STRECKEN",
+  "menu.races": "RENNEN",
+  "menu.laps": "RUNDEN",
+  "menu.difficulty": "SCHWIERIGKEIT",
+  "menu.start": "START",
+
+  "hud.race": "Rennen {race}/{total}\nStrecke {track} · {laps} Runden",
+
+  "powerup.speed": "TEMPO",
+  "powerup.freeze": "FROST",
+  "powerup.oil": "ÖL",
+  "powerup.swap": "TAUSCH",
+
+  "results.standings": "RENNEN {race} VORBEI",
+  "results.final": "ENDSTAND",
+  "results.points": "{points} Pkt.",
+  "results.continue": "Weiter",
+  "results.finish": "Fertig",
+  "results.menu": "Menü",
+
+  "setup.title": "RACING",
+  "howto.1.title": "Serie festlegen",
+  "howto.1.body": "Wähle die Strecken in der Reihenfolge, in der du sie fahren willst, dann Rennanzahl und Runden.",
+  "howto.2.title": "Fahren",
+  "howto.2.body": "Drehe den Controller wie ein Lenkrad zum Lenken und kippe ihn nach vorn zum Beschleunigen.",
+  "howto.3.title": "Serie gewinnen",
+  "howto.3.body": "Jedes Rennen gibt Punkte nach Platzierung. Wer nach dem letzten vorn liegt, gewinnt die Serie.",
+  "milestones.daily": "Heute ein Rennen beenden",
+  "milestones.track": "Strecke {number} beenden"
+}

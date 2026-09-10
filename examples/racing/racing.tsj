@@ -1,0 +1,811 @@
+{
+ "name": "racing",
+ "type": "tileset",
+ "version": "1.10",
+ "tiledversion": "1.10.0",
+ "tilewidth": 128,
+ "tileheight": 128,
+ "tilecount": 132,
+ "columns": 0,
+ "margin": 0,
+ "spacing": 0,
+ "grid": {
+  "orientation": "orthogonal",
+  "width": 128,
+  "height": 128
+ },
+ "tiles": [
+  {
+   "id": 0,
+   "image": "src/assets/tiles/asphalt/road_asphalt01.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 1,
+   "image": "src/assets/tiles/asphalt/road_asphalt02.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 2,
+   "image": "src/assets/tiles/asphalt/road_asphalt03.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 3,
+   "image": "src/assets/tiles/asphalt/road_asphalt04.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 4,
+   "image": "src/assets/tiles/asphalt/road_asphalt05.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 5,
+   "image": "src/assets/tiles/asphalt/road_asphalt06.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 6,
+   "image": "src/assets/tiles/asphalt/road_asphalt07.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 7,
+   "image": "src/assets/tiles/asphalt/road_asphalt08.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 8,
+   "image": "src/assets/tiles/asphalt/road_asphalt09.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 9,
+   "image": "src/assets/tiles/asphalt/road_asphalt10.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 10,
+   "image": "src/assets/tiles/asphalt/road_asphalt11.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 11,
+   "image": "src/assets/tiles/asphalt/road_asphalt12.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 12,
+   "image": "src/assets/tiles/asphalt/road_asphalt13.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 13,
+   "image": "src/assets/tiles/asphalt/road_asphalt14.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 14,
+   "image": "src/assets/tiles/asphalt/road_asphalt15.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 15,
+   "image": "src/assets/tiles/asphalt/road_asphalt16.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 16,
+   "image": "src/assets/tiles/asphalt/road_asphalt17.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 17,
+   "image": "src/assets/tiles/asphalt/road_asphalt18.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 18,
+   "image": "src/assets/tiles/asphalt/road_asphalt19.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 19,
+   "image": "src/assets/tiles/asphalt/road_asphalt20.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 20,
+   "image": "src/assets/tiles/asphalt/road_asphalt21.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 21,
+   "image": "src/assets/tiles/asphalt/road_asphalt22.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 22,
+   "image": "src/assets/tiles/asphalt/road_asphalt23.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 23,
+   "image": "src/assets/tiles/asphalt/road_asphalt24.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 24,
+   "image": "src/assets/tiles/asphalt/road_asphalt25.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 25,
+   "image": "src/assets/tiles/asphalt/road_asphalt26.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 26,
+   "image": "src/assets/tiles/asphalt/road_asphalt27.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 27,
+   "image": "src/assets/tiles/asphalt/road_asphalt28.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 28,
+   "image": "src/assets/tiles/asphalt/road_asphalt29.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 29,
+   "image": "src/assets/tiles/asphalt/road_asphalt30.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 30,
+   "image": "src/assets/tiles/asphalt/road_asphalt31.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 31,
+   "image": "src/assets/tiles/asphalt/road_asphalt32.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 32,
+   "image": "src/assets/tiles/asphalt/road_asphalt33.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 33,
+   "image": "src/assets/tiles/asphalt/road_asphalt34.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 34,
+   "image": "src/assets/tiles/asphalt/road_asphalt35.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 35,
+   "image": "src/assets/tiles/asphalt/road_asphalt36.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 36,
+   "image": "src/assets/tiles/asphalt/road_asphalt37.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 37,
+   "image": "src/assets/tiles/asphalt/road_asphalt38.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 38,
+   "image": "src/assets/tiles/asphalt/road_asphalt39.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 39,
+   "image": "src/assets/tiles/asphalt/road_asphalt40.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 40,
+   "image": "src/assets/tiles/asphalt/road_asphalt41.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 41,
+   "image": "src/assets/tiles/asphalt/road_asphalt42.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 42,
+   "image": "src/assets/tiles/asphalt/road_asphalt43.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 43,
+   "image": "src/assets/tiles/asphalt/road_asphalt44.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 44,
+   "image": "src/assets/tiles/asphalt/road_asphalt45.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 45,
+   "image": "src/assets/tiles/asphalt/road_asphalt46.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 46,
+   "image": "src/assets/tiles/asphalt/road_asphalt47.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 47,
+   "image": "src/assets/tiles/asphalt/road_asphalt48.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 48,
+   "image": "src/assets/tiles/asphalt/road_asphalt49.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 49,
+   "image": "src/assets/tiles/asphalt/road_asphalt50.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 50,
+   "image": "src/assets/tiles/asphalt/road_asphalt51.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 51,
+   "image": "src/assets/tiles/asphalt/road_asphalt52.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 52,
+   "image": "src/assets/tiles/asphalt/road_asphalt53.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 53,
+   "image": "src/assets/tiles/asphalt/road_asphalt54.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 54,
+   "image": "src/assets/tiles/asphalt/road_asphalt55.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 55,
+   "image": "src/assets/tiles/asphalt/road_asphalt56.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 56,
+   "image": "src/assets/tiles/asphalt/road_asphalt57.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 57,
+   "image": "src/assets/tiles/asphalt/road_asphalt58.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 58,
+   "image": "src/assets/tiles/asphalt/road_asphalt59.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 59,
+   "image": "src/assets/tiles/asphalt/road_asphalt60.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 60,
+   "image": "src/assets/tiles/asphalt/road_asphalt61.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 61,
+   "image": "src/assets/tiles/asphalt/road_asphalt62.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 62,
+   "image": "src/assets/tiles/asphalt/road_asphalt63.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 63,
+   "image": "src/assets/tiles/asphalt/road_asphalt64.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 64,
+   "image": "src/assets/tiles/asphalt/road_asphalt65.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 65,
+   "image": "src/assets/tiles/asphalt/road_asphalt66.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 66,
+   "image": "src/assets/tiles/asphalt/road_asphalt67.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 67,
+   "image": "src/assets/tiles/asphalt/road_asphalt68.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 68,
+   "image": "src/assets/tiles/asphalt/road_asphalt69.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 69,
+   "image": "src/assets/tiles/asphalt/road_asphalt70.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 70,
+   "image": "src/assets/tiles/asphalt/road_asphalt71.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 71,
+   "image": "src/assets/tiles/asphalt/road_asphalt72.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 72,
+   "image": "src/assets/tiles/asphalt/road_asphalt73.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 73,
+   "image": "src/assets/tiles/asphalt/road_asphalt74.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 74,
+   "image": "src/assets/tiles/asphalt/road_asphalt75.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 75,
+   "image": "src/assets/tiles/asphalt/road_asphalt76.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 76,
+   "image": "src/assets/tiles/asphalt/road_asphalt77.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 77,
+   "image": "src/assets/tiles/asphalt/road_asphalt78.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 78,
+   "image": "src/assets/tiles/asphalt/road_asphalt79.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 79,
+   "image": "src/assets/tiles/asphalt/road_asphalt80.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 80,
+   "image": "src/assets/tiles/asphalt/road_asphalt81.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 81,
+   "image": "src/assets/tiles/asphalt/road_asphalt82.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 82,
+   "image": "src/assets/tiles/asphalt/road_asphalt83.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 83,
+   "image": "src/assets/tiles/asphalt/road_asphalt84.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 84,
+   "image": "src/assets/tiles/asphalt/road_asphalt85.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 85,
+   "image": "src/assets/tiles/asphalt/road_asphalt86.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 86,
+   "image": "src/assets/tiles/asphalt/road_asphalt87.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 87,
+   "image": "src/assets/tiles/asphalt/road_asphalt88.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 88,
+   "image": "src/assets/tiles/asphalt/road_asphalt89.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 89,
+   "image": "src/assets/tiles/asphalt/road_asphalt90.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 90,
+   "image": "src/assets/tiles/grass/land_grass01.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 91,
+   "image": "src/assets/tiles/grass/land_grass02.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 92,
+   "image": "src/assets/tiles/grass/land_grass03.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 93,
+   "image": "src/assets/tiles/grass/land_grass04.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 94,
+   "image": "src/assets/tiles/grass/land_grass05.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 95,
+   "image": "src/assets/tiles/grass/land_grass06.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 96,
+   "image": "src/assets/tiles/grass/land_grass07.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 97,
+   "image": "src/assets/tiles/grass/land_grass08.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 98,
+   "image": "src/assets/tiles/grass/land_grass09.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 99,
+   "image": "src/assets/tiles/grass/land_grass10.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 100,
+   "image": "src/assets/tiles/grass/land_grass11.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 101,
+   "image": "src/assets/tiles/grass/land_grass12.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 102,
+   "image": "src/assets/tiles/grass/land_grass13.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 103,
+   "image": "src/assets/tiles/grass/land_grass14.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 104,
+   "image": "src/assets/tiles/sand/land_sand01.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 105,
+   "image": "src/assets/tiles/sand/land_sand02.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 106,
+   "image": "src/assets/tiles/sand/land_sand03.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 107,
+   "image": "src/assets/tiles/sand/land_sand04.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 108,
+   "image": "src/assets/tiles/sand/land_sand05.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 109,
+   "image": "src/assets/tiles/sand/land_sand06.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 110,
+   "image": "src/assets/tiles/sand/land_sand07.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 111,
+   "image": "src/assets/tiles/sand/land_sand08.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 112,
+   "image": "src/assets/tiles/sand/land_sand09.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 113,
+   "image": "src/assets/tiles/sand/land_sand10.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 114,
+   "image": "src/assets/tiles/sand/land_sand11.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 115,
+   "image": "src/assets/tiles/sand/land_sand12.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 116,
+   "image": "src/assets/tiles/sand/land_sand13.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 117,
+   "image": "src/assets/tiles/sand/land_sand14.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 118,
+   "image": "src/assets/tiles/dirt/land_dirt01.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 119,
+   "image": "src/assets/tiles/dirt/land_dirt02.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 120,
+   "image": "src/assets/tiles/dirt/land_dirt03.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 121,
+   "image": "src/assets/tiles/dirt/land_dirt04.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 122,
+   "image": "src/assets/tiles/dirt/land_dirt05.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 123,
+   "image": "src/assets/tiles/dirt/land_dirt06.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 124,
+   "image": "src/assets/tiles/dirt/land_dirt07.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 125,
+   "image": "src/assets/tiles/dirt/land_dirt08.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 126,
+   "image": "src/assets/tiles/dirt/land_dirt09.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 127,
+   "image": "src/assets/tiles/dirt/land_dirt10.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 128,
+   "image": "src/assets/tiles/dirt/land_dirt11.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 129,
+   "image": "src/assets/tiles/dirt/land_dirt12.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 130,
+   "image": "src/assets/tiles/dirt/land_dirt13.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  },
+  {
+   "id": 131,
+   "image": "src/assets/tiles/dirt/land_dirt14.png",
+   "imagewidth": 128,
+   "imageheight": 128
+  }
+ ]
+}

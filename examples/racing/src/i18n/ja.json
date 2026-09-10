@@ -1,0 +1,34 @@
+{
+  "controls.steer": "車を運転する",
+  "controls.action": "ぶつけたら巻きもどす",
+
+  "menu.tracks": "コース",
+  "menu.races": "レース数",
+  "menu.laps": "しゅう回数",
+  "menu.difficulty": "むずかしさ",
+  "menu.start": "スタート",
+
+  "hud.race": "レース {race}/{total}\nコース {track} · {laps}周",
+
+  "powerup.speed": "スピード",
+  "powerup.freeze": "こおり",
+  "powerup.oil": "オイル",
+  "powerup.swap": "いれかえ",
+
+  "results.standings": "レース{race} しゅうりょう",
+  "results.final": "さいしゅう順位",
+  "results.points": "{points}点",
+  "results.continue": "つづける",
+  "results.finish": "おわる",
+  "results.menu": "メニュー",
+
+  "setup.title": "RACING",
+  "howto.1.title": "シリーズをきめる",
+  "howto.1.body": "走りたい順にコースをえらび、レース数とラップ数をきめます。",
+  "howto.2.title": "はしる",
+  "howto.2.body": "コントローラーをハンドルのようにまわしてステアリング、前にかたむけるとアクセルです。",
+  "howto.3.title": "シリーズで勝つ",
+  "howto.3.body": "レースごとに順位でポイントが入ります。最後のレースのあとで首位の人が優勝です。",
+  "milestones.daily": "今日レースを1つ完走する",
+  "milestones.track": "コース{number}を完走する"
+}

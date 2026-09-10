@@ -1,0 +1,522 @@
+{
+ "name": "objects",
+ "type": "tileset",
+ "version": "1.10",
+ "tiledversion": "1.10.0",
+ "tilewidth": 128,
+ "tileheight": 128,
+ "tilecount": 39,
+ "columns": 0,
+ "margin": 0,
+ "spacing": 0,
+ "objectalignment": "center",
+ "tiles": [
+  {
+   "id": 0,
+   "image": "src/assets/objects/arrow_white.png",
+   "imagewidth": 165,
+   "imageheight": 99,
+   "properties": [
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": false
+    }
+   ]
+  },
+  {
+   "id": 1,
+   "image": "src/assets/objects/arrow_yellow.png",
+   "imagewidth": 165,
+   "imageheight": 99,
+   "properties": [
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": false
+    }
+   ]
+  },
+  {
+   "id": 2,
+   "image": "src/assets/objects/barrel_blue.png",
+   "imagewidth": 56,
+   "imageheight": 56,
+   "properties": [
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 3,
+   "image": "src/assets/objects/barrel_blue_down.png",
+   "imagewidth": 70,
+   "imageheight": 48,
+   "properties": [
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 4,
+   "image": "src/assets/objects/barrel_red.png",
+   "imagewidth": 56,
+   "imageheight": 56,
+   "properties": [
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 5,
+   "image": "src/assets/objects/barrel_red_down.png",
+   "imagewidth": 70,
+   "imageheight": 48,
+   "properties": [
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 6,
+   "image": "src/assets/objects/barrier_red.png",
+   "imagewidth": 210,
+   "imageheight": 62,
+   "properties": [
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 7,
+   "image": "src/assets/objects/barrier_red_race.png",
+   "imagewidth": 210,
+   "imageheight": 62,
+   "properties": [
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 8,
+   "image": "src/assets/objects/barrier_white.png",
+   "imagewidth": 210,
+   "imageheight": 62,
+   "properties": [
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 9,
+   "image": "src/assets/objects/barrier_white_race.png",
+   "imagewidth": 210,
+   "imageheight": 62,
+   "properties": [
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 10,
+   "image": "src/assets/objects/cone_down.png",
+   "imagewidth": 46,
+   "imageheight": 44,
+   "properties": [
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 11,
+   "image": "src/assets/objects/cone_straight.png",
+   "imagewidth": 45,
+   "imageheight": 44,
+   "properties": [
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 12,
+   "image": "src/assets/objects/light_white.png",
+   "imagewidth": 98,
+   "imageheight": 235,
+   "properties": [
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": false
+    }
+   ]
+  },
+  {
+   "id": 13,
+   "image": "src/assets/objects/light_yellow.png",
+   "imagewidth": 98,
+   "imageheight": 235,
+   "properties": [
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": false
+    }
+   ]
+  },
+  {
+   "id": 14,
+   "image": "src/assets/objects/lights.png",
+   "imagewidth": 160,
+   "imageheight": 64,
+   "properties": [
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": false
+    }
+   ]
+  },
+  {
+   "id": 15,
+   "image": "src/assets/objects/oil.png",
+   "imagewidth": 109,
+   "imageheight": 95,
+   "properties": [
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": false
+    }
+   ]
+  },
+  {
+   "id": 16,
+   "image": "src/assets/objects/rock1.png",
+   "imagewidth": 89,
+   "imageheight": 72,
+   "properties": [
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 17,
+   "image": "src/assets/objects/rock2.png",
+   "imagewidth": 73,
+   "imageheight": 68,
+   "properties": [
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 18,
+   "image": "src/assets/objects/rock3.png",
+   "imagewidth": 87,
+   "imageheight": 67,
+   "properties": [
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 19,
+   "image": "src/assets/objects/skidmark_long_1.png",
+   "imagewidth": 60,
+   "imageheight": 192,
+   "properties": [
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": false
+    }
+   ]
+  },
+  {
+   "id": 20,
+   "image": "src/assets/objects/skidmark_long_2.png",
+   "imagewidth": 60,
+   "imageheight": 192,
+   "properties": [
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": false
+    }
+   ]
+  },
+  {
+   "id": 21,
+   "image": "src/assets/objects/skidmark_long_3.png",
+   "imagewidth": 76,
+   "imageheight": 192,
+   "properties": [
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": false
+    }
+   ]
+  },
+  {
+   "id": 22,
+   "image": "src/assets/objects/skidmark_short_1.png",
+   "imagewidth": 60,
+   "imageheight": 16,
+   "properties": [
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": false
+    }
+   ]
+  },
+  {
+   "id": 23,
+   "image": "src/assets/objects/skidmark_short_2.png",
+   "imagewidth": 60,
+   "imageheight": 16,
+   "properties": [
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": false
+    }
+   ]
+  },
+  {
+   "id": 24,
+   "image": "src/assets/objects/skidmark_short_3.png",
+   "imagewidth": 76,
+   "imageheight": 16,
+   "properties": [
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": false
+    }
+   ]
+  },
+  {
+   "id": 25,
+   "image": "src/assets/objects/tent_blue.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 26,
+   "image": "src/assets/objects/tent_blue_large.png",
+   "imagewidth": 256,
+   "imageheight": 256,
+   "properties": [
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 27,
+   "image": "src/assets/objects/tent_red.png",
+   "imagewidth": 128,
+   "imageheight": 128,
+   "properties": [
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 28,
+   "image": "src/assets/objects/tent_red_large.png",
+   "imagewidth": 256,
+   "imageheight": 256,
+   "properties": [
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 29,
+   "image": "src/assets/objects/tires_red.png",
+   "imagewidth": 56,
+   "imageheight": 56,
+   "properties": [
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 30,
+   "image": "src/assets/objects/tires_red_alt.png",
+   "imagewidth": 56,
+   "imageheight": 56,
+   "properties": [
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 31,
+   "image": "src/assets/objects/tires_white.png",
+   "imagewidth": 56,
+   "imageheight": 56,
+   "properties": [
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 32,
+   "image": "src/assets/objects/tires_white_alt.png",
+   "imagewidth": 56,
+   "imageheight": 56,
+   "properties": [
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 33,
+   "image": "src/assets/objects/tree_large.png",
+   "imagewidth": 214,
+   "imageheight": 212,
+   "properties": [
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 34,
+   "image": "src/assets/objects/tree_small.png",
+   "imagewidth": 141,
+   "imageheight": 141,
+   "properties": [
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 35,
+   "image": "src/assets/objects/tribune_empty.png",
+   "imagewidth": 448,
+   "imageheight": 223,
+   "properties": [
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 36,
+   "image": "src/assets/objects/tribune_full.png",
+   "imagewidth": 448,
+   "imageheight": 223,
+   "properties": [
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 37,
+   "image": "src/assets/objects/tribune_overhang_red.png",
+   "imagewidth": 448,
+   "imageheight": 144,
+   "properties": [
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 38,
+   "image": "src/assets/objects/tribune_overhang_striped.png",
+   "imagewidth": 448,
+   "imageheight": 144,
+   "properties": [
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  }
+ ]
+}

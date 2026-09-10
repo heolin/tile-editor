@@ -1,0 +1,34 @@
+{
+  "controls.steer": "Conduce tu auto",
+  "controls.action": "Rebobina si chocas",
+
+  "menu.tracks": "PISTAS",
+  "menu.races": "CARRERAS",
+  "menu.laps": "VUELTAS",
+  "menu.difficulty": "DIFICULTAD",
+  "menu.start": "EMPEZAR",
+
+  "hud.race": "Carrera {race}/{total}\nPista {track} · {laps} vueltas",
+
+  "powerup.speed": "TURBO",
+  "powerup.freeze": "HIELO",
+  "powerup.oil": "ACEITE",
+  "powerup.swap": "CAMBIO",
+
+  "results.standings": "CARRERA {race} LISTA",
+  "results.final": "CLASIFICACIÓN FINAL",
+  "results.points": "{points} pts",
+  "results.continue": "Continuar",
+  "results.finish": "Terminar",
+  "results.menu": "Menú",
+
+  "setup.title": "RACING",
+  "howto.1.title": "Prepara la serie",
+  "howto.1.body": "Elige los circuitos en el orden en que quieras correrlos y luego cuántas carreras y cuántas vueltas.",
+  "howto.2.title": "Conduce",
+  "howto.2.body": "Gira el mando como un volante para dirigir e inclínalo hacia delante para acelerar.",
+  "howto.3.title": "Gana la serie",
+  "howto.3.body": "Cada carrera reparte puntos según la posición. Quien vaya delante tras la última se lleva la serie.",
+  "milestones.daily": "Termina una carrera hoy",
+  "milestones.track": "Termina el circuito {number}"
+}

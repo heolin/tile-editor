@@ -1,0 +1,34 @@
+{
+  "controls.steer": "Steer your car",
+  "controls.action": "Rewind if you crash",
+
+  "menu.tracks": "TRACKS",
+  "menu.races": "RACES",
+  "menu.laps": "LAPS",
+  "menu.difficulty": "DIFFICULTY",
+  "menu.start": "START",
+
+  "hud.race": "Race {race}/{total}\nTrack {track} · {laps} laps",
+
+  "powerup.speed": "SPEED",
+  "powerup.freeze": "FREEZE",
+  "powerup.oil": "OIL",
+  "powerup.swap": "SWAP",
+
+  "results.standings": "RACE {race} DONE",
+  "results.final": "FINAL STANDINGS",
+  "results.points": "{points} pts",
+  "results.continue": "Continue",
+  "results.finish": "Finish",
+  "results.menu": "Menu",
+
+  "setup.title": "RACING",
+  "howto.1.title": "Set up the series",
+  "howto.1.body": "Pick the tracks in the order you want to drive them, then how many races and how many laps.",
+  "howto.2.title": "Drive",
+  "howto.2.body": "Turn the controller like a wheel to steer, and tilt it forward to accelerate.",
+  "howto.3.title": "Win the series",
+  "howto.3.body": "Every race pays points by finishing place. Whoever leads after the last one takes the series.",
+  "milestones.daily": "Finish a race today",
+  "milestones.track": "Finish track {number}"
+}
