@@ -53,7 +53,7 @@ export async function scanProject(fs: ProjectFS): Promise<ProjectContents> {
   const files = entries.filter((e) => e.kind === 'file').map((e) => e.path)
 
   const configPath = files.find((f) => f.endsWith('.tiled-project'))
-  let config: TiledProject = { folders: ['.'] }
+  let config: TiledProject = { folders: ['.'], propertyTypes: [] }
   if (configPath) {
     try {
       config = parseProjectJson(await fs.readText(configPath))

@@ -42,6 +42,7 @@ dodaj `--lan`.
 | **Warstwy** | kolejność, widoczność, krycie, dodawanie i usuwanie |
 | **Obiekty** | stawianie, zaznaczanie, przesuwanie ze snapowaniem, kasowanie; render z rozciąganiem, obrotem, flipem i `objectalignment` |
 | **Properties** | mapy, warstwy, obiektu i **kafla** — wszystkie typy skalarne; zmiany kafla zapisują się do tilesetu |
+| **Typy własne** | enumy i klasy w `.tiled-project`; enum staje się listą wyboru, flagi checkboxami, klasa rozwija się na pola |
 | **Paleta poleceń** | `Ctrl+K` — polecenia, skok do mapy i wyszukiwanie po properties w całym projekcie |
 | **Lint** | sprzeczne typy property, braki względem reszty map, GID-y spoza tilesetu, nieużywane kafle |
 | **Układ** | trzy progi: telefon, tablet w pionie, tablet w poziomie i desktop |
@@ -105,6 +106,28 @@ APK buduje się w GitHub Actions (`.github/workflows/android.yml`, uruchamiany
 ręcznie albo tagiem `v*`) i pobiera jako artefakt. Budowanie na telefonie
 wymagałoby JDK, Android SDK i Gradle'a — dlatego Termux zostaje miejscem
 uruchamiania, nie budowania.
+
+## Typy własne
+
+Projekt może zadeklarować typy properties — enumy i klasy — w pliku
+`.tiled-project`, dokładnie w formacie Tileda. Property z przypisanym typem
+przestaje być polem tekstowym: enum dostaje listę wyboru, enum flagowy
+checkboxy, a klasa rozwija się na swoje pola. Lint zgłasza wartość spoza typu.
+
+Typów nie trzeba wypisywać ręcznie. **Paleta → „Typy projektu" → „Zaproponuj
+z projektu"** przegląda wszystkie mapy i szuka properties tekstowych, które w
+praktyce przyjmują tylko kilka powtarzających się wartości — czyli enumów,
+których projekt już używa, tylko nigdzie ich nie zapisał. Na `examples/`
+znajduje `mode`, `edges` i `laserColour`.
+
+Świadomie **nie proponuje** typu, gdy wszystkie wartości wyglądają jak liczby:
+to zwykle liczba zapisana jako tekst, a nie zbiór wyborów. Enum zacementowałby
+pomyłkę zamiast ją pokazać — od zgłaszania takich przypadków jest reguła
+`conflicting-property-type`.
+
+Zaznaczona opcja „przypisz do istniejących properties" zapisuje pliki
+bezpośrednio we wszystkich mapach i **nie da się jej cofnąć w edytorze** —
+cofniesz to gitem.
 
 ## Wyszukiwanie w projekcie
 

@@ -1,4 +1,5 @@
 import type { TiledProject } from '../model.js'
+import { parsePropertyTypes, serializePropertyTypes, unrecognizedPropertyTypes } from '../property-types.js'
 import { emitOrdered, takePreserved } from './common.js'
 import { PROJECT_STYLE, writeJson } from './writer.js'
 
@@ -11,7 +12,8 @@ export function parseProjectJson(text: string): TiledProject {
     automappingRulesFile: raw.automappingRulesFile as string | undefined,
     commands: raw.commands as unknown[] | undefined,
     extensionsPath: raw.extensionsPath as string | undefined,
-    propertyTypes: raw.propertyTypes as unknown[] | undefined,
+    propertyTypes: parsePropertyTypes(raw.propertyTypes),
+    unknownPropertyTypes: unrecognizedPropertyTypes(raw.propertyTypes),
     ...takePreserved(raw, PROJECT_KEYS),
   }
 }
@@ -22,7 +24,7 @@ export function serializeProjectJson(project: TiledProject): string {
     commands: project.commands ?? [],
     extensionsPath: project.extensionsPath ?? 'extensions',
     folders: project.folders,
-    propertyTypes: project.propertyTypes ?? [],
+    propertyTypes: [...serializePropertyTypes(project.propertyTypes), ...(project.unknownPropertyTypes ?? [])],
   })
   return writeJson(out, PROJECT_STYLE)
 }

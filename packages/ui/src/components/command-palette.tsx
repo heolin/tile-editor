@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import clsx from 'clsx'
 import {
-  ArrowRight, Brush, Eraser, FileText, Grid3x3, Layers, MousePointer2,
+  ArrowRight, Brush, Eraser, FileText, Grid3x3, Layers, ListChecks, MousePointer2,
   PaintBucket, Palette, Pipette, Play, Plus, Redo2, Save, Search, Shapes,
   ShieldCheck, SlidersHorizontal, Square, StickyNote, Undo2,
 } from 'lucide-react'
@@ -55,6 +55,7 @@ export function CommandPalette() {
       { id: 'save', label: 'Zapisz mapę', group: 'Plik', icon: Save, hint: 'Ctrl+S', run: () => useEditor.getState().save() },
       { id: 'new-map', label: 'Nowa mapa…', group: 'Plik', icon: Plus, run: () => useEditor.getState().setDialog('new-map') },
       { id: 'add-tileset', label: 'Dodaj tileset…', group: 'Plik', icon: Palette, run: () => useEditor.getState().setDialog('add-tileset') },
+      { id: 'types', label: 'Typy projektu…', group: 'Projekt', icon: ListChecks, run: () => useEditor.getState().setDialog('property-types') },
       { id: 'undo', label: 'Cofnij', group: 'Edycja', icon: Undo2, hint: 'Ctrl+Z', run: () => useEditor.getState().undo() },
       { id: 'redo', label: 'Ponów', group: 'Edycja', icon: Redo2, hint: 'Ctrl+Shift+Z', run: () => useEditor.getState().redo() },
       tool('brush', 'Pędzel', Brush, 'B'),

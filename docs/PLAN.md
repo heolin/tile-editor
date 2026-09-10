@@ -171,8 +171,9 @@ kształty obiektów · tileset atlasowy · `data` w base64 z gzip/zlib ·
 Bez tego edytor nie otworzy cudzych map, ale nie da się tego zweryfikować
 na Waszych plikach — stąd osobna pozycja w rejestrze ryzyk.
 
-**v1.1:** ~~`animation`~~ (zrobione w M4) · kolizje kafla · szablony `.tx` ·
-custom types (`propertyTypes`) · zstd.
+**v1.1:** ~~`animation`~~ (M4) · ~~custom types (`propertyTypes`)~~ (zrobione) ·
+kolizje kafla — dane przechodzą przez zapis, brakuje edytora kształtów ·
+szablony `.tx` · zstd.
 
 **Zrealizowane wcześniej niż planowano:** mapy nieskończone i chunki —
 w korpusie ich nie ma, ale przykładowa mapa Tileda na nich stanęła, a odczyt

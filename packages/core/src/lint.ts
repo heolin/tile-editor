@@ -1,5 +1,6 @@
 import { tileId } from './gid.js'
 import { allObjects, tilesetForGid, walkLayers, type Property, type TileMap, type Tileset } from './model.js'
+import { checkProperty, type PropertyTypeRegistry } from './property-types.js'
 
 /**
  * Rules derived from real defects found in examples/ (docs/PLAN.md section 5.2):
@@ -26,6 +27,8 @@ export interface LintTarget {
 export interface LintContext {
   /** Tilesets already resolved, keyed by the path the map refers to them by. */
   tilesets?: Map<string, Tileset>
+  /** Custom types from the project, when it declares any. */
+  registry?: PropertyTypeRegistry
 }
 
 const scope = (props: Property[]) => new Map(props.map((p) => [p.name, p.type]))
@@ -85,6 +88,34 @@ export function lintMap(target: LintTarget, ctx: LintContext = {}): LintFinding[
     }
   }
 
+  // A property that names a custom type has to agree with it. This is the rule
+  // that would have caught railId being an int in one map and a string in
+  // another, at the moment of typing rather than months later.
+  if (ctx.registry && !ctx.registry.isEmpty) {
+    const report = (props: Property[], where: string, layerId?: number, objectId?: number) => {
+      for (const property of props) {
+        const problem = checkProperty(property, ctx.registry!)
+        if (!problem) continue
+        findings.push({
+          rule: 'property-type-mismatch',
+          severity: 'error',
+          message: `${where}: property „${problem.property}" ${problem.message}.`,
+          mapPath: path,
+          layerId,
+          objectId,
+        })
+      }
+    }
+    report(map.properties, 'Mapa')
+    for (const layer of walkLayers(map.layers)) {
+      report(layer.properties, `Warstwa „${layer.name}"`, layer.id)
+      if (layer.kind !== 'objectgroup') continue
+      for (const obj of layer.objects) {
+        report(obj.properties, `Obiekt #${obj.id}`, layer.id, obj.id)
+      }
+    }
+  }
+
   const names = new Set<string>()
   for (const layer of walkLayers(map.layers)) {
     if (names.has(layer.name)) {
@@ -108,6 +139,65 @@ export function lintMap(target: LintTarget, ctx: LintContext = {}): LintFinding[
  * Checks the whole project, where the interesting defects live: a property
  * name used with two types, or present in most maps but not all.
  */
+/**
+ * Looks at how a property name is actually used across the project and, when
+ * the values form a small closed set, proposes an enum for it. This is how a
+ * project that has been running on loose strings for months gets types without
+ * anyone writing them out by hand.
+ */
+export interface TypeSuggestion {
+  /** Where the property lives: on maps or on objects. */
+  scope: 'map' | 'object'
+  property: string
+  values: string[]
+  /** How many properties carry one of these values. */
+  occurrences: number
+}
+
+export function suggestEnums(targets: LintTarget[], options: { maxValues?: number; minOccurrences?: number } = {}): TypeSuggestion[] {
+  const maxValues = options.maxValues ?? 8
+  const minOccurrences = options.minOccurrences ?? 4
+  const seen = new Map<string, { values: Map<string, number>; scope: 'map' | 'object'; typed: boolean }>()
+
+  const record = (scope: 'map' | 'object', property: Property) => {
+    // Numeric and boolean properties are already well typed; enums are for the
+    // string properties standing in for a closed set of choices.
+    if (property.type !== 'string' || property.propertytype) return
+    const text = String(property.value ?? '')
+    if (text === '' || text.length > 40) return
+    const key = `${scope}.${property.name}`
+    const entry = seen.get(key) ?? { values: new Map(), scope, typed: false }
+    entry.values.set(text, (entry.values.get(text) ?? 0) + 1)
+    seen.set(key, entry)
+  }
+
+  for (const { map } of targets) {
+    for (const property of map.properties) record('map', property)
+    for (const object of allObjects(map)) {
+      for (const property of object.properties) record('object', property)
+    }
+  }
+
+  const out: TypeSuggestion[] = []
+  for (const [key, entry] of seen) {
+    const occurrences = [...entry.values.values()].reduce((sum, n) => sum + n, 0)
+    if (entry.values.size < 2 || entry.values.size > maxValues || occurrences < minOccurrences) continue
+    // A set worth naming repeats: values seen once each are free-form text.
+    if (occurrences < entry.values.size * 2) continue
+    // Values that are all numbers are a number written as text, not a set of
+    // choices. Proposing an enum there would cement the mistake instead of
+    // surfacing it - and `conflicting-property-type` already reports it.
+    if ([...entry.values.keys()].every((value) => value.trim() !== '' && Number.isFinite(Number(value)))) continue
+    out.push({
+      scope: entry.scope,
+      property: key.split('.').slice(1).join('.'),
+      values: [...entry.values.keys()].sort(),
+      occurrences,
+    })
+  }
+  return out.sort((a, b) => b.occurrences - a.occurrences)
+}
+
 export function lintProject(targets: LintTarget[], ctx: LintContext = {}): LintFinding[] {
   const findings: LintFinding[] = targets.flatMap((t) => lintMap(t, ctx))
   if (targets.length === 0) return findings

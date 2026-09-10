@@ -1,4 +1,5 @@
 import type { LayerData } from './layer-data.js'
+import type { PropertyTypeDef } from './property-types.js'
 
 /**
  * The document model is format-agnostic: nothing here knows about JSON or XML.
@@ -211,7 +212,10 @@ export interface TiledProject extends Preserving {
   automappingRulesFile?: string
   commands?: unknown[]
   extensionsPath?: string
-  propertyTypes?: unknown[]
+  /** Custom types, modelled. See property-types.ts. */
+  propertyTypes: PropertyTypeDef[]
+  /** Entries in the source list this editor did not recognise, kept verbatim. */
+  unknownPropertyTypes?: unknown[]
 }
 
 /* ------------------------------------------------------------------ */

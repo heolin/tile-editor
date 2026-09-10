@@ -1,13 +1,14 @@
 import { create } from 'zustand'
 import {
   AddTilesCommand, AddTilesetCommand, DenseLayerData, History, ProjectLoader,
-  RemoveTilesetCommand, SetTilesCommand,
+  PropertyTypeRegistry, RemoveTilesetCommand, SetTilesCommand, serializeProjectJson,
+  suggestEnums,
   addImagesToTileset, createFromTemplate, createTileMap, createTileset,
   findTilesetRef, lintMap, lintProject, lintUnusedTiles, mapTitle,
   nextFirstGid, normalizePath, relativeFrom, tileId, tilesetUsage, walkLayers,
   type DocumentFormat, type FormatHints, type LintFinding, type Layer, type MapObject,
-  type ObjectLayer, type ProjectContents, type TileLayer, type TileMap, type Tileset,
-  type TilesetRef,
+  type ObjectLayer, type ProjectContents, type PropertyTypeDef, type TileLayer,
+  type TileMap, type Tileset, type TilesetRef, type TypeSuggestion,
 } from '@tile-editor/core'
 import { HttpProjectFS } from '../fs/http-fs'
 import { buildTileSourceIndex, type TileSourceIndex } from '../render/tile-source'
@@ -91,7 +92,7 @@ interface EditorState {
 
   openPanel: PanelId | null
   /** Modal dialogs live here so the command palette can open them too. */
-  dialog: 'new-map' | 'add-tileset' | 'palette' | null
+  dialog: 'new-map' | 'add-tileset' | 'property-types' | 'palette' | null
   propertyTarget: PropertyOwner
   lint: LintFinding[]
   lintRunning: boolean
@@ -107,6 +108,12 @@ interface EditorState {
   markTilesetDirty(path: string): void
   rebuildSource(): void
 
+  /** Custom types declared by the project, wrapped for lookup. */
+  types(): PropertyTypeRegistry
+  savePropertyTypes(types: PropertyTypeDef[]): Promise<void>
+  suggestPropertyTypes(): Promise<TypeSuggestion[]>
+  applyPropertyType(scope: 'map' | 'object', property: string, typeName: string): Promise<{ maps: number; properties: number }>
+
   attachTileset(tilesetPath: string): Promise<void>
   detachTileset(ref: TilesetRef): void
   createTilesetFile(options: { fileName: string; folder: string; name: string; tileSize: number }): Promise<void>
@@ -118,7 +125,7 @@ interface EditorState {
   selectObjects(ids: number[]): void
   setCamera(camera: Partial<Camera>): void
   setPanel(panel: PanelId | null): void
-  setDialog(dialog: 'new-map' | 'add-tileset' | 'palette' | null): void
+  setDialog(dialog: 'new-map' | 'add-tileset' | 'property-types' | 'palette' | null): void
   setPropertyTarget(target: PropertyOwner): void
   toggleGrid(): void
   toggleObjects(): void
@@ -324,6 +331,88 @@ export const useEditor = create<EditorState>((set, get) => ({
     set({ doc: { ...doc, source }, sourceRevision: get().sourceRevision + 1 })
   },
 
+  types() {
+    return new PropertyTypeRegistry(get().project?.config.propertyTypes ?? [])
+  },
+
+  /** Writes the project file, which is where Tiled keeps custom types. */
+  async savePropertyTypes(types) {
+    const { project, fs: files } = get()
+    if (!project) return
+    const path = project.configPath ?? '.tiled-project'
+    const config = { ...project.config, propertyTypes: types }
+    try {
+      await files.writeText(path, serializeProjectJson(config))
+      set({ project: { ...project, configPath: path, config } })
+      get().touch()
+      get().notify(`Zapisano typy do ${path}`)
+    } catch (error) {
+      get().notify(error instanceof Error ? error.message : String(error), 'error')
+    }
+  },
+
+  async suggestPropertyTypes() {
+    const { loader, project, doc } = get()
+    if (!loader || !project) return []
+    const targets: { path: string; map: TileMap }[] = []
+    for (const path of project.maps) {
+      try {
+        targets.push({ path, map: doc && doc.path === path ? doc.map : (await loader.loadMap(path)).map })
+      } catch {
+        // A map that will not parse simply contributes nothing to the guess.
+      }
+    }
+    return suggestEnums(targets)
+  },
+
+  /**
+   * Stamps a custom type onto every property of that name across the project.
+   * This rewrites files directly rather than going through the undo stack:
+   * undo is per-document, and this touches the whole folder. Git is the safety
+   * net, which the dialog says out loud before running it.
+   */
+  async applyPropertyType(scope, property, typeName) {
+    const { loader, project, doc } = get()
+    if (!loader || !project) return { maps: 0, properties: 0 }
+    let maps = 0
+    let properties = 0
+
+    for (const path of project.maps) {
+      let loaded
+      try {
+        loaded = doc && doc.path === path ? { map: doc.map, hints: doc.hints } : await loader.loadMap(path)
+      } catch {
+        continue
+      }
+      const lists =
+        scope === 'map'
+          ? [loaded.map.properties]
+          : [...walkLayers(loaded.map.layers)]
+              .filter((layer): layer is ObjectLayer => layer.kind === 'objectgroup')
+              .flatMap((layer) => layer.objects.map((object) => object.properties))
+
+      let touched = 0
+      for (const list of lists) {
+        for (const entry of list) {
+          if (entry.name !== property || entry.propertytype === typeName) continue
+          entry.propertytype = typeName
+          touched++
+        }
+      }
+      if (touched === 0) continue
+      maps++
+      properties += touched
+      await loader.saveMap(loaded.map, path, loaded.hints)
+    }
+
+    if (doc) {
+      // The open document may have been rewritten underneath the editor.
+      get().rebuildSource()
+      get().touch()
+    }
+    return { maps, properties }
+  },
+
   async attachTileset(tilesetPath) {
     const { doc, loader } = get()
     if (!doc || !loader) return
@@ -495,7 +584,10 @@ export const useEditor = create<EditorState>((set, get) => ({
           if (ref.source && ref.tileset) tilesetsByRef.set(ref.source, ref.tileset)
         }
       }
-      const findings = [...lintProject(targets), ...lintUnusedTiles(targets, tilesetsByRef)]
+      const findings = [
+        ...lintProject(targets, { registry: get().types() }),
+        ...lintUnusedTiles(targets, tilesetsByRef),
+      ]
       set({ lint: findings, lintRunning: false })
     } catch (error) {
       set({ lintRunning: false })

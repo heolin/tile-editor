@@ -2,8 +2,11 @@ import { useMemo, useState } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import {
   FLIP_H, FLIP_V, ResizeMapCommand, SetAnimationCommand, SetPropertyCommand,
-  UpdateLayerCommand, UpdateObjectsCommand, parseGid, tileLabel, walkLayers,
-  type Frame, type Property, type PropertyType, type Tile, type Tileset,
+  UpdateLayerCommand, UpdateObjectsCommand, defaultValueFor, flagsToValues,
+  parseGid, storageTypeOf, tileLabel, valuesToFlags, walkLayers,
+  type ClassPropertyType, type EnumPropertyType, type Frame, type Property,
+  type PropertyType, type PropertyTypeDef, type PropertyTypeTarget, type Tile,
+  type Tileset,
 } from '@tile-editor/core'
 import { Button, Empty, Field, Panel, Select, TextInput } from './ui'
 import { useEditor, type PropertyOwner } from '../state/store'
@@ -22,6 +25,8 @@ export function PropertiesPanel() {
   const state = useEditor.getState()
 
   const owner = useMemo(() => resolveOwner(target), [target, doc, state.revision])
+  const registry = state.types()
+  const customTypes = registry.usableOn(targetKind(target))
 
   if (!doc) return <Panel title="Properties"><Empty>Brak otwartej mapy.</Empty></Panel>
   if (!owner) return <Panel title="Properties"><Empty>Nic nie jest zaznaczone.</Empty></Panel>
@@ -70,14 +75,38 @@ export function PropertiesPanel() {
                   className="font-medium"
                 />
                 <Select
-                  value={prop.type}
+                  value={prop.propertytype ? `custom:${prop.propertytype}` : prop.type}
                   aria-label="Typ property"
                   className="px-1 text-[11px]"
-                  onChange={(e) => setAt(index, { type: e.target.value as PropertyType, value: coerce(prop.value, e.target.value as PropertyType) })}
+                  onChange={(e) => {
+                    const chosen = e.target.value
+                    if (chosen.startsWith('custom:')) {
+                      const def = registry.get(chosen.slice(7))
+                      if (!def) return
+                      setAt(index, {
+                        type: storageTypeOf(def),
+                        propertytype: def.name,
+                        value: defaultValueFor(def),
+                      })
+                      return
+                    }
+                    setAt(index, {
+                      type: chosen as PropertyType,
+                      propertytype: undefined,
+                      value: coerce(prop.value, chosen as PropertyType),
+                    })
+                  }}
                 >
                   {TYPES.map((t) => (
                     <option key={t} value={t}>{t}</option>
                   ))}
+                  {customTypes.length > 0 ? (
+                    <optgroup label="Typy projektu">
+                      {customTypes.map((def) => (
+                        <option key={def.name} value={`custom:${def.name}`}>{def.name}</option>
+                      ))}
+                    </optgroup>
+                  ) : null}
                 </Select>
                 <button
                   type="button"
@@ -89,7 +118,7 @@ export function PropertiesPanel() {
                   <Trash2 size={14} />
                 </button>
               </div>
-              <PropertyValue prop={prop} onChange={(value) => setAt(index, { value })} />
+              <PropertyValue prop={prop} definition={registry.get(prop.propertytype)} onChange={(value) => setAt(index, { value })} />
             </li>
           ))}
         </ul>
@@ -98,7 +127,26 @@ export function PropertiesPanel() {
   )
 }
 
-function PropertyValue({ prop, onChange }: { prop: Property; onChange: (value: unknown) => void }) {
+/** Which custom types make sense here, per each class's `useAs`. */
+function targetKind(target: PropertyOwner): PropertyTypeTarget {
+  switch (target.kind) {
+    case 'map': return 'map'
+    case 'layer': return 'layer'
+    case 'object': return 'object'
+    case 'tile': return 'tile'
+  }
+}
+
+function PropertyValue({ prop, definition, onChange }: {
+  prop: Property
+  definition?: PropertyTypeDef
+  onChange: (value: unknown) => void
+}) {
+  // A declared type replaces free text with the choices it allows, which is the
+  // whole point of declaring it.
+  if (definition?.kind === 'enum') return <EnumValue type={definition} prop={prop} onChange={onChange} />
+  if (definition?.kind === 'class') return <ClassValue type={definition} prop={prop} onChange={onChange} />
+
   if (prop.type === 'bool') {
     return (
       <label className="flex items-center gap-2 text-[13px] text-ink-dim">
@@ -139,6 +187,134 @@ function PropertyValue({ prop, onChange }: { prop: Property; onChange: (value: u
     )
   }
   return <TextInput value={String(prop.value ?? '')} onChange={(e) => onChange(e.target.value)} />
+}
+
+function EnumValue({ type, prop, onChange }: {
+  type: EnumPropertyType
+  prop: Property
+  onChange: (value: unknown) => void
+}) {
+  if (type.valuesAsFlags) {
+    const chosen = flagsToValues(type, prop.value)
+    return (
+      <div className="flex flex-wrap gap-x-3 gap-y-1">
+        {type.values.map((value) => (
+          <label key={value} className="flex items-center gap-1.5 text-[12.5px] text-ink-dim">
+            <input
+              type="checkbox"
+              checked={chosen.includes(value)}
+              onChange={(e) => {
+                const next = e.target.checked ? [...chosen, value] : chosen.filter((v) => v !== value)
+                onChange(valuesToFlags(type, next))
+              }}
+              className="h-4 w-4 accent-[var(--color-accent)]"
+            />
+            {value}
+          </label>
+        ))}
+      </div>
+    )
+  }
+
+  // An int-backed enum stores the index; a string-backed one stores the text.
+  const current = type.storageType === 'int' ? (type.values[Number(prop.value) || 0] ?? '') : String(prop.value ?? '')
+  const known = type.values.includes(current)
+  return (
+    <div className="flex flex-col gap-1">
+      <Select
+        value={known ? current : ''}
+        aria-label={`Wartość property ${prop.name}`}
+        onChange={(e) => {
+          const index = type.values.indexOf(e.target.value)
+          onChange(type.storageType === 'int' ? index : e.target.value)
+        }}
+      >
+        {!known ? <option value="">— wybierz —</option> : null}
+        {type.values.map((value) => (
+          <option key={value} value={value}>{value}</option>
+        ))}
+      </Select>
+      {!known ? (
+        <span className="text-[11px] text-danger">
+          Obecna wartość „{String(prop.value ?? '')}" nie należy do typu {type.name}.
+        </span>
+      ) : null}
+    </div>
+  )
+}
+
+function ClassValue({ type, prop, onChange }: {
+  type: ClassPropertyType
+  prop: Property
+  onChange: (value: unknown) => void
+}) {
+  const value = (prop.value ?? {}) as Record<string, unknown>
+  const setMember = (name: string, next: unknown) => onChange({ ...value, [name]: next })
+
+  return (
+    <div className="flex flex-col gap-1.5 rounded-md border border-line bg-ground/40 p-2">
+      {type.members.length === 0 ? (
+        <span className="text-[11px] text-ink-faint">Klasa {type.name} nie ma pól.</span>
+      ) : (
+        type.members.map((member) => (
+          <label key={member.name} className="grid grid-cols-[minmax(0,88px)_minmax(0,1fr)] items-center gap-2">
+            <span className="truncate text-[11.5px] text-ink-faint" title={member.name}>{member.name}</span>
+            <MemberValue
+              member={member}
+              value={value[member.name] ?? member.value}
+              onChange={(next) => setMember(member.name, next)}
+            />
+          </label>
+        ))
+      )}
+    </div>
+  )
+}
+
+function MemberValue({ member, value, onChange }: {
+  member: ClassPropertyType['members'][number]
+  value: unknown
+  onChange: (next: unknown) => void
+}) {
+  const registry = useEditor.getState().types()
+  const definition = registry.get(member.propertyType)
+  // Nested enums render as their own dropdown; nested classes stay a summary,
+  // because a fully recursive editor in a 240px panel helps nobody.
+  if (definition?.kind === 'enum') {
+    return (
+      <EnumValue
+        type={definition}
+        prop={{ name: member.name, type: member.type, value }}
+        onChange={onChange}
+      />
+    )
+  }
+  if (member.type === 'bool') {
+    return (
+      <input
+        type="checkbox"
+        checked={value === true}
+        onChange={(e) => onChange(e.target.checked)}
+        className="h-4 w-4 justify-self-start accent-[var(--color-accent)]"
+      />
+    )
+  }
+  if (member.type === 'int' || member.type === 'float') {
+    return (
+      <TextInput
+        className="num"
+        type="number"
+        step={member.type === 'int' ? 1 : 'any'}
+        value={String(value ?? 0)}
+        onChange={(e) => onChange(member.type === 'int' ? Math.trunc(Number(e.target.value)) : Number(e.target.value))}
+      />
+    )
+  }
+  if (member.type === 'class') {
+    const fields = Object.keys((value ?? {}) as Record<string, unknown>).length
+    return <span className="text-[11.5px] text-ink-faint">{member.propertyType ?? 'klasa'} · {fields} pól</span>
+  }
+  return <TextInput value={String(value ?? '')} onChange={(e) => onChange(e.target.value)} />
 }
 
 /* ------------------------------------------------------------------ */

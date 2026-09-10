@@ -13,6 +13,7 @@ import { CommandPalette } from './components/command-palette'
 import { ConnectScreen } from './components/connect-screen'
 import { NewMapDialog } from './components/new-map-dialog'
 import { AddTilesetDialog } from './components/tileset-dialogs'
+import { PropertyTypesDialog } from './components/property-types-dialog'
 import { Button, Sheet, Toast } from './components/ui'
 import { useEditor, type PanelId } from './state/store'
 
@@ -184,6 +185,7 @@ export function App() {
       <CommandPalette />
       <NewMapDialog open={dialog === 'new-map'} onClose={() => setDialog(null)} />
       <AddTilesetDialog open={dialog === 'add-tileset'} onClose={() => setDialog(null)} />
+      <PropertyTypesDialog open={dialog === 'property-types'} onClose={() => setDialog(null)} />
 
       {toast ? <Toast text={toast.text} tone={toast.tone} /> : null}
     </div>
