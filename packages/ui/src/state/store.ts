@@ -107,6 +107,8 @@ interface EditorState {
 
   init(): Promise<void>
   connectTo(base: string): Promise<void>
+  /** Quiet retry: succeeds into the editor, fails without disturbing anything. */
+  reconnect(): Promise<boolean>
   openMap(path: string): Promise<void>
   createMap(options: NewMapRequest): Promise<void>
   refreshProject(): Promise<void>
@@ -179,6 +181,16 @@ export const useEditor = create<EditorState>((set, get) => ({
   lint: [],
   lintRunning: false,
   propertyIndex: [],
+
+  async reconnect() {
+    try {
+      await fs.project()
+    } catch {
+      return false
+    }
+    await get().init()
+    return get().status === 'ready'
+  },
 
   async connectTo(base) {
     fs.setBase(base)

@@ -59,6 +59,11 @@ export class HttpProjectFS implements ProjectFS {
     return `${this.base}${path}`
   }
 
+  /** The address the API is reached at, for error messages and diagnostics. */
+  get origin(): string {
+    return this.base || (typeof location === 'undefined' ? '' : location.origin)
+  }
+
   async project(): Promise<{
     root: string
     configPath?: string
@@ -67,8 +72,15 @@ export class HttpProjectFS implements ProjectFS {
     tilesets: string[]
     images: string[]
   }> {
-    const res = await fetch(this.url('/api/project'))
-    if (!res.ok) throw new Error(`Nie udało się wczytać projektu (${res.status})`)
+    let res: Response
+    try {
+      res = await fetch(this.url('/api/project'))
+    } catch {
+      // A failed fetch says "Failed to fetch" and nothing else. Naming the
+      // address turns that into something a person can act on.
+      throw new Error(`Brak odpowiedzi z ${this.origin}`)
+    }
+    if (!res.ok) throw new Error(`Serwer odpowiedział ${res.status} na ${this.origin}/api/project`)
     return res.json()
   }
 

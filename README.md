@@ -196,7 +196,12 @@ po zwykłym HTTP już nie — przy `--lan` nie będzie ani service workera, ani
 instalacji.
 
 Offline działa sama powłoka edytora. Pliki projektu czyta lokalny serwer, więc
-bez niego edytor otworzy się, ale nie pokaże map.
+bez niego edytor otworzy się, ale nie pokaże map — zamiast tego pokaże ekran
+połączenia i **będzie próbował co trzy sekundy**. Uruchomienie serwera w
+Termuxie wystarczy; edytor wróci do pracy sam.
+
+Android ubija procesy w tle, więc serwer potrafi zniknąć po chwili poza
+ekranem. Zapobiega temu `termux-wake-lock` przed uruchomieniem.
 
 ## Motywy
 
