@@ -31,17 +31,34 @@ export function storeServerBase(base: string): void {
   }
 }
 
-/** True when the page was not served over http, so there is no same origin. */
+/** The packaged Android shell, which serves the app from its own local origin. */
+export function isPackagedShell(): boolean {
+  return typeof window !== 'undefined' && 'Capacitor' in window
+}
+
+/**
+ * True when nothing is listening on the page's own origin, so an address has to
+ * be entered. The Android shell counts: Capacitor serves the app from
+ * `http://localhost` itself, so the protocol looks ordinary while there is no
+ * project server behind it.
+ */
 export function needsExplicitServer(): boolean {
+  if (isPackagedShell()) return true
   return typeof location !== 'undefined' && !location.protocol.startsWith('http')
 }
+
+/** Where the Termux server listens by default, and where the shell looks first. */
+export const DEFAULT_SERVER = 'http://127.0.0.1:4173'
 
 export class HttpProjectFS implements ProjectFS {
   private cachedList: FsEntry[] | undefined
   private base: string
 
   constructor(base?: string) {
-    this.base = base ?? storedServerBase()
+    // The packaged app has no server of its own, so rather than asking the
+    // same origin and failing, it starts by looking where Termux listens.
+    this.base = base ?? storedServerBase() ?? ''
+    if (!this.base && isPackagedShell()) this.base = DEFAULT_SERVER
   }
 
   /** Points this adapter at a different server and forgets what it cached. */
@@ -81,7 +98,13 @@ export class HttpProjectFS implements ProjectFS {
       throw new Error(`Brak odpowiedzi z ${this.origin}`)
     }
     if (!res.ok) throw new Error(`Serwer odpowiedział ${res.status} na ${this.origin}/api/project`)
-    return res.json()
+    try {
+      return (await res.json()) as Awaited<ReturnType<HttpProjectFS['project']>>
+    } catch {
+      // Something answered but it is not the editor's server - most often the
+      // app's own shell replying to a request meant for Termux.
+      throw new Error(`${this.origin} odpowiada, ale to nie serwer tile-editora`)
+    }
   }
 
   async listAll(): Promise<FsEntry[]> {

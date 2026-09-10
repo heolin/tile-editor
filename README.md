@@ -103,8 +103,14 @@ jest dokładnie jedna implementacja dostępu do plików zamiast dwóch.
 npx tile-editor . --app       # --app wpuszcza aplikację do API
 ```
 
-Przy pierwszym uruchomieniu aplikacja pyta o adres serwera (domyślnie
-`http://127.0.0.1:4173`) i zapamiętuje go.
+Aplikacja szuka serwera pod `http://127.0.0.1:4173` sama — jeśli tam stoi,
+otworzy projekt bez pytania. Inny adres wpiszesz na ekranie połączenia i
+zostanie zapamiętany.
+
+**`--app` jest konieczne.** Aplikacja działa na własnym adresie
+`http://localhost`, więc sięga do serwera z zewnątrz, a ten domyślnie odpowiada
+tylko własnej stronie. Bez tej flagi zobaczysz ekran połączenia, choć serwer
+działa.
 
 **API jest domyślnie tylko same-origin.** Serwer czyta i zapisuje Twoje pliki,
 więc każda strona, która by go dosięgła, mogłaby to samo. `--app` wpuszcza
