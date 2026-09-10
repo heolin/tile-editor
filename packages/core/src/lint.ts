@@ -1,6 +1,6 @@
 import { tileId } from './gid.js'
 import { allObjects, tilesetForGid, walkLayers, type Property, type TileMap, type Tileset } from './model.js'
-import { checkProperty, type PropertyTypeRegistry } from './property-types.js'
+import { checkProperty, type PropertyTypeRegistry, type PropertyTypeTarget } from './property-types.js'
 
 /**
  * Rules derived from real defects found in examples/ (docs/PLAN.md section 5.2):
@@ -106,12 +106,48 @@ export function lintMap(target: LintTarget, ctx: LintContext = {}): LintFinding[
         })
       }
     }
+    // A node may also carry a class as its own type; naming one the project
+    // never declared is the same mistake at a different level.
+    const reportClass = (className: string | undefined, target: PropertyTypeTarget, where: string, layerId?: number, objectId?: number) => {
+      if (!className) return
+      const type = ctx.registry!.get(className)
+      if (!type) {
+        findings.push({
+          rule: 'unknown-class',
+          severity: 'warning',
+          message: `${where}: klasa „${className}" nie jest zadeklarowana w projekcie.`,
+          mapPath: path, layerId, objectId,
+        })
+        return
+      }
+      if (type.kind !== 'class') {
+        findings.push({
+          rule: 'unknown-class',
+          severity: 'error',
+          message: `${where}: „${className}" jest enumem, a nie klasą.`,
+          mapPath: path, layerId, objectId,
+        })
+        return
+      }
+      if (!type.useAs.includes(target)) {
+        findings.push({
+          rule: 'unknown-class',
+          severity: 'warning',
+          message: `${where}: klasa „${className}" nie jest przeznaczona dla tego węzła (useAs: ${type.useAs.join(', ')}).`,
+          mapPath: path, layerId, objectId,
+        })
+      }
+    }
+
     report(map.properties, 'Mapa')
+    reportClass(map.className, 'map', 'Mapa')
     for (const layer of walkLayers(map.layers)) {
       report(layer.properties, `Warstwa „${layer.name}"`, layer.id)
+      reportClass(layer.className, 'layer', `Warstwa „${layer.name}"`, layer.id)
       if (layer.kind !== 'objectgroup') continue
       for (const obj of layer.objects) {
         report(obj.properties, `Obiekt #${obj.id}`, layer.id, obj.id)
+        reportClass(obj.className || undefined, 'object', `Obiekt #${obj.id}`, layer.id, obj.id)
       }
     }
   }

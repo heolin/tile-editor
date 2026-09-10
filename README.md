@@ -114,6 +114,12 @@ Projekt może zadeklarować typy properties — enumy i klasy — w pliku
 przestaje być polem tekstowym: enum dostaje listę wyboru, enum flagowy
 checkboxy, a klasa rozwija się na swoje pola. Lint zgłasza wartość spoza typu.
 
+Klasa może też być typem samego węzła — mapy, warstwy, obiektu albo kafla.
+Wtedy jej pola pokazują się jako pola tego węzła, z wypełnionymi wartościami
+domyślnymi. Pole zostawione na wartości domyślnej **nie trafia do pliku**,
+dokładnie jak w Tiledzie: zapisana mapa notuje decyzje, które ktoś podjął, a
+nie te, których nie ruszył.
+
 Typów nie trzeba wypisywać ręcznie. **Paleta → „Typy projektu" → „Zaproponuj
 z projektu"** przegląda wszystkie mapy i szuka properties tekstowych, które w
 praktyce przyjmują tylko kilka powtarzających się wartości — czyli enumów,

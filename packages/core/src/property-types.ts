@@ -279,3 +279,79 @@ export function defaultValueFor(type: PropertyTypeDef): unknown {
 export function storageTypeOf(type: PropertyTypeDef): PropertyType {
   return type.kind === 'class' ? 'class' : type.storageType
 }
+
+/* ------------------------------------------------------------------ */
+/* A class used as a node's own type                                   */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Tiled lets a map, layer, object, tile or tileset carry a class as its own
+ * type. The class's members then behave as properties of that node, and Tiled
+ * omits from the file any member still equal to its default. Reproducing that
+ * omission is what keeps files small and diffs honest: a saved map records the
+ * decisions somebody made, not the ones they left alone.
+ */
+export function classFor(
+  className: string | undefined,
+  registry: PropertyTypeRegistry,
+  target: PropertyTypeTarget,
+): ClassPropertyType | undefined {
+  if (!className) return undefined
+  const type = registry.get(className)
+  if (type?.kind !== 'class') return undefined
+  return type.useAs.includes(target) ? type : undefined
+}
+
+export interface ClassMemberState {
+  member: ClassMember
+  value: unknown
+  /** True when the node declares this member itself instead of inheriting it. */
+  overridden: boolean
+}
+
+export function classMemberStates(type: ClassPropertyType, properties: Property[]): ClassMemberState[] {
+  return type.members.map((member) => {
+    const declared = properties.find((property) => property.name === member.name)
+    return {
+      member,
+      value: declared ? declared.value : member.value,
+      overridden: declared !== undefined,
+    }
+  })
+}
+
+/** Deep enough for the values a property can hold: scalars and flat objects. */
+function sameValue(a: unknown, b: unknown): boolean {
+  if (a === b) return true
+  if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) return false
+  const left = a as Record<string, unknown>
+  const right = b as Record<string, unknown>
+  const keys = new Set([...Object.keys(left), ...Object.keys(right)])
+  for (const key of keys) if (!sameValue(left[key], right[key])) return false
+  return true
+}
+
+/**
+ * Sets one class member on a node. A value back at the class default removes
+ * the property entirely, which is exactly what Tiled writes.
+ */
+export function setClassMember(properties: Property[], member: ClassMember, value: unknown): Property[] {
+  const rest = properties.filter((property) => property.name !== member.name)
+  if (sameValue(value, member.value)) return rest
+  return [
+    ...rest,
+    {
+      name: member.name,
+      type: member.type,
+      propertytype: member.propertyType,
+      value,
+    },
+  ]
+}
+
+/** Properties that are not part of the node's class, so still shown separately. */
+export function propertiesOutsideClass(properties: Property[], type: ClassPropertyType | undefined): Property[] {
+  if (!type) return properties
+  const members = new Set(type.members.map((member) => member.name))
+  return properties.filter((property) => !members.has(property.name))
+}

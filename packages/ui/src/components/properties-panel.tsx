@@ -1,12 +1,14 @@
 import { useMemo, useState } from 'react'
+import clsx from 'clsx'
 import { Plus, Trash2 } from 'lucide-react'
 import {
   FLIP_H, FLIP_V, ResizeMapCommand, SetAnimationCommand, SetPropertyCommand,
-  UpdateLayerCommand, UpdateObjectsCommand, defaultValueFor, flagsToValues,
-  parseGid, storageTypeOf, tileLabel, valuesToFlags, walkLayers,
-  type ClassPropertyType, type EnumPropertyType, type Frame, type Property,
-  type PropertyType, type PropertyTypeDef, type PropertyTypeTarget, type Tile,
-  type Tileset,
+  UpdateLayerCommand, UpdateObjectsCommand, classFor, classMemberStates,
+  defaultValueFor, flagsToValues, parseGid, propertiesOutsideClass,
+  setClassMember, storageTypeOf, tileLabel, valuesToFlags, walkLayers,
+  type ClassMember, type ClassPropertyType, type EnumPropertyType, type Frame,
+  type Property, type PropertyType, type PropertyTypeDef, type PropertyTypeTarget,
+  type Tile, type Tileset,
 } from '@tile-editor/core'
 import { Button, Empty, Field, Panel, Select, TextInput } from './ui'
 import { useEditor, type PropertyOwner } from '../state/store'
@@ -26,7 +28,9 @@ export function PropertiesPanel() {
 
   const owner = useMemo(() => resolveOwner(target), [target, doc, state.revision])
   const registry = state.types()
-  const customTypes = registry.usableOn(targetKind(target))
+  const kind = targetKind(target)
+  const customTypes = registry.usableOn(kind)
+  const nodeClass = owner ? classFor(owner.className, registry, kind) : undefined
 
   if (!doc) return <Panel title="Properties"><Empty>Brak otwartej mapy.</Empty></Panel>
   if (!owner) return <Panel title="Properties"><Empty>Nic nie jest zaznaczone.</Empty></Panel>
@@ -57,11 +61,20 @@ export function PropertiesPanel() {
     >
       {owner.header}
 
-      {owner.node.properties.length === 0 ? (
-        <Empty>Brak properties. Dodaj pierwszą przyciskiem plus.</Empty>
+      {nodeClass ? (
+        <NodeClassSection type={nodeClass} owner={owner} onCommit={commit} />
+      ) : null}
+
+      {propertiesOutsideClass(owner.node.properties, nodeClass).length === 0 ? (
+        <Empty>
+          {nodeClass
+            ? 'Poza klasą nie ma dodatkowych properties.'
+            : 'Brak properties. Dodaj pierwszą przyciskiem plus.'}
+        </Empty>
       ) : (
         <ul className="flex flex-col divide-y divide-line/60">
           {owner.node.properties.map((prop, index) => (
+            nodeClass?.members.some((member) => member.name === prop.name) ? null :
             <li key={index} className="flex flex-col gap-1.5 px-3 py-2">
               {/* The name gets its own row: sharing one with the type selector
                   crushed it to a couple of characters in a 240px panel. */}
@@ -272,7 +285,7 @@ function ClassValue({ type, prop, onChange }: {
 }
 
 function MemberValue({ member, value, onChange }: {
-  member: ClassPropertyType['members'][number]
+  member: ClassMember
   value: unknown
   onChange: (next: unknown) => void
 }) {
@@ -323,7 +336,56 @@ interface ResolvedOwner {
   key: string
   title: string
   node: { properties: Property[] }
+  /** The node's own class, when it declares one. */
+  className?: string
   header?: React.ReactNode
+}
+
+/**
+ * A node carrying a class shows that class's members as its own fields, with
+ * inherited defaults filled in. Setting a field back to its default removes the
+ * property, matching what Tiled writes.
+ */
+function NodeClassSection({ type, owner, onCommit }: {
+  type: ClassPropertyType
+  owner: ResolvedOwner
+  onCommit: (next: Property[]) => void
+}) {
+  const states = classMemberStates(type, owner.node.properties)
+  return (
+    <div className="border-b border-line bg-ground/30">
+      <div className="flex items-center gap-2 px-3 pb-1 pt-2">
+        <span className="text-[11px] font-medium tracking-wide text-ink-faint">Z klasy</span>
+        <span
+          className="rounded px-1.5 text-[11px] font-medium"
+          style={type.color ? { background: `${type.color.slice(0, 1)}${type.color.slice(3)}22`, color: 'inherit' } : undefined}
+        >
+          {type.name}
+        </span>
+      </div>
+      <ul className="flex flex-col gap-1.5 px-3 pb-2">
+        {states.map((state) => (
+          <li key={state.member.name} className="grid grid-cols-[minmax(0,100px)_minmax(0,1fr)] items-center gap-2">
+            <span
+              className={clsx('truncate text-[12px]', state.overridden ? 'text-ink' : 'text-ink-faint')}
+              title={state.overridden ? state.member.name : `${state.member.name} — wartość domyślna klasy`}
+            >
+              {state.member.name}
+              {state.overridden ? null : <span className="pl-1 text-ink-faint">·</span>}
+            </span>
+            <MemberValue
+              member={state.member}
+              value={state.value}
+              onChange={(next) => onCommit(setClassMember(owner.node.properties, state.member, next))}
+            />
+          </li>
+        ))}
+      </ul>
+      <p className="px-3 pb-2 text-[10.5px] text-ink-faint">
+        Pola równe domyślnym nie trafiają do pliku — tak samo robi Tiled.
+      </p>
+    </div>
+  )
 }
 
 function resolveOwner(target: PropertyOwner): ResolvedOwner | undefined {
@@ -332,18 +394,32 @@ function resolveOwner(target: PropertyOwner): ResolvedOwner | undefined {
   if (!doc) return undefined
 
   if (target.kind === 'map') {
-    return { key: 'map', title: 'Mapa', node: doc.map, header: <MapHeader /> }
+    return { key: 'map', title: 'Mapa', node: doc.map, className: doc.map.className, header: <MapHeader /> }
   }
   if (target.kind === 'layer') {
     const layer = [...walkLayers(doc.map.layers)].find((l) => l.id === target.id)
     if (!layer) return undefined
-    return { key: `layer:${layer.id}`, title: layer.name || 'Warstwa', node: layer, header: <LayerHeader id={layer.id} /> }
+    return {
+      key: `layer:${layer.id}`,
+      title: layer.name || 'Warstwa',
+      node: layer,
+      className: layer.className,
+      header: <LayerHeader id={layer.id} />,
+    }
   }
   if (target.kind === 'object') {
     for (const layer of walkLayers(doc.map.layers)) {
       if (layer.kind !== 'objectgroup') continue
       const obj = layer.objects.find((o) => o.id === target.id)
-      if (obj) return { key: `object:${obj.id}`, title: `Obiekt #${obj.id}`, node: obj, header: <ObjectHeader id={obj.id} /> }
+      if (obj) {
+        return {
+          key: `object:${obj.id}`,
+          title: `Obiekt #${obj.id}`,
+          node: obj,
+          className: obj.className,
+          header: <ObjectHeader id={obj.id} />,
+        }
+      }
     }
     return undefined
   }
@@ -457,9 +533,11 @@ function ObjectHeader({ id }: { id: number }) {
       <Field label="Nazwa">
         <TextInput value={obj.name} onChange={(e) => patch({ name: e.target.value })} />
       </Field>
-      <Field label="Klasa" hint="W korpusie nieużywana — semantyka siedzi w properties.">
-        <TextInput value={obj.className} onChange={(e) => patch({ className: e.target.value })} />
-      </Field>
+      <ClassField
+        value={obj.className}
+        target="object"
+        onChange={(className) => patch({ className })}
+      />
       <div className="grid grid-cols-2">
         <Field label="X"><TextInput type="number" className="num" value={obj.x} onChange={(e) => patch({ x: Number(e.target.value) })} /></Field>
         <Field label="Y"><TextInput type="number" className="num" value={obj.y} onChange={(e) => patch({ y: Number(e.target.value) })} /></Field>
@@ -598,6 +676,40 @@ function TileAnimationEditor({ tilesetPath, tileset, tile }: {
         </ul>
       )}
     </div>
+  )
+}
+
+/**
+ * Picks the node's own class. Falls back to free text when the project declares
+ * no classes, so a project that has not adopted types keeps working as before.
+ */
+function ClassField({ value, target, onChange }: {
+  value: string
+  target: PropertyTypeTarget
+  onChange: (className: string) => void
+}) {
+  const registry = useEditor.getState().types()
+  const classes = registry.usableOn(target).filter((type) => type.kind === 'class')
+  const known = classes.some((type) => type.name === value)
+
+  if (classes.length === 0) {
+    return (
+      <Field label="Klasa" hint="Projekt nie deklaruje żadnych klas dla tego węzła.">
+        <TextInput value={value} onChange={(e) => onChange(e.target.value)} />
+      </Field>
+    )
+  }
+
+  return (
+    <Field label="Klasa" hint={value && !known ? `„${value}" nie jest zadeklarowana w projekcie.` : undefined}>
+      <Select value={known ? value : ''} onChange={(e) => onChange(e.target.value)}>
+        <option value="">— bez klasy —</option>
+        {!known && value ? <option value={value}>{value} (nieznana)</option> : null}
+        {classes.map((type) => (
+          <option key={type.name} value={type.name}>{type.name}</option>
+        ))}
+      </Select>
+    </Field>
   )
 }
 
