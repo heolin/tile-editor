@@ -1,6 +1,6 @@
 import type { ObjectAlignment, ObjectLayer, Tile, Tileset } from '../model.js'
 import { emitObjectNode, emitPropertiesNode, parseObjectNode, parsePropertiesNode } from './map-codec.js'
-import { attrNum, attrStr, childNamed, childrenNamed, extraAttrs, parseXml, type XNode } from './reader.js'
+import { attrNum, attrStr, childNamed, childrenNamed, extraAttrs, parseXml, unknownChildren, type XNode } from './reader.js'
 import { writeXml, type XmlElement } from './writer.js'
 
 const TILESET_ATTRS = [
@@ -10,6 +10,12 @@ const TILESET_ATTRS = [
 ]
 
 const TILE_ATTRS = ['id', 'type', 'class', 'probability', 'x', 'y', 'width', 'height']
+
+/** Child elements each node models itself; anything else is carried verbatim. */
+// 'grid' is deliberately absent: the model does not read it, so it has to be
+// carried through verbatim rather than treated as understood.
+const TILESET_CHILDREN = ['tileoffset', 'properties', 'image', 'tile'] as const
+const TILE_CHILDREN = ['properties', 'image', 'animation', 'objectgroup'] as const
 
 function parseTile(node: XNode): Tile {
   const image = childNamed(node, 'image')
@@ -49,6 +55,7 @@ function parseTile(node: XNode): Tile {
       : undefined,
     extra: extraAttrs(node, TILE_ATTRS),
     keyOrder: Object.keys(node.attrs),
+    xmlChildren: unknownChildren(node, TILE_CHILDREN),
   }
 }
 
@@ -84,6 +91,7 @@ function emitTile(tile: Tile): XmlElement {
       })),
     })
   }
+  children.push(...((tile.xmlChildren as XmlElement[] | undefined) ?? []))
   return {
     tag: 'tile',
     attrs: {
@@ -122,6 +130,9 @@ export function parseTilesetBody(node: XNode, sourcePath?: string): Tileset {
     sourcePath,
     extra: extraAttrs(node, TILESET_ATTRS),
     keyOrder: Object.keys(node.attrs),
+    // Wang sets, terrain types and the grid element all land here: the editor
+    // does not model them yet, and dropping them would corrupt the file.
+    xmlChildren: unknownChildren(node, TILESET_CHILDREN),
   }
 }
 
@@ -144,6 +155,7 @@ export function serializeTilesetBody(tileset: Tileset): XmlElement {
     })
   }
   for (const tile of tileset.tiles) children.push(emitTile(tile))
+  children.push(...((tileset.xmlChildren as XmlElement[] | undefined) ?? []))
 
   return {
     tag: 'tileset',

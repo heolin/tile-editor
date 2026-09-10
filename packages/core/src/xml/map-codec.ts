@@ -5,7 +5,7 @@ import type {
   RenderOrder, TextBlock, TileLayer, TileMap, TilesetRef,
 } from '../model.js'
 import { parseTilesetBody, serializeTilesetBody } from './tileset-codec.js'
-import { attrBool, attrNum, attrStr, childNamed, childrenNamed, extraAttrs, parseXml, type XNode } from './reader.js'
+import { attrBool, attrNum, attrStr, childNamed, childrenNamed, extraAttrs, parseXml, unknownChildren, type XNode } from './reader.js'
 import { writeXml, type XmlElement } from './writer.js'
 
 /* ------------------------------------------------------------------ */
@@ -230,6 +230,11 @@ function emitData(layer: TileLayer, infinite: boolean): XmlElement {
 const OBJECT_ATTRS = ['id', 'name', 'type', 'class', 'x', 'y', 'width', 'height', 'rotation', 'visible', 'gid', 'template']
 const TEXT_ATTRS = ['fontfamily', 'pixelsize', 'wrap', 'color', 'bold', 'italic', 'underline', 'strikeout', 'kerning', 'halign', 'valign']
 
+/** Child elements each node models itself; anything else is carried verbatim. */
+const MAP_CHILDREN = ['properties', 'tileset', 'layer', 'objectgroup', 'imagelayer', 'group'] as const
+const LAYER_CHILDREN = ['properties', 'data', 'object', 'image', 'layer', 'objectgroup', 'imagelayer', 'group'] as const
+const OBJECT_CHILDREN = ['properties', 'ellipse', 'point', 'polygon', 'polyline', 'text'] as const
+
 function parsePoints(raw: string): Point[] {
   return raw
     .split(' ')
@@ -290,6 +295,7 @@ export function parseObjectNode(node: XNode): MapObject {
     properties: parsePropertiesNode(node),
     extra: extraAttrs(node, OBJECT_ATTRS),
     keyOrder: Object.keys(node.attrs),
+    xmlChildren: unknownChildren(node, OBJECT_CHILDREN),
   }
 }
 
@@ -323,6 +329,7 @@ export function emitObjectNode(obj: MapObject): XmlElement {
     })
   }
 
+  children.push(...((obj.xmlChildren as XmlElement[] | undefined) ?? []))
   return {
     tag: 'object',
     attrs: {
@@ -368,6 +375,7 @@ function parseLayerNode(node: XNode): Layer | undefined {
     properties: parsePropertiesNode(node),
     extra: extraAttrs(node, LAYER_ATTRS),
     keyOrder: Object.keys(node.attrs),
+    xmlChildren: unknownChildren(node, LAYER_CHILDREN),
   }
 
   switch (node.tag) {
@@ -435,13 +443,14 @@ function emitLayerNode(layer: Layer, infinite: boolean): XmlElement {
     ...(layer.extra as Record<string, string>),
   }
   const props = emitPropertiesNode(layer.properties)
+  const kept = (layer.xmlChildren as XmlElement[] | undefined) ?? []
 
   switch (layer.kind) {
     case 'objectgroup':
       return {
         tag: 'objectgroup',
         attrs: { ...common, draworder: layer.draworder === 'topdown' ? undefined : layer.draworder },
-        children: [...(props ? [props] : []), ...layer.objects.map(emitObjectNode)],
+        children: [...(props ? [props] : []), ...layer.objects.map(emitObjectNode), ...kept],
       }
     case 'imagelayer':
       return {
@@ -450,19 +459,20 @@ function emitLayerNode(layer: Layer, infinite: boolean): XmlElement {
         children: [
           ...(props ? [props] : []),
           { tag: 'image', attrs: { source: layer.image, trans: layer.transparentcolor } },
+          ...kept,
         ],
       }
     case 'group':
       return {
         tag: 'group',
         attrs: common,
-        children: [...(props ? [props] : []), ...layer.layers.map((child) => emitLayerNode(child, infinite))],
+        children: [...(props ? [props] : []), ...layer.layers.map((child) => emitLayerNode(child, infinite)), ...kept],
       }
     default:
       return {
         tag: 'layer',
         attrs: { ...common, width: layer.width, height: layer.height, x: layer.x || undefined, y: layer.y || undefined },
-        children: [...(props ? [props] : []), emitData(layer, infinite)],
+        children: [...(props ? [props] : []), emitData(layer, infinite), ...kept],
       }
   }
 }
@@ -517,6 +527,7 @@ export function parseMapXml(text: string): { map: TileMap } {
     properties: parsePropertiesNode(node),
     extra: extraAttrs(node, MAP_ATTRS),
     keyOrder: Object.keys(node.attrs),
+    xmlChildren: unknownChildren(node, MAP_CHILDREN),
   }
   return { map }
 }
@@ -538,6 +549,7 @@ export function serializeMapXml(map: TileMap): string {
     }
   }
   for (const layer of map.layers) children.push(emitLayerNode(layer, map.infinite))
+  children.push(...((map.xmlChildren as XmlElement[] | undefined) ?? []))
 
   return writeXml({
     tag: 'map',

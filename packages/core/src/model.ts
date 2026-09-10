@@ -12,6 +12,12 @@ export interface Preserving {
   extra?: Record<string, unknown>
   /** Key order as found in the source, used to keep saves stable. */
   keyOrder?: string[]
+  /**
+   * XML child elements this model does not understand, kept verbatim so a save
+   * cannot delete parts of a file the editor never touched. Typed loosely
+   * because the document model stays free of any XML representation.
+   */
+  xmlChildren?: unknown[]
 }
 
 export type PropertyType = 'string' | 'int' | 'float' | 'bool' | 'color' | 'file' | 'object' | 'class'

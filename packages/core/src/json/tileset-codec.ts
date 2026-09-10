@@ -3,16 +3,21 @@ import { emitLayer, parseLayer } from './map-codec.js'
 import { DEFAULT_HINTS, bool, detectHints, emitOrdered, emitProperties, num, parseProperties, str, takePreserved, type FormatHints } from './common.js'
 import { PLAIN_STYLE, TILED_STYLE, writeJson } from './writer.js'
 
+/**
+ * Only keys this codec actually writes back belong here. Anything listed but
+ * not emitted would be swallowed on read and lost on write, which is how
+ * wangsets and grid used to disappear from a tileset the editor merely opened.
+ */
 const TILESET_KEYS = [
   'name', 'class', 'type', 'version', 'tiledversion', 'tilewidth', 'tileheight',
   'tilecount', 'columns', 'margin', 'spacing', 'image', 'imagewidth',
   'imageheight', 'transparentcolor', 'objectalignment', 'tileoffset', 'tiles',
-  'properties', 'grid', 'wangsets', 'transformations', 'fillmode', 'tilerendersize',
+  'properties',
 ] as const
 
 const TILE_KEYS = [
   'id', 'class', 'type', 'probability', 'image', 'imagewidth', 'imageheight',
-  'properties', 'animation', 'objectgroup', 'x', 'y', 'width', 'height',
+  'properties', 'animation', 'objectgroup',
 ] as const
 
 const FRAME_KEYS = ['tileid', 'duration'] as const

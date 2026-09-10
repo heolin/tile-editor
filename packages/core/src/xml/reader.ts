@@ -1,4 +1,5 @@
 import { XMLParser } from 'fast-xml-parser'
+import type { XmlElement } from './writer.js'
 
 /**
  * Thin navigation layer over fast-xml-parser's order-preserving output. Order
@@ -83,6 +84,27 @@ export function attrBool(node: XNode, name: string, fallback: boolean): boolean 
 
 export function attrStr(node: XNode, name: string, fallback = ''): string {
   return node.attrs[name] ?? fallback
+}
+
+/** Turns a parsed node back into something the writer can emit verbatim. */
+export function toElement(node: XNode): XmlElement {
+  return {
+    tag: node.tag,
+    attrs: { ...node.attrs },
+    children: node.children.map(toElement),
+    text: node.children.length === 0 && node.text.trim() !== '' ? node.text.trim() : undefined,
+    textLayout: 'indented',
+  }
+}
+
+/**
+ * Child elements the model does not understand - wangsets, terrain types, a
+ * tileset's grid - kept exactly as they came in. Without this, opening and
+ * saving a file would quietly delete parts of it that this editor never touched.
+ */
+export function unknownChildren(node: XNode, known: readonly string[]): XmlElement[] | undefined {
+  const rest = node.children.filter((child) => !known.includes(child.tag))
+  return rest.length > 0 ? rest.map(toElement) : undefined
 }
 
 /** Attributes the model does not name explicitly, kept so a save loses nothing. */
