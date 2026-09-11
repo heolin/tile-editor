@@ -365,6 +365,25 @@ serwera, a nie do powłoki wokół niego.
 
 **Brak blokad. M0 ruszył.**
 
+**Rozstrzygnięte 11 września 2026:**
+
+1. ~~Kolizje w racing~~ → **zostają poza edytorem.** Racing ma kolizje, ale nie
+   są to kolizje kafla w rozumieniu Tileda: `src/assets/road_walls.json` trzyma
+   wypukłe części ścian per kafel, kluczowane nazwą pliku, a `trackN.collision.json`
+   to ten sam atlas wypalony na tor. Gra nie czyta kolizji z `.tsj` — stempluje
+   atlas po komórkach, z flipami. Oba pliki **generuje** `tools/track-mesh/`,
+   a `ASSETS.md` zakazuje ich ręcznej edycji, więc edytor kształtów byłby
+   narzędziem, którego wynik ginie przy następnym uruchomieniu generatora.
+   Pokrycie atlasu sprawdzone i celowe: ściany mają wszystkie 90 kafli asfaltu,
+   42 kafle terenu nie mają żadnych.
+
+   Zmierzone przy okazji, jako ostrzeżenie na przyszłość: `racing.tsj` odwzorowuje
+   kolejność plików w `tiles/` pozycja w pozycję (132 kafle, `asphalt → grass →
+   sand → dirt`, każdy sortowany; 39 obiektów od gid 133). Gra liczy te same id
+   z posortowanego globa, więc dodanie pliku o nazwie sortującej się wcześniej
+   przenumerowuje wszystko po nim i po cichu psuje każdy tor. Edytor tego nie
+   pilnuje — świadomie, bo to konwencja jednego projektu, a nie własność formatu.
+
 **Rozstrzygnięte 9 września 2026:**
 
 1. ~~Korpus referencyjny~~ → **`examples/` na main**, 110 map. Zastąpił
