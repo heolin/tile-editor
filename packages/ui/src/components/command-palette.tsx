@@ -3,7 +3,8 @@ import clsx from 'clsx'
 import {
   ArrowRight, Brush, Eraser, FileText, Grid3x3, Layers, ListChecks, MousePointer2,
   PaintBucket, Palette, Pipette, Play, Plus, Redo2, Save, Search, Shapes,
-  ShieldCheck, SlidersHorizontal, Smartphone, Square, StickyNote, Undo2,
+  ShieldCheck, SlidersHorizontal, Smartphone, Square, SquareDashed, StickyNote,
+  ClipboardCopy, ClipboardPaste, Scissors, Undo2,
 } from 'lucide-react'
 import { allObjects, mapFolder, mapTitle, type TileMap } from '@tile-editor/core'
 import { THEMES } from '../theme'
@@ -59,10 +60,15 @@ export function CommandPalette() {
       { id: 'types', label: 'Typy projektu…', group: 'Projekt', icon: ListChecks, run: () => useEditor.getState().setDialog('property-types') },
       { id: 'undo', label: 'Cofnij', group: 'Edycja', icon: Undo2, hint: 'Ctrl+Z', run: () => useEditor.getState().undo() },
       { id: 'redo', label: 'Ponów', group: 'Edycja', icon: Redo2, hint: 'Ctrl+Shift+Z', run: () => useEditor.getState().redo() },
+      { id: 'select-all', label: 'Zaznacz całą warstwę', group: 'Edycja', icon: SquareDashed, hint: 'Ctrl+A', run: () => useEditor.getState().selectAllTiles() },
+      { id: 'copy', label: 'Kopiuj zaznaczenie', group: 'Edycja', icon: ClipboardCopy, hint: 'Ctrl+C', run: () => useEditor.getState().copyTiles() },
+      { id: 'cut', label: 'Wytnij zaznaczenie', group: 'Edycja', icon: Scissors, hint: 'Ctrl+X', run: () => useEditor.getState().copyTiles(true) },
+      { id: 'paste', label: 'Wklej', group: 'Edycja', icon: ClipboardPaste, hint: 'Ctrl+V', run: () => useEditor.getState().pasteTiles() },
       tool('brush', 'Pędzel', Brush, 'B'),
       tool('eraser', 'Gumka', Eraser, 'E'),
       tool('fill', 'Wypełnienie', PaintBucket, 'F'),
       tool('rect', 'Prostokąt', Square, 'R'),
+      tool('area', 'Zaznacz obszar', SquareDashed, 'S'),
       tool('picker', 'Pipeta', Pipette, 'I'),
       tool('select', 'Zaznaczanie obiektów', MousePointer2, 'V'),
       tool('object', 'Stawianie obiektów', StickyNote, 'A'),

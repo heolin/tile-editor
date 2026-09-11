@@ -443,6 +443,18 @@ export class PixiTileRenderer implements TileRenderer {
         .stroke({ color: canvasTheme.accent, width: line })
     }
 
+    if (options.tileSelection) {
+      const r = options.tileSelection
+      const left = r.x * map.tilewidth
+      const top = r.y * map.tileheight
+      const width = r.width * map.tilewidth
+      const height = r.height * map.tileheight
+      // Dashed, so it never reads as the solid band the rectangle tool drags
+      // out - one of them is about to paint, the other is holding ground.
+      this.overlay.rect(left, top, width, height).fill({ color: canvasTheme.accent, alpha: 0.08 })
+      this.dashedRect(left, top, width, height, Math.max(map.tilewidth, 8) / 2, line)
+    }
+
     if (options.selectedObjectIds.length > 0) {
       const selected = new Set(options.selectedObjectIds)
       // Handles only make sense on a single object; several at once get an
@@ -464,6 +476,30 @@ export class PixiTileRenderer implements TileRenderer {
         .fill({ color: canvasTheme.accent, alpha: 0.1 })
         .stroke({ color: canvasTheme.accent, width: line, alpha: 0.9 })
     }
+  }
+
+  /**
+   * A rectangle outlined in dashes, since Pixi strokes are always solid. The
+   * dashes ride on a darker outline so the edge stays visible over whatever
+   * the map happens to be - a pale floor swallows a thin accent line.
+   */
+  private dashedRect(x: number, y: number, w: number, h: number, dash: number, width: number): void {
+    this.overlay.rect(x, y, w, h).stroke({ color: canvasTheme.ground, width: width * 2, alpha: 0.55 })
+    const run = (x0: number, y0: number, x1: number, y1: number) => {
+      const length = Math.hypot(x1 - x0, y1 - y0)
+      const steps = Math.max(1, Math.round(length / dash))
+      for (let i = 0; i < steps; i += 2) {
+        const a = i / steps
+        const b = Math.min(1, (i + 1) / steps)
+        this.overlay.moveTo(x0 + (x1 - x0) * a, y0 + (y1 - y0) * a)
+        this.overlay.lineTo(x0 + (x1 - x0) * b, y0 + (y1 - y0) * b)
+      }
+    }
+    run(x, y, x + w, y)
+    run(x + w, y, x + w, y + h)
+    run(x + w, y + h, x, y + h)
+    run(x, y + h, x, y)
+    this.overlay.stroke({ color: canvasTheme.accent, width: width * 1.5 })
   }
 
   /** The anchor an object's box hangs from, per its tileset's alignment. */

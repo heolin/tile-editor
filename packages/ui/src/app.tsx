@@ -279,6 +279,29 @@ function useKeyboardShortcuts(): void {
         state.redo()
         return
       }
+      // The tile clipboard only claims these when it has something to do with
+      // them; otherwise they stay the browser's, so copying text still works.
+      const onTiles = state.activeTileLayer() !== undefined
+      if (mod && event.key.toLowerCase() === 'a' && onTiles) {
+        event.preventDefault()
+        state.selectAllTiles()
+        return
+      }
+      if (mod && onTiles && state.tileSelection && /^[cx]$/.test(event.key.toLowerCase())) {
+        event.preventDefault()
+        state.copyTiles(event.key.toLowerCase() === 'x')
+        return
+      }
+      if (mod && onTiles && state.clipboard && event.key.toLowerCase() === 'v') {
+        event.preventDefault()
+        state.pasteTiles()
+        return
+      }
+      if (event.key === 'Escape' && state.tileSelection) {
+        event.preventDefault()
+        state.selectTiles(undefined)
+        return
+      }
       if (event.key === 'Delete' || event.key === 'Backspace') {
         const layer = state.activeObjectLayer()
         const selected = state.selectedObjects()
@@ -287,6 +310,9 @@ function useKeyboardShortcuts(): void {
           state.history.run(new RemoveObjectsCommand(layer, selected))
           state.selectObjects([])
           state.touch()
+        } else if (state.tileSelection) {
+          event.preventDefault()
+          state.fillSelection(0)
         }
         return
       }
@@ -298,6 +324,7 @@ function useKeyboardShortcuts(): void {
         case 'f': state.setTool('fill'); break
         case 'r': state.setTool('rect'); break
         case 'i': state.setTool('picker'); break
+        case 's': state.setTool('area'); break
         case 'v': state.setTool('select'); break
         case 'a': state.setTool('object'); break
         case 'g': state.toggleGrid(); break

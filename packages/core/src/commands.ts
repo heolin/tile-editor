@@ -1,5 +1,6 @@
 import { DenseLayerData } from './layer-data.js'
 import type { Frame, Layer, MapObject, Property, Tile, TileLayer, TileMap, Tileset, TilesetRef } from './model.js'
+import type { TileRegion } from './tiles.js'
 import { walkLayers } from './model.js'
 
 /**
@@ -111,18 +112,39 @@ export class SetTilesCommand implements EditCommand {
   private edits: CellEdit[] = []
   private index = new Set<string>()
 
-  constructor(readonly label: string, private layer: TileLayer, strokeId: string) {
+  /**
+   * `mask` is the user's tile selection: while one is up, every tool writes
+   * inside it and nowhere else, so a stray drag cannot spill over the edge.
+   */
+  constructor(
+    readonly label: string,
+    private layer: TileLayer,
+    strokeId: string,
+    private mask?: TileRegion,
+  ) {
     this.mergeKey = `tiles:${layer.id}:${strokeId}`
   }
 
   /** Records an intended change; call before apply(). */
   add(x: number, y: number, gid: number): void {
+    if (!this.writable(x, y)) return
     const key = `${x},${y}`
     if (this.index.has(key)) return
     const before = this.layer.data.get(x, y)
     if (before === gid) return
     this.index.add(key)
     this.edits.push({ x, y, before, after: gid })
+  }
+
+  /**
+   * Cells the layer does not cover would be dropped on apply() anyway, so
+   * recording them would only make an all-miss stroke look like a real edit.
+   */
+  private writable(x: number, y: number): boolean {
+    const m = this.mask
+    if (m && (x < m.x || y < m.y || x >= m.x + m.width || y >= m.y + m.height)) return false
+    const b = this.layer.data.bounds
+    return x >= b.x && y >= b.y && x < b.x + b.width && y < b.y + b.height
   }
 
   get empty(): boolean {

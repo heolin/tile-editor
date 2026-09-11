@@ -62,6 +62,74 @@ try {
   check('narzędzie pasuje do warstwy', true, objectMode ? 'warstwa obiektów' : 'warstwa kafli')
 
   const box = await page.locator('main > div').boundingBox()
+
+  // Bulk tile editing, on a tile layer only: select a block, copy it, paste it
+  // somewhere else through the context menu, and confirm the selection refuses
+  // to let a brush write outside itself. Runs before any painting, so the undo
+  // at the end leaves the document exactly as it was found.
+  if (!objectMode) {
+    const view = await page.evaluate(() => {
+      const s = window.__tileEditor.state()
+      return { tw: s.doc.map.tilewidth, th: s.doc.map.tileheight, ...s.camera }
+    })
+    const at = (tx, ty) => ({
+      x: box.x + view.x + (tx + 0.5) * view.tw * view.zoom,
+      y: box.y + view.y + (ty + 0.5) * view.th * view.zoom,
+    })
+    const peek = () => page.evaluate(() => {
+      const s = window.__tileEditor.state()
+      return { selection: s.tileSelection, clipboard: s.clipboard, undo: s.history.canUndo }
+    })
+
+    await page.keyboard.press('s')
+    await page.mouse.move(...Object.values(at(1, 1)))
+    await page.mouse.down()
+    await page.mouse.move(...Object.values(at(2, 2)), { steps: 5 })
+    await page.mouse.up()
+    await page.waitForTimeout(200)
+    const selected = await peek()
+    check(
+      'zaznaczenie obszaru',
+      selected.selection?.width === 2 && selected.selection?.height === 2,
+      JSON.stringify(selected.selection),
+    )
+
+    await page.keyboard.press('Control+c')
+    await page.waitForTimeout(200)
+    const copied = await peek()
+    check('kopiowanie do schowka', copied.clipboard?.gids?.length === 4, `${copied.clipboard?.width}x${copied.clipboard?.height}`)
+
+    await page.mouse.click(...Object.values(at(4, 4)), { button: 'right' })
+    await page.waitForTimeout(200)
+    const paste = page.getByRole('menuitem', { name: /Wklej tutaj/ })
+    check('menu oferuje wklejenie', (await paste.count()) === 1)
+    if (await paste.count()) await paste.first().click()
+    await page.waitForTimeout(300)
+    const pasted = await peek()
+    check(
+      'wklejenie przenosi zaznaczenie',
+      pasted.selection?.x === 4 && pasted.selection?.y === 4,
+      JSON.stringify(pasted.selection),
+    )
+    await page.keyboard.press('Control+z')
+
+    // With a selection up, a brush stroke outside it must change nothing.
+    await page.keyboard.press('b')
+    const before = await page.evaluate(() => window.__tileEditor.state().activeTileLayer().data.toArray().join())
+    await page.mouse.click(...Object.values(at(8, 6)))
+    await page.waitForTimeout(200)
+    const after = await page.evaluate(() => window.__tileEditor.state().activeTileLayer().data.toArray().join())
+    check('zaznaczenie blokuje pędzel poza sobą', before === after)
+
+    await page.keyboard.press('Escape')
+    await page.waitForTimeout(150)
+    check('Esc odznacza', (await peek()).selection === undefined)
+
+    // Copying loads the block onto the brush, so the palette pick the edit
+    // below relies on has to be made again.
+    await tiles.nth(3).click()
+  }
+
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2)
   await page.waitForTimeout(400)
   check('edycja oznaczona jako niezapisana', await page.getByRole('button', { name: /Zapisz$/ }).isEnabled())

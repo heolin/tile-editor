@@ -31,8 +31,14 @@ export function ContextMenu({ x, y, items, onClose }: {
   }, [x, y])
 
   useEffect(() => {
-    const close = () => onClose()
-    // Any interaction outside dismisses it, including a scroll or a key.
+    // Any interaction outside dismisses it, including a scroll or a key. The
+    // listener captures from the window, so a press on the menu itself reaches
+    // it before React sees the click - without this guard the menu would
+    // unmount first and no item would ever run.
+    const close = (event: Event) => {
+      if (event.type === 'pointerdown' && ref.current?.contains(event.target as Node)) return
+      onClose()
+    }
     window.addEventListener('pointerdown', close, { capture: true })
     window.addEventListener('keydown', close)
     window.addEventListener('blur', close)
@@ -61,6 +67,8 @@ export function ContextMenu({ x, y, items, onClose }: {
             'hit flex w-full items-center justify-between gap-3 px-3 text-left text-[13px]',
             item.danger ? 'text-danger hover:bg-danger-deep' : 'text-ink-dim hover:bg-hover hover:text-ink',
           ].join(' ')}
+          // The menu renders inside the canvas, so a press that bubbles would
+          // also land as a tool stroke on the map underneath.
           onPointerDown={(event) => event.stopPropagation()}
           onClick={() => {
             item.onSelect()

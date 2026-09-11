@@ -275,6 +275,34 @@ Każdy kończy się czymś, co da się uruchomić na telefonie.
 | **M5** | Dopracowanie mobile UX, PWA (installable, offline), wydajność na słabszych telefonach | Instalowalne z ekranu domowego, działa offline | **gotowe** |
 | **M6** | Autotiling (Wang sets + reguły w stylu LDtk), command palette, wyszukiwanie w projekcie, lint mapy | Funkcje, których Tiled nie ma albo ma gorsze | lint, paleta i wyszukiwanie gotowe; autotiling odłożony |
 | **M7** | Capacitor 7, `CapacitorProjectFS` przez SAF, pipeline APK w GitHub Actions | Podpisany APK do pobrania z Actions | **wycofane** — patrz niżej |
+| **M8** | Masowa edycja kafli: zaznaczanie obszaru, schowek, zaznaczenie jako maska narzędzi | Blok kafli przenosi się w obrębie mapy i między mapami | **gotowe** |
+
+### M8 — masowa edycja kafli, 11 września 2026
+
+Narzędzie `S` wyciąga prostokąt zaznaczenia na warstwie kafli. Zaznaczenie
+żyje dalej po puszczeniu palca i robi dwie rzeczy naraz:
+
+- jest źródłem bloku — `Ctrl+C` / `Ctrl+X` bierze go do schowka **i na pędzel**,
+  więc od razu można nim stemplować; `Ctrl+V` kładzie blok w miejscu
+  zaznaczenia, a menu z długiego przytrzymania kładzie go pod palcem;
+- jest maską — dopóki stoi, pędzel, gumka, wypełnienie i prostokąt piszą tylko
+  w jego środku. Maska siedzi w `SetTilesCommand`, nie w narzędziach, więc nie
+  da się o niej zapomnieć w nowym narzędziu.
+
+Schowek przeżywa otwarcie innej mapy, bo przeniesienie fragmentu z mapy na mapę
+to połowa powodu, dla którego istnieje. Samo zaznaczenie nie przeżywa.
+
+Ryzyko, które to niesie: zaznaczenie, o którym użytkownik zapomniał, wygląda
+jak zepsuty pędzel. Dlatego jest rysowane kreskowaną ramką na ciemnym podkładzie
+(widoczną też na jasnym tilesecie), a w HUD stoi `⬚ 4×3 ×`, które odznacza
+jednym kliknięciem.
+
+Operacje na kaflach przeniosły się przy okazji z UI do `core/tiles.ts` i dostały
+testy. Wyszły z tego dwa błędy: `floodFill` indeksował tablicę odwiedzonych
+komórek od zera, więc na mapie nieskończonej z warstwą poza początkiem układu
+zapętlał się; a menu kontekstowe zamykało się na `pointerdown` z okna, zanim
+React zobaczył `click` — czyli **żadna pozycja tego menu nigdy się nie
+wykonywała**.
 
 ### M7 wycofane — 10 września 2026
 

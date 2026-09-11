@@ -35,6 +35,8 @@ export interface RenderOptions {
   selectionRect?: { x0: number; y0: number; x1: number; y1: number }
   /** Rectangle being dragged out by the rectangle tool, in tile coordinates. */
   marquee?: { x0: number; y0: number; x1: number; y1: number }
+  /** The standing tile selection, in tile coordinates. Masks every tile tool. */
+  tileSelection?: { x: number; y: number; width: number; height: number }
 }
 
 /**

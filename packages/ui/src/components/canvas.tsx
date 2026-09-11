@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   AddObjectCommand, RemoveObjectsCommand, SetTilesCommand, UpdateObjectsCommand,
-  boxBounds, boundsIntersect, resizeBox, rotationTowards, tilesetForGid,
-  type Anchor, type Box, type HandleId, type MapObject,
+  boxBounds, boundsIntersect, fillRegion, floodFill, paintStamp, regionContains,
+  regionFromCorners,
+  resizeBox, rotationTowards, tilesetForGid,
+  type Anchor, type Box, type HandleId, type MapObject, type Stamp, type TileRegion,
 } from '@tile-editor/core'
 import { ContextMenu, type MenuItem } from './context-menu'
-import { floodFill, makeTileObject, paintStamp, useEditor, type Stamp } from '../state/store'
+import { makeTileObject, nextStroke, useEditor } from '../state/store'
 import { tileObjectAnchor } from '../render/tile-source'
 import { createRenderer, type PixiTileRenderer } from '../render/pixi-renderer'
 
@@ -30,7 +32,7 @@ type Drag =
       startedAt: number
       moved: number
     }
-  | { kind: 'marquee'; x0: number; y0: number; x1: number; y1: number; mode: 'rect' | 'pick' }
+  | { kind: 'marquee'; x0: number; y0: number; x1: number; y1: number; mode: 'rect' | 'area' }
   | { kind: 'moveObjects'; objects: MapObject[]; startX: number; startY: number; origin: { x: number; y: number }[] }
   | { kind: 'resizeObject'; object: MapObject; handle: Exclude<HandleId, 'rotate'>; anchor: Anchor; start: Box }
   | { kind: 'rotateObject'; object: MapObject; start: Box }
@@ -46,7 +48,6 @@ export function MapCanvas() {
   const rendererRef = useRef<PixiTileRenderer>(null)
   const dragRef = useRef<Drag>({ kind: 'none' })
   const pointersRef = useRef(new Map<number, PointerRecord>())
-  const strokeRef = useRef(0)
   const [mounted, setMounted] = useState(false)
 
   const doc = useEditor((s) => s.doc)
@@ -55,6 +56,7 @@ export function MapCanvas() {
   const camera = useEditor((s) => s.camera)
   const tool = useEditor((s) => s.tool)
   const stamp = useEditor((s) => s.stamp)
+  const tileSelection = useEditor((s) => s.tileSelection)
   const showGrid = useEditor((s) => s.showGrid)
   const showObjects = useEditor((s) => s.showObjects)
   const animate = useEditor((s) => s.animate)
@@ -141,10 +143,11 @@ export function MapCanvas() {
       showHandles: selectBox === undefined,
       selectionRect: selectBox,
       marquee: marquee ? { x0: marquee.x0, y0: marquee.y0, x1: marquee.x1, y1: marquee.y1 } : undefined,
+      tileSelection: state.tileSelection,
     })
   }
 
-  useEffect(redraw, [revision, camera, showGrid, showObjects, animate, hover, marquee, selectBox, selectedObjectIds, tool, stamp, mounted])
+  useEffect(redraw, [revision, camera, showGrid, showObjects, animate, hover, marquee, selectBox, selectedObjectIds, tool, stamp, tileSelection, mounted])
 
   // Animation is the one thing that needs a running clock. Everything else
   // draws on demand, so the loop exists only while the toggle is on.
@@ -214,11 +217,17 @@ export function MapCanvas() {
       return
     }
 
-    strokeRef.current += 1
-    const stroke = String(strokeRef.current)
+    const stroke = nextStroke()
+
+    if (state.tool === 'area') {
+      const start = { kind: 'marquee', x0: cell.x, y0: cell.y, x1: cell.x, y1: cell.y, mode: 'area' } as const
+      setMarquee(start)
+      dragRef.current = { ...start }
+      return
+    }
 
     if (state.tool === 'fill') {
-      const command = new SetTilesCommand('Wypełnij', layer, stroke)
+      const command = new SetTilesCommand('Wypełnij', layer, stroke, state.tileSelection)
       floodFill(layer, cell.x, cell.y, state.stamp?.gids[0] ?? 0, command)
       if (!command.empty) {
         state.history.run(command)
@@ -233,7 +242,12 @@ export function MapCanvas() {
       return
     }
 
-    const command = new SetTilesCommand(state.tool === 'eraser' ? 'Wymaż' : 'Maluj', layer, stroke)
+    const command = new SetTilesCommand(
+      state.tool === 'eraser' ? 'Wymaż' : 'Maluj',
+      layer,
+      stroke,
+      state.tileSelection,
+    )
     applyBrush(command, cell)
     dragRef.current = { kind: 'paint', command }
     state.history.run(command)
@@ -326,6 +340,32 @@ export function MapCanvas() {
     if (!tileLayer || !inBounds(cell)) return []
     const gid = tileLayer.data.get(cell.x, cell.y)
     const items: MenuItem[] = []
+
+    // The tablet has no Ctrl+C, so the whole clipboard lives here as well.
+    const selection = state.tileSelection
+    if (selection && regionContains(selection, cell.x, cell.y)) {
+      items.push({ label: 'Kopiuj zaznaczenie', hint: 'Ctrl C', onSelect: () => state.copyTiles() })
+      items.push({ label: 'Wytnij zaznaczenie', hint: 'Ctrl X', onSelect: () => state.copyTiles(true) })
+      items.push({
+        label: 'Wypełnij zaznaczenie',
+        onSelect: () => state.fillSelection(state.stamp?.gids[0] ?? 0),
+      })
+      items.push({
+        label: 'Wyczyść zaznaczenie',
+        danger: true,
+        hint: 'Del',
+        onSelect: () => state.fillSelection(0),
+      })
+      items.push({ label: 'Odznacz', hint: 'Esc', onSelect: () => state.selectTiles(undefined) })
+    }
+    if (state.clipboard) {
+      items.push({
+        label: `Wklej tutaj (${state.clipboard.width}×${state.clipboard.height})`,
+        hint: 'Ctrl V',
+        onSelect: () => state.pasteTiles(cell),
+      })
+    }
+
     if (gid !== 0) {
       items.push({
         label: 'Pobierz kafel',
@@ -339,8 +379,7 @@ export function MapCanvas() {
         label: 'Wyczyść kafel',
         danger: true,
         onSelect: () => {
-          strokeRef.current += 1
-          const command = new SetTilesCommand('Wymaż', tileLayer, String(strokeRef.current))
+          const command = new SetTilesCommand('Wymaż', tileLayer, nextStroke(), state.tileSelection)
           command.add(cell.x, cell.y, 0)
           if (!command.empty) {
             state.history.run(command)
@@ -353,8 +392,7 @@ export function MapCanvas() {
       label: 'Wypełnij tym kaflem',
       hint: 'F',
       onSelect: () => {
-        strokeRef.current += 1
-        const command = new SetTilesCommand('Wypełnij', tileLayer, String(strokeRef.current))
+        const command = new SetTilesCommand('Wypełnij', tileLayer, nextStroke(), state.tileSelection)
         floodFill(tileLayer, cell.x, cell.y, state.stamp?.gids[0] ?? 0, command)
         if (!command.empty) {
           state.history.run(command)
@@ -713,19 +751,19 @@ export function MapCanvas() {
       setSelectBox(undefined)
     }
 
-    if (drag.kind === 'marquee') {
+    if (drag.kind === 'marquee' && drag.mode === 'area') {
+      const region = regionFromCorners(drag.x0, drag.y0, drag.x1, drag.y1)
+      // A tap is how you drop the selection again, and that matters: while one
+      // is up every tool refuses to write outside it.
+      state.selectTiles(region.width === 1 && region.height === 1 ? undefined : region)
+    }
+
+    if (drag.kind === 'marquee' && drag.mode === 'rect') {
       const layer = state.activeTileLayer()
       if (layer) {
-        strokeRef.current += 1
-        const command = new SetTilesCommand('Prostokąt', layer, String(strokeRef.current))
-        const left = Math.min(drag.x0, drag.x1)
-        const right = Math.max(drag.x0, drag.x1)
-        const top = Math.min(drag.y0, drag.y1)
-        const bottom = Math.max(drag.y0, drag.y1)
-        const gid = state.stamp?.gids[0] ?? 0
-        for (let y = top; y <= bottom; y++) {
-          for (let x = left; x <= right; x++) command.add(x, y, gid)
-        }
+        const command = new SetTilesCommand('Prostokąt', layer, nextStroke(), state.tileSelection)
+        const region = regionFromCorners(drag.x0, drag.y0, drag.x1, drag.y1)
+        fillRegion(command, region, state.stamp?.gids[0] ?? 0)
         if (!command.empty) {
           state.history.run(command)
           state.touch()
@@ -777,6 +815,8 @@ export function MapCanvas() {
 function CanvasHud({ hover, onFit }: { hover?: { x: number; y: number }; onFit: () => void }) {
   const zoom = useEditor((s) => s.camera.zoom)
   const doc = useEditor((s) => s.doc)
+  const selection = useEditor((s) => s.tileSelection)
+  const selectTiles = useEditor((s) => s.selectTiles)
   if (!doc) return null
   return (
     <div className="pointer-events-none absolute bottom-2 left-2 flex items-center gap-2 rounded-md bg-surface/85 px-2 py-1 text-[11px] text-ink-faint backdrop-blur">
@@ -787,6 +827,21 @@ function CanvasHud({ hover, onFit }: { hover?: { x: number; y: number }; onFit: 
       <button type="button" className="pointer-events-auto num hover:text-ink" onClick={onFit}>
         {Math.round(zoom * 100)}%
       </button>
+      {selection ? (
+        <>
+          <span className="text-line-strong">·</span>
+          {/* A standing selection blocks painting everywhere else, so it says so
+              out loud and keeps its own way out. */}
+          <button
+            type="button"
+            className="pointer-events-auto num rounded px-1 text-accent hover:bg-accent/15"
+            title="Zaznaczenie ogranicza narzędzia — kliknij, żeby odznaczyć (Esc)"
+            onClick={() => selectTiles(undefined)}
+          >
+            ⬚ {selection.width}×{selection.height} ×
+          </button>
+        </>
+      ) : null}
     </div>
   )
 }

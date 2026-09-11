@@ -38,6 +38,7 @@ dodaj `--lan`.
 | **Animacje kafli** | edytor klatek; odtwarzanie jako przełącznik, domyślnie wyłączony |
 | **Mapy nieskończone** | odczyt i zapis chunków w obu formatach |
 | **Edycja kafli** | pędzel, gumka, wypełnienie, prostokąt, pipeta, cofanie ze scalaniem pociągnięć |
+| **Masowa edycja** | zaznaczanie obszaru, kopiowanie i wycinanie bloków kafli, wklejanie (także między mapami), wypełnianie i czyszczenie zaznaczenia; dopóki zaznaczenie stoi, żadne narzędzie nie pisze poza nim |
 | **Tworzenie map** | pusta mapa albo na podstawie szablonu, z przepisaniem ścieżek do tilesetów |
 | **Warstwy** | kolejność, widoczność, krycie, dodawanie i usuwanie |
 | **Obiekty** | stawianie, zaznaczanie ramką, przeciąganie uchwytów do skalowania i obrotu, przesuwanie ze snapowaniem, kasowanie; render z rozciąganiem, obrotem, flipem i `objectalignment` |
@@ -74,8 +75,14 @@ npm run dev:ui         # Vite dev server; równolegle uruchom npm start <folder>
 ## Skróty klawiszowe
 
 `B` pędzel · `E` gumka · `F` wypełnienie · `R` prostokąt · `I` pipeta ·
-`V` zaznaczanie · `A` stawianie obiektów · `G` siatka · `O` obiekty · `P` animacje · `Ctrl+Z` / `Ctrl+Shift+Z` cofnij i
-ponów · `Ctrl+S` zapisz · `Ctrl+K` paleta poleceń · `Delete` usuwa zaznaczone obiekty.
+`S` zaznacz obszar · `V` zaznaczanie obiektów · `A` stawianie obiektów ·
+`G` siatka · `O` obiekty · `P` animacje · `Ctrl+Z` / `Ctrl+Shift+Z` cofnij i
+ponów · `Ctrl+S` zapisz · `Ctrl+K` paleta poleceń.
+
+Na warstwie kafli: `Ctrl+A` zaznacz całą warstwę · `Ctrl+C` / `Ctrl+X` kopiuj
+i wytnij blok · `Ctrl+V` wklej · `Delete` czyści zaznaczenie · `Esc` odznacza.
+`Delete` usuwa zaznaczone obiekty, gdy warstwa jest warstwą obiektów. Bez
+klawiatury to samo robi menu z długiego przytrzymania.
 
 **Obiekty na płótnie.** Zaznaczony pojedynczy obiekt dostaje osiem uchwytów
 skalowania i uchwyt obrotu nad górną krawędzią. Przeciągnięcie uchwytu trzyma

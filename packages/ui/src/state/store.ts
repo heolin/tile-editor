@@ -2,29 +2,25 @@ import { create } from 'zustand'
 import {
   AddTilesCommand, AddTilesetCommand, DenseLayerData, History, ProjectLoader,
   PropertyTypeRegistry, RemoveTilesetCommand, SetTilesCommand, applyFix,
-  indexProperties, serializeProjectJson, suggestEnums,
+  captureRegion, clampRegion, fillRegion, indexProperties, paintStamp,
+  serializeProjectJson, suggestEnums,
   addImagesToTileset, createFromTemplate, createTileMap, createTileset,
   findTilesetRef, lintMap, lintProject, lintUnusedTiles, mapTitle,
   nextFirstGid, normalizePath, relativeFrom, tileId, tilesetUsage, walkLayers,
   type DocumentFormat, type FormatHints, type LintFinding, type Layer, type MapObject,
   type LintFix, type ObjectLayer, type ProjectContents, type PropertyIndexEntry,
-  type PropertyTypeDef, type TileLayer, type TileMap, type Tileset,
-  type TilesetRef, type TypeSuggestion,
+  type PropertyTypeDef, type Stamp, type TileLayer, type TileMap, type TileRegion,
+  type Tileset, type TilesetRef, type TypeSuggestion,
 } from '@tile-editor/core'
 import { HttpProjectFS } from '../fs/http-fs'
 import { DEFAULT_THEME, applyTheme, storedTheme } from '../theme'
 import { INSTALL_MESSAGES, promptInstall } from '../pwa'
 import { buildTileSourceIndex, type TileSourceIndex } from '../render/tile-source'
 
-export type ToolId = 'brush' | 'eraser' | 'fill' | 'rect' | 'picker' | 'select' | 'object'
-export type PanelId = 'project' | 'layers' | 'tilesets' | 'properties' | 'lint'
+export type ToolId = 'brush' | 'eraser' | 'fill' | 'rect' | 'picker' | 'area' | 'select' | 'object'
 
-/** A rectangular block of tiles picked up from a tileset or the map. */
-export interface Stamp {
-  width: number
-  height: number
-  gids: number[]
-}
+export type { Stamp, TileRegion }
+export type PanelId = 'project' | 'layers' | 'tilesets' | 'properties' | 'lint'
 
 export interface Camera {
   x: number
@@ -84,6 +80,10 @@ interface EditorState {
   dirtyTilesets: Set<string>
   tool: ToolId
   stamp?: Stamp
+  /** Cells picked out on the map. While it is up, every tile tool writes only inside it. */
+  tileSelection?: TileRegion
+  /** Tiles held for pasting. Separate from the stamp, which the brush follows. */
+  clipboard?: Stamp
   activeTilesetPath?: string
   hoverTile?: { x: number; y: number }
 
@@ -130,6 +130,13 @@ interface EditorState {
 
   setTool(tool: ToolId): void
   setStamp(stamp: Stamp | undefined): void
+  selectTiles(region: TileRegion | undefined): void
+  selectAllTiles(): void
+  /** Lifts the selection into the clipboard and onto the brush; `cut` also clears it. */
+  copyTiles(cut?: boolean): void
+  /** Drops the clipboard at a cell, or loads it onto the brush when there is no target. */
+  pasteTiles(at?: { x: number; y: number }): void
+  fillSelection(gid: number): void
   setActiveLayer(id: number | undefined): void
   selectObjects(ids: number[]): void
   setCamera(camera: Partial<Camera>): void
@@ -233,6 +240,9 @@ export const useEditor = create<EditorState>((set, get) => ({
         doc: { path: loaded.path, map: loaded.map, hints: loaded.hints, format: loaded.format, source },
         activeLayerId: firstLayer?.id,
         selectedObjectIds: [],
+        // The clipboard survives: pasting a block from one map into the next
+        // is half the reason it exists. A selection rectangle does not.
+        tileSelection: undefined,
         propertyTarget: { kind: 'map' },
         revision: get().revision + 1,
         dirty: false,
@@ -550,6 +560,69 @@ export const useEditor = create<EditorState>((set, get) => ({
   setTool: (tool) =>
     set({ tool, selectedObjectIds: tool === 'select' || tool === 'object' ? get().selectedObjectIds : [] }),
   setStamp: (stamp) => set({ stamp }),
+  selectTiles: (tileSelection) => set({ tileSelection }),
+  selectAllTiles: () => {
+    const layer = get().activeTileLayer()
+    if (!layer) return
+    const { x, y, width, height } = layer.data.bounds
+    set({ tileSelection: { x, y, width, height }, tool: 'area' })
+  },
+  copyTiles: (cut = false) => {
+    const state = get()
+    const layer = state.activeTileLayer()
+    const region = state.tileSelection && layer ? clampRegion(state.tileSelection, layer) : undefined
+    if (!layer || !region) {
+      state.notify('Najpierw zaznacz obszar narzędziem zaznaczania (S).', 'error')
+      return
+    }
+    const stamp = captureRegion(layer, region)
+    set({ clipboard: stamp, stamp })
+    if (cut) {
+      const command = new SetTilesCommand('Wytnij', layer, nextStroke())
+      fillRegion(command, region, 0)
+      if (!command.empty) {
+        state.history.run(command)
+        state.touch()
+      }
+    }
+    state.notify(`${cut ? 'Wycięto' : 'Skopiowano'} ${stamp.width}×${stamp.height} kafli`)
+  },
+  pasteTiles: (at) => {
+    const state = get()
+    const clipboard = state.clipboard
+    const layer = state.activeTileLayer()
+    if (!clipboard) {
+      state.notify('Schowek jest pusty.', 'error')
+      return
+    }
+    const target = at ?? (state.tileSelection ? { x: state.tileSelection.x, y: state.tileSelection.y } : undefined)
+    if (!layer || !target) {
+      // Nothing says where it should land, so hand it to the brush and let the
+      // next tap decide - which is the only workable answer on a touchscreen.
+      set({ stamp: clipboard, tool: 'brush' })
+      state.notify('Schowek na pędzlu — kliknij, żeby wkleić.')
+      return
+    }
+    const command = new SetTilesCommand('Wklej', layer, nextStroke())
+    paintStamp(command, clipboard, target.x, target.y)
+    // The selection follows the block even when the paste changed nothing,
+    // so what is highlighted is always what was last put down.
+    set({ tileSelection: { x: target.x, y: target.y, width: clipboard.width, height: clipboard.height } })
+    if (command.empty) return
+    state.history.run(command)
+    state.touch()
+  },
+  fillSelection: (gid) => {
+    const state = get()
+    const layer = state.activeTileLayer()
+    const region = state.tileSelection && layer ? clampRegion(state.tileSelection, layer) : undefined
+    if (!layer || !region) return
+    const command = new SetTilesCommand(gid === 0 ? 'Wyczyść zaznaczenie' : 'Wypełnij zaznaczenie', layer, nextStroke())
+    fillRegion(command, region, gid)
+    if (command.empty) return
+    state.history.run(command)
+    state.touch()
+  },
   setActiveLayer: (id) => {
     const layer = id === undefined ? undefined : [...walkLayers(get().doc?.map.layers ?? [])].find((l) => l.id === id)
     set({
@@ -716,56 +789,15 @@ export const useEditor = create<EditorState>((set, get) => ({
 /* Tile editing helpers                                                */
 /* ------------------------------------------------------------------ */
 
-/** Applies a stamp at a map position, respecting its footprint. */
-export function paintStamp(command: SetTilesCommand, stamp: Stamp, x: number, y: number): void {
-  for (let dy = 0; dy < stamp.height; dy++) {
-    for (let dx = 0; dx < stamp.width; dx++) {
-      command.add(x + dx, y + dy, stamp.gids[dy * stamp.width + dx] ?? 0)
-    }
-  }
-}
+let strokeCounter = 0
 
-/** Four-way flood fill bounded by the layer. */
-export function floodFill(layer: TileLayer, x: number, y: number, gid: number, command: SetTilesCommand): void {
-  const target = layer.data.get(x, y)
-  if (target === gid) return
-  const { width, height } = layer.data.bounds
-  const seen = new Uint8Array(width * height)
-  const queue: number[] = [y * width + x]
-  seen[y * width + x] = 1
-  while (queue.length > 0) {
-    const index = queue.pop()!
-    const cx = index % width
-    const cy = Math.floor(index / width)
-    if (layer.data.get(cx, cy) !== target) continue
-    command.add(cx, cy, gid)
-    const neighbours = [
-      [cx - 1, cy],
-      [cx + 1, cy],
-      [cx, cy - 1],
-      [cx, cy + 1],
-    ] as const
-    for (const [nx, ny] of neighbours) {
-      if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue
-      const ni = ny * width + nx
-      if (seen[ni]) continue
-      seen[ni] = 1
-      queue.push(ni)
-    }
-  }
-}
-
-/** Reads a rectangle out of a tile layer as a reusable stamp. */
-export function captureStamp(layer: TileLayer, x0: number, y0: number, x1: number, y1: number): Stamp {
-  const left = Math.min(x0, x1)
-  const top = Math.min(y0, y1)
-  const width = Math.abs(x1 - x0) + 1
-  const height = Math.abs(y1 - y0) + 1
-  const gids: number[] = []
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) gids.push(layer.data.get(left + x, top + y))
-  }
-  return { width, height, gids }
+/**
+ * One id per gesture. Edits sharing it collapse into a single undo step, which
+ * is what makes dragging a brush across forty cells one Ctrl+Z, not forty.
+ */
+export function nextStroke(): string {
+  strokeCounter += 1
+  return String(strokeCounter)
 }
 
 export function newLayerId(map: TileMap): number {

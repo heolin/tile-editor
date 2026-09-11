@@ -1,7 +1,7 @@
 import clsx from 'clsx'
 import {
   Brush, Eraser, Grid3x3, PaintBucket, Pipette, Play, Redo2, Save, Shapes,
-  Square, MousePointer2, StickyNote, Undo2,
+  Square, SquareDashed, MousePointer2, StickyNote, Undo2,
 } from 'lucide-react'
 import { Button } from './ui'
 import { useEditor, type ToolId } from '../state/store'
@@ -12,6 +12,7 @@ const TILE_TOOLS: { id: ToolId; icon: typeof Brush; label: string; key: string }
   { id: 'fill', icon: PaintBucket, label: 'Wypełnienie', key: 'F' },
   { id: 'rect', icon: Square, label: 'Prostokąt', key: 'R' },
   { id: 'picker', icon: Pipette, label: 'Pipeta', key: 'I' },
+  { id: 'area', icon: SquareDashed, label: 'Zaznacz obszar', key: 'S' },
 ]
 
 export function ToolBar() {
