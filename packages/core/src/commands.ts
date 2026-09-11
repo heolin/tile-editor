@@ -87,6 +87,15 @@ export class History {
     this.notify()
   }
 
+  /**
+   * Declares the document out of step with the file without any command having
+   * run - the case when a restored draft replaces what is on disk.
+   */
+  markUnsaved(): void {
+    this.savedDepth = -1
+    this.notify()
+  }
+
   clear(): void {
     this.past = []
     this.future = []

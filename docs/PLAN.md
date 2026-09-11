@@ -276,7 +276,36 @@ Każdy kończy się czymś, co da się uruchomić na telefonie.
 | **M6** | Autotiling (Wang sets + reguły w stylu LDtk), command palette, wyszukiwanie w projekcie, lint mapy | Funkcje, których Tiled nie ma albo ma gorsze | lint, paleta i wyszukiwanie gotowe; autotiling odłożony |
 | **M7** | Capacitor 7, `CapacitorProjectFS` przez SAF, pipeline APK w GitHub Actions | Podpisany APK do pobrania z Actions | **wycofane** — patrz niżej |
 | **M8** | Masowa edycja kafli: zaznaczanie obszaru, schowek, zaznaczenie jako maska narzędzi | Blok kafli przenosi się w obrębie mapy i między mapami | **gotowe** |
+| **M10** | Odzyskiwanie niezapisanej pracy: szkic w IndexedDB, propozycja przywrócenia przy starcie | Ubicie procesu nie kosztuje pracy | **gotowe** |
 | **M9** | Masowa edycja obiektów: schowek obiektów, duplikowanie, properties całego zaznaczenia | Poprawka na 40 obiektach to jedna operacja, nie 40 | **gotowe** |
+
+### M10 — odzyskiwanie niezapisanej pracy, 11 września 2026
+
+Plan od początku zapisywał ryzyko „Termux ubija serwer w tle" z mitygacją
+„stan zawsze w plikach". To była nieprawda: stan siedział w pamięci do
+`Ctrl+S`, a jedynym zabezpieczeniem było `beforeunload`, które przy zabiciu
+procesu przez Androida nie ma prawa się odpalić. Na docelowym urządzeniu to był
+najczęstszy sposób utraty pracy.
+
+Teraz każda zmiana po 1,5 s trafia do IndexedDB jako **dokładnie ten tekst,
+który zapisałby `Ctrl+S`** — razem z tekstem, jaki plik miał w chwili otwarcia,
+i z brudnymi tilesetami. Dzięki temu przywrócenie to `adoptMap()`, czyli ta sama
+ścieżka co zwykłe wczytanie, tylko bez czytania pliku; złote testy round-tripu
+obejmują ją bez zmian. Szkic leci też na `visibilitychange`, bo zwinięcie
+przeglądarki na Androidzie to pierwszy krok do zabicia jej procesu.
+
+Dwie decyzje warte zapisania:
+
+- **Przywrócenie nie dotyka dysku.** Wkłada zmiany do edytora jako niezapisane;
+  plik zmienia dopiero `Ctrl+S` użytkownika. Dialog mówi to wprost i ostrzega,
+  gdy plik na dysku zmienił się od czasu szkicu.
+- **Przełączenie mapy nie gubi już pracy po cichu.** Wcześniej `openMap`
+  czyścił historię i podmieniał dokument bez słowa. Teraz najpierw odkłada
+  szkic i mówi, gdzie go szukać („Niezapisane zmiany…" w palecie poleceń).
+
+Testu na to nie da się napisać w jednej karcie, więc `scripts/recovery.mjs`
+trzyma jeden kontekst przeglądarki, zabija stronę w połowie edycji i sprawdza
+cały cykl. `npm run smoke` uruchamia go jako trzeci przebieg.
 
 ### M9 — masowa edycja obiektów, 11 września 2026
 
@@ -355,7 +384,7 @@ serwera, a nie do powłoki wokół niego.
 | Funkcje formatu nieobecne w korpusie (inne kształty, atlasy, kompresja, grupy) wychodzą wadliwie na cudzych mapach | Średnia | Drugi zestaw testów na mapach z repo Tileda; świadomie oznaczone jako słabiej zweryfikowane (§5.4) |
 | Panel tilesetu ładujący 250 osobnych PNG-ów | Średnia | To kolekcje obrazków, nie atlasy. Miniatury generowane i cache'owane po stronie serwera, lista wirtualizowana |
 | Wydajność renderera | Niska | Mapa 50×50 to 2500 kafli na Adreno 650. Zapas jest ogromny. Interfejs `TileRenderer` i benchmark w M1 zostają, ale to formalność |
-| Termux ubija serwer w tle | Średnia | Stan zawsze w plikach, szybki restart, `termux-wake-lock` w dokumentacji |
+| Termux ubija serwer w tle | Średnia | Szkic każdej zmiany w IndexedDB (M10), szybki restart, `termux-wake-lock` w dokumentacji |
 | Szeroki układ potraktowany jak „na pewno mysz" | Wysoka | Dwie niezależne osie (szerokość × wskaźnik) od M0; test na Tab S7 od M1, nie w M5 |
 | Obrót tabletu przełącza cały układ | Niska | Trójstopniowe breakpointy — pion i poziom są po tej samej stronie granicy panele/arkusze |
 | Brak kompresji zstd przy zapisie | Niska | Zapis jako zlib + ostrzeżenie; udokumentowane |

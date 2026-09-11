@@ -16,6 +16,7 @@ import { HttpProjectFS } from '../fs/http-fs'
 import { DEFAULT_THEME, applyTheme, storedTheme } from '../theme'
 import { INSTALL_MESSAGES, promptInstall } from '../pwa'
 import { buildTileSourceIndex, type TileSourceIndex } from '../render/tile-source'
+import { draftKey, dropDraft, listDrafts, putDraft, type Draft } from './drafts'
 
 export type ToolId = 'brush' | 'eraser' | 'fill' | 'rect' | 'picker' | 'area' | 'select' | 'object'
 
@@ -35,6 +36,8 @@ export interface OpenDocument {
   /** Which serialisation this map came from, shown in the properties panel. */
   format: DocumentFormat
   source: TileSourceIndex
+  /** The file's text as it was last read or written, for draft bookkeeping. */
+  baseText: string
 }
 
 export interface NewMapRequest {
@@ -99,13 +102,15 @@ interface EditorState {
   /** Id of the active colour theme; see theme.ts for the list. */
   theme: string
   /** Modal dialogs live here so the command palette can open them too. */
-  dialog: 'new-map' | 'add-tileset' | 'property-types' | 'palette' | 'theme' | null
+  dialog: 'new-map' | 'add-tileset' | 'property-types' | 'palette' | 'theme' | 'drafts' | null
   propertyTarget: PropertyOwner
   lint: LintFinding[]
   lintRunning: boolean
   /** Property names the project already uses; drives the name suggestions. */
   propertyIndex: PropertyIndexEntry[]
   toast?: { text: string; tone: 'ok' | 'error' }
+  /** Unsaved work found in browser storage when the project opened. */
+  drafts: Draft[]
 
   init(): Promise<void>
   connectTo(base: string): Promise<void>
@@ -148,7 +153,7 @@ interface EditorState {
   selectObjects(ids: number[]): void
   setCamera(camera: Partial<Camera>): void
   setPanel(panel: PanelId | null): void
-  setDialog(dialog: 'new-map' | 'add-tileset' | 'property-types' | 'palette' | 'theme' | null): void
+  setDialog(dialog: 'new-map' | 'add-tileset' | 'property-types' | 'palette' | 'theme' | 'drafts' | null): void
   setTheme(id: string): void
   addToHomeScreen(): Promise<void>
   setPropertyTarget(target: PropertyOwner): void
@@ -156,6 +161,10 @@ interface EditorState {
   toggleObjects(): void
   toggleAnimate(): void
   notify(text: string, tone?: 'ok' | 'error'): void
+
+  /** Puts a found draft back into the editor, still unsaved. */
+  restoreDraft(draft: Draft): Promise<void>
+  discardDraft(draft: Draft): Promise<void>
 
   undo(): void
   redo(): void
@@ -195,6 +204,7 @@ export const useEditor = create<EditorState>((set, get) => ({
   lint: [],
   lintRunning: false,
   propertyIndex: [],
+  drafts: [],
 
   async reconnect() {
     try {
@@ -228,6 +238,9 @@ export const useEditor = create<EditorState>((set, get) => ({
           images: data.images,
         },
       })
+      // Anything left behind by a session that never got to save. Read before
+      // the first map opens, so the offer is on screen from the start.
+      set({ drafts: await listDrafts(data.root) })
       const first = data.maps[0]
       if (first) await get().openMap(first)
     } catch (error) {
@@ -238,13 +251,21 @@ export const useEditor = create<EditorState>((set, get) => ({
   async openMap(path) {
     const loader = get().loader
     if (!loader) return
+    // Switching maps has always dropped unsaved edits on the floor. Now they
+    // land in a draft on the way out, and the editor says where they went.
+    const leaving = get().doc
+    if (leaving && get().dirty && leaving.path !== normalizePath(path)) {
+      await flushDraft()
+      set({ drafts: await listDrafts(get().root) })
+      get().notify(`Niezapisane zmiany w ${mapTitle(leaving.path)} odłożone — odzyskasz je przez „Niezapisane zmiany…"`)
+    }
     try {
       const loaded = await loader.loadMap(path)
       const source = buildTileSourceIndex(loaded.map, (p) => fs.assetUrl(p))
       const firstLayer = [...walkLayers(loaded.map.layers)][0]
       get().history.clear()
       set({
-        doc: { path: loaded.path, map: loaded.map, hints: loaded.hints, format: loaded.format, source },
+        doc: { path: loaded.path, map: loaded.map, hints: loaded.hints, format: loaded.format, source, baseText: loaded.text },
         activeLayerId: firstLayer?.id,
         selectedObjectIds: [],
         // The clipboard survives: pasting a block from one map into the next
@@ -332,7 +353,7 @@ export const useEditor = create<EditorState>((set, get) => ({
     if (!doc || !loader) return
     set({ saving: true })
     try {
-      await loader.saveMap(doc.map, doc.path, doc.hints)
+      const text = await loader.saveMap(doc.map, doc.path, doc.hints)
       // Tile properties drive the games in this corpus, so an edit to one has
       // to reach the .tsj alongside the map that prompted it.
       const savedTilesets: string[] = []
@@ -343,7 +364,10 @@ export const useEditor = create<EditorState>((set, get) => ({
         savedTilesets.push(path)
       }
       history.markSaved()
-      set({ dirty: false, saving: false, dirtyTilesets: new Set() })
+      // The file and the document now agree, so the safety copy has nothing
+      // left to protect.
+      await dropDraft(draftKey(get().root, doc.path))
+      set({ doc: { ...doc, baseText: text }, dirty: false, saving: false, dirtyTilesets: new Set() })
       get().notify(
         savedTilesets.length > 0
           ? `Zapisano ${mapTitle(doc.path)} i ${savedTilesets.length} tileset${savedTilesets.length === 1 ? '' : 'y'}`
@@ -357,6 +381,7 @@ export const useEditor = create<EditorState>((set, get) => ({
 
   touch() {
     set({ revision: get().revision + 1, dirty: get().history.dirty || get().dirtyTilesets.size > 0 })
+    scheduleDraft()
   },
 
   markTilesetDirty(path) {
@@ -756,6 +781,42 @@ export const useEditor = create<EditorState>((set, get) => ({
     }, 2600)
   },
 
+  async restoreDraft(draft) {
+    const { loader } = get()
+    if (!loader) return
+    try {
+      // Tilesets first: the map resolves its references against them.
+      for (const entry of draft.tilesets) loader.adoptTileset(entry.path, entry.text)
+      const loaded = await loader.adoptMap(draft.path, draft.text)
+      const source = buildTileSourceIndex(loaded.map, (p) => fs.assetUrl(p))
+      const firstLayer = [...walkLayers(loaded.map.layers)][0]
+      get().history.clear()
+      // Nothing was undone to get here, yet the document differs from the file.
+      get().history.markUnsaved()
+      set({
+        doc: { ...loaded, source, baseText: draft.baseText },
+        activeLayerId: firstLayer?.id,
+        selectedObjectIds: [],
+        tileSelection: undefined,
+        propertyTarget: { kind: 'map' },
+        revision: get().revision + 1,
+        dirty: true,
+        dirtyTilesets: new Set(draft.tilesets.map((entry) => entry.path)),
+        sourceRevision: get().sourceRevision + 1,
+        camera: { x: 0, y: 0, zoom: 1 },
+        lint: [],
+        drafts: get().drafts.filter((d) => d.key !== draft.key),
+      })
+      get().notify(`Przywrócono niezapisane zmiany w ${mapTitle(draft.path)} — zapisz, żeby je utrwalić`)
+    } catch (error) {
+      get().notify(`Nie udało się przywrócić szkicu: ${error instanceof Error ? error.message : String(error)}`, 'error')
+    }
+  },
+  async discardDraft(draft) {
+    await dropDraft(draft.key)
+    set({ drafts: get().drafts.filter((d) => d.key !== draft.key) })
+  },
+
   undo() {
     get().history.undo()
     get().touch()
@@ -869,6 +930,56 @@ export const useEditor = create<EditorState>((set, get) => ({
     return out
   },
 }))
+
+/* ------------------------------------------------------------------ */
+/* Drafts                                                              */
+/* ------------------------------------------------------------------ */
+
+/** Long enough that a brush drag writes one draft, short enough to matter. */
+const DRAFT_DELAY = 1500
+let draftTimer: ReturnType<typeof setTimeout> | undefined
+
+/** Writes the draft now, for the moments there may be no "later". */
+export async function flushDraft(): Promise<void> {
+  if (draftTimer !== undefined) {
+    clearTimeout(draftTimer)
+    draftTimer = undefined
+  }
+  await writeDraft()
+}
+
+function scheduleDraft(): void {
+  if (draftTimer !== undefined) clearTimeout(draftTimer)
+  draftTimer = setTimeout(() => {
+    draftTimer = undefined
+    void writeDraft()
+  }, DRAFT_DELAY)
+}
+
+/** Mirrors the open document, as the text a save would write, into the browser. */
+async function writeDraft(): Promise<void> {
+  const state = useEditor.getState()
+  const { doc, loader, root } = state
+  if (!doc || !loader || !root) return
+  const key = draftKey(root, doc.path)
+  if (!state.dirty) {
+    await dropDraft(key)
+    return
+  }
+  const tilesets = [...state.dirtyTilesets].flatMap((path) => {
+    const loaded = loader.tilesets.get(path)
+    return loaded ? [{ path, text: loader.serializeTileset(loaded.tileset, path, loaded.hints) }] : []
+  })
+  await putDraft({
+    key,
+    root,
+    path: doc.path,
+    text: loader.serializeMap(doc.map, doc.path, doc.hints),
+    baseText: doc.baseText,
+    tilesets,
+    savedAt: Date.now(),
+  })
+}
 
 /* ------------------------------------------------------------------ */
 /* Tile editing helpers                                                */

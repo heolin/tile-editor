@@ -49,6 +49,7 @@ dodaj `--lan`.
 | **Lint** | sprzeczne typy property, braki względem reszty map, GID-y spoza tilesetu, nieużywane kafle, wartości spoza typu; część zgłoszeń z naprawą jednym kliknięciem |
 | **Układ** | trzy progi: telefon, tablet w pionie, tablet w poziomie i desktop |
 | **Gesty** | dwa palce = pan i zoom, tapnięcie dwoma palcami = cofnij, długie przytrzymanie = menu kontekstowe, kółko = zoom do kursora |
+| **Odzyskiwanie pracy** | każda zmiana trafia po sekundzie do IndexedDB jako tekst, który zapisałby `Ctrl+S`; po ubiciu procesu edytor proponuje przywrócenie. Nic nie ląduje na dysku bez zapisu |
 | **PWA** | manifest, ikony i service worker — instalowalne z ekranu domowego, powłoka działa offline i wraca sama, gdy serwer zniknie |
 
 ## Wydajność
@@ -67,7 +68,8 @@ pomiar na Galaxy Tab S7 wciąż jest do zrobienia.
 ```bash
 npm start <folder>     # serwer + edytor
 npm test               # złote testy round-tripu na korpusie examples/
-npm run smoke          # test end-to-end w przeglądarce (wymaga playwright)
+npm run smoke          # testy end-to-end w przeglądarce (wymaga playwright)
+npm run recovery       # sam test odzyskiwania po ubiciu procesu
 npm run bench          # benchmark renderera na wygenerowanych dużych mapach
 npm run typecheck
 npm run dev:ui         # Vite dev server; równolegle uruchom npm start <folder>

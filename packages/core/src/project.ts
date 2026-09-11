@@ -93,6 +93,8 @@ export interface LoadedMap {
   format: DocumentFormat
   /** Only meaningful for the JSON format; XML has a single dialect. */
   hints: FormatHints
+  /** The text it was parsed from, kept so a later save can be compared to it. */
+  text: string
 }
 
 export interface LoadedTileset {
@@ -119,7 +121,16 @@ export class ProjectLoader {
     const key = normalizePath(path)
     const cached = this.tilesetCache.get(key)
     if (cached) return cached
-    const text = await this.fs.readText(key)
+    return this.adoptTileset(key, await this.fs.readText(key))
+  }
+
+  /**
+   * Takes a tileset parsed from text already in hand and caches it as if it had
+   * been read from disk. Restoring an unsaved draft needs exactly this: the
+   * text exists, the file does not.
+   */
+  adoptTileset(path: string, text: string): LoadedTileset {
+    const key = normalizePath(path)
     const format = formatOf(key)
     const loaded: LoadedTileset =
       format === 'xml'
@@ -131,7 +142,12 @@ export class ProjectLoader {
 
   async loadMap(path: string): Promise<LoadedMap> {
     const key = normalizePath(path)
-    const text = await this.fs.readText(key)
+    return this.adoptMap(key, await this.fs.readText(key))
+  }
+
+  /** The same as loadMap, from text rather than from the file. */
+  async adoptMap(path: string, text: string): Promise<LoadedMap> {
+    const key = normalizePath(path)
     const format = formatOf(key)
     const parsed =
       format === 'xml'
@@ -149,19 +165,29 @@ export class ProjectLoader {
         // still opens, just without art for those tiles.
       }
     }
-    return { ...parsed, path: key, format }
+    return { ...parsed, path: key, format, text }
   }
 
-  async saveMap(map: TileMap, path: string, hints: FormatHints): Promise<void> {
+  /** The text a save would write, without writing it. */
+  serializeMap(map: TileMap, path: string, hints: FormatHints): string {
+    return formatOf(path) === 'xml' ? serializeMapXml(map) : serializeMapJson(map, hints)
+  }
+
+  /** The text a tileset save would write, without writing it. */
+  serializeTileset(tileset: Tileset, path: string, hints: FormatHints): string {
+    return formatOf(path) === 'xml' ? serializeTilesetXml(tileset) : serializeTilesetJson(tileset, hints)
+  }
+
+  async saveMap(map: TileMap, path: string, hints: FormatHints): Promise<string> {
     const key = normalizePath(path)
-    const text = formatOf(key) === 'xml' ? serializeMapXml(map) : serializeMapJson(map, hints)
+    const text = this.serializeMap(map, key, hints)
     await this.fs.writeText(key, text)
+    return text
   }
 
   async saveTileset(tileset: Tileset, path: string, hints: FormatHints): Promise<void> {
     const key = normalizePath(path)
-    const text = formatOf(key) === 'xml' ? serializeTilesetXml(tileset) : serializeTilesetJson(tileset, hints)
-    await this.fs.writeText(key, text)
+    await this.fs.writeText(key, this.serializeTileset(tileset, key, hints))
   }
 
   invalidate(path?: string): void {

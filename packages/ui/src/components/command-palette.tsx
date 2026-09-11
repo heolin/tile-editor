@@ -4,7 +4,7 @@ import {
   ArrowRight, Brush, Eraser, FileText, Grid3x3, Layers, ListChecks, MousePointer2,
   PaintBucket, Palette, Pipette, Play, Plus, Redo2, Save, Search, Shapes,
   ShieldCheck, SlidersHorizontal, Smartphone, Square, SquareDashed, StickyNote,
-  ClipboardCopy, ClipboardPaste, CopyPlus, Scissors, Undo2,
+  ClipboardCopy, ClipboardPaste, CopyPlus, History, Scissors, Undo2,
 } from 'lucide-react'
 import { allObjects, mapFolder, mapTitle, type TileMap } from '@tile-editor/core'
 import { THEMES } from '../theme'
@@ -59,6 +59,7 @@ export function CommandPalette() {
       { id: 'new-map', label: 'Nowa mapa…', group: 'Plik', icon: Plus, run: () => useEditor.getState().setDialog('new-map') },
       { id: 'add-tileset', label: 'Dodaj tileset…', group: 'Plik', icon: Palette, run: () => useEditor.getState().setDialog('add-tileset') },
       { id: 'types', label: 'Typy projektu…', group: 'Projekt', icon: ListChecks, run: () => useEditor.getState().setDialog('property-types') },
+      { id: 'drafts', label: 'Niezapisane zmiany…', group: 'Plik', icon: History, detail: 'Odzyskaj pracę z sesji, która skończyła się bez zapisu', run: () => useEditor.getState().setDialog('drafts') },
       { id: 'undo', label: 'Cofnij', group: 'Edycja', icon: Undo2, hint: 'Ctrl+Z', run: () => useEditor.getState().undo() },
       { id: 'redo', label: 'Ponów', group: 'Edycja', icon: Redo2, hint: 'Ctrl+Shift+Z', run: () => useEditor.getState().redo() },
       { id: 'select-all', label: 'Zaznacz całą warstwę', group: 'Edycja', icon: SquareDashed, hint: 'Ctrl+A', run: () => useEditor.getState().selectAllTiles() },

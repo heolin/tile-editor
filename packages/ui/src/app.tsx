@@ -18,8 +18,9 @@ import { NewMapDialog } from './components/new-map-dialog'
 import { AddTilesetDialog } from './components/tileset-dialogs'
 import { PropertyTypesDialog } from './components/property-types-dialog'
 import { ThemeDialog } from './components/theme-dialog'
+import { RecoveryDialog } from './components/recovery-dialog'
 import { Button, Sheet, Toast } from './components/ui'
-import { useEditor, type PanelId } from './state/store'
+import { flushDraft, useEditor, type PanelId } from './state/store'
 import { canOfferInstall, installOffered, onInstallabilityChange } from './pwa'
 
 const PANELS: { id: PanelId; label: string; icon: typeof Layers }[] = [
@@ -197,6 +198,7 @@ export function App() {
       ) : null}
 
       <CommandPalette />
+      <RecoveryDialog />
       <NewMapDialog open={dialog === 'new-map'} onClose={() => setDialog(null)} />
       <AddTilesetDialog open={dialog === 'add-tileset'} onClose={() => setDialog(null)} />
       <PropertyTypesDialog open={dialog === 'property-types'} onClose={() => setDialog(null)} />
@@ -358,11 +360,28 @@ function useKeyboardShortcuts(): void {
   }, [])
 }
 
-/** Closing the tab with unsaved edits should cost a confirmation. */
+/**
+ * Closing the tab with unsaved edits should cost a confirmation - but Android
+ * backgrounding the browser costs nothing and gives no warning, so the draft
+ * gets written the moment the page stops being visible.
+ */
 function useDirtyGuard(dirty: boolean): void {
+  useEffect(() => {
+    const hide = () => {
+      if (document.visibilityState === 'hidden') void flushDraft()
+    }
+    document.addEventListener('visibilitychange', hide)
+    window.addEventListener('pagehide', hide)
+    return () => {
+      document.removeEventListener('visibilitychange', hide)
+      window.removeEventListener('pagehide', hide)
+    }
+  }, [])
+
   useEffect(() => {
     if (!dirty) return
     const handler = (event: BeforeUnloadEvent) => {
+      void flushDraft()
       event.preventDefault()
       event.returnValue = ''
     }
