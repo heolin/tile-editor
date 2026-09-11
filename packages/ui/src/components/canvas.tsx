@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
+import clsx from 'clsx'
 import {
-  AddObjectCommand, RemoveObjectsCommand, SetTilesCommand, UpdateObjectsCommand,
-  boxBounds, boundsIntersect, fillRegion, floodFill, paintStamp, regionContains,
-  regionFromCorners,
+  AddObjectCommand, MoveTilesCommand, RemoveObjectsCommand, SetTilesCommand,
+  UpdateObjectsCommand, boxBounds, boundsIntersect, captureRegion, fillRegion,
+  floodFill, paintStamp, regionContains, regionFromCorners,
   resizeBox, rotationTowards, tilesetForGid,
   type Anchor, type Box, type HandleId, type MapObject, type Stamp, type TileRegion,
 } from '@tile-editor/core'
@@ -37,6 +38,7 @@ type Drag =
   | { kind: 'resizeObject'; object: MapObject; handle: Exclude<HandleId, 'rotate'>; anchor: Anchor; start: Box }
   | { kind: 'rotateObject'; object: MapObject; start: Box }
   | { kind: 'selectBox'; x0: number; y0: number; x1: number; y1: number; additive: boolean }
+  | { kind: 'moveTiles'; command: MoveTilesCommand; startX: number; startY: number }
 
 /**
  * The map canvas. Owns all pointer input, because the tablet needs gestures the
@@ -204,7 +206,7 @@ export function MapCanvas() {
 
   /* ---------------- tools ---------------- */
 
-  function beginPaint(clientX: number, clientY: number): void {
+  function beginPaint(clientX: number, clientY: number, copy = false): void {
     const state = useEditor.getState()
     const layer = state.activeTileLayer()
     const cell = tileAt(clientX, clientY)
@@ -220,6 +222,14 @@ export function MapCanvas() {
     const stroke = nextStroke()
 
     if (state.tool === 'area') {
+      // A press inside the standing selection picks the block up; anywhere else
+      // starts a new one. Ctrl leaves the original behind.
+      const selection = state.tileSelection
+      if (selection && regionContains(selection, cell.x, cell.y)) {
+        const command = new MoveTilesCommand(layer, selection, captureRegion(layer, selection), copy)
+        dragRef.current = { kind: 'moveTiles', command, startX: cell.x, startY: cell.y }
+        return
+      }
       const start = { kind: 'marquee', x0: cell.x, y0: cell.y, x1: cell.x, y1: cell.y, mode: 'area' } as const
       setMarquee(start)
       dragRef.current = { ...start }
@@ -583,7 +593,7 @@ export function MapCanvas() {
       }
       return
     }
-    beginPaint(event.clientX, event.clientY)
+    beginPaint(event.clientX, event.clientY, event.ctrlKey)
   }
 
   function onPointerMove(event: React.PointerEvent): void {
@@ -638,6 +648,17 @@ export function MapCanvas() {
       applyBrush(drag.command, cell)
       drag.command.apply()
       state.touch()
+      return
+    }
+
+    if (drag.kind === 'moveTiles' && cell) {
+      const dx = cell.x - drag.startX
+      const dy = cell.y - drag.startY
+      if (drag.command.delta.x !== dx || drag.command.delta.y !== dy) {
+        drag.command.setDelta(dx, dy)
+        state.selectTiles(drag.command.target)
+        state.touch()
+      }
       return
     }
 
@@ -713,6 +734,13 @@ export function MapCanvas() {
   }
 
   function cancelDrag(): void {
+    // A block being dragged is already on the layer; abandoning the gesture has
+    // to put it back, or a second finger would leave it stranded.
+    const drag = dragRef.current
+    if (drag.kind === 'moveTiles') {
+      drag.command.revert()
+      useEditor.getState().touch()
+    }
     dragRef.current = { kind: 'none' }
     setMarquee(undefined)
     setSelectBox(undefined)
@@ -753,6 +781,19 @@ export function MapCanvas() {
         state.selectObjects([])
       }
       setSelectBox(undefined)
+    }
+
+    if (drag.kind === 'moveTiles') {
+      // It has been on screen the whole drag; the history wants it applied by
+      // its own hand, so hand the layer back first.
+      drag.command.revert()
+      if (drag.command.moved) {
+        state.history.run(drag.command)
+        state.selectTiles(drag.command.target)
+      } else {
+        state.selectTiles(drag.command.target)
+      }
+      state.touch()
     }
 
     if (drag.kind === 'marquee' && drag.mode === 'area') {
@@ -796,7 +837,11 @@ export function MapCanvas() {
   return (
     <div
       ref={hostRef}
-      className="relative h-full w-full touch-none overflow-hidden bg-ground"
+      className={clsx(
+        'relative h-full w-full touch-none overflow-hidden bg-ground',
+        // The one place the pointer means something other than "use the tool".
+        tool === 'area' && hover && tileSelection && regionContains(tileSelection, hover.x, hover.y) && 'cursor-move',
+      )}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}

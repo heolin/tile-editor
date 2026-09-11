@@ -38,7 +38,7 @@ dodaj `--lan`.
 | **Animacje kafli** | edytor klatek; odtwarzanie jako przełącznik, domyślnie wyłączony |
 | **Mapy nieskończone** | odczyt i zapis chunków w obu formatach |
 | **Edycja kafli** | pędzel, gumka, wypełnienie, prostokąt, pipeta, cofanie ze scalaniem pociągnięć |
-| **Masowa edycja** | zaznaczanie obszaru, kopiowanie i wycinanie bloków kafli, wklejanie (także między mapami), wypełnianie i czyszczenie zaznaczenia; dopóki zaznaczenie stoi, żadne narzędzie nie pisze poza nim |
+| **Masowa edycja** | zaznaczanie obszaru, przeciąganie zaznaczonego bloku (`Ctrl` kopiuje zamiast przenosić), kopiowanie i wycinanie, wklejanie (także między mapami), wypełnianie i czyszczenie zaznaczenia; dopóki zaznaczenie stoi, żadne narzędzie nie pisze poza nim |
 | **Tworzenie map** | pusta mapa albo na podstawie szablonu, z przepisaniem ścieżek do tilesetów |
 | **Warstwy** | kolejność, widoczność, krycie, dodawanie i usuwanie |
 | **Obiekty** | stawianie, zaznaczanie ramką, przeciąganie uchwytów do skalowania i obrotu, przesuwanie ze snapowaniem, kasowanie; render z rozciąganiem, obrotem, flipem i `objectalignment` |
@@ -87,6 +87,10 @@ na warstwie kafli na zaznaczonym bloku, na warstwie obiektów na zaznaczonych
 obiektach. Do tego na kaflach `Ctrl+A` zaznacza całą warstwę, `Delete` czyści
 zaznaczenie, `Esc` odznacza; na obiektach `Ctrl+D` duplikuje zaznaczenie,
 a `Delete` je usuwa. Bez klawiatury to samo robi menu z długiego przytrzymania.
+
+**Blok kafli przeciągasz.** Narzędziem `S` chwytasz zaznaczenie w jego środku
+i przenosisz — blok idzie razem z ramką, a na starym miejscu zostaje dziura.
+Z wciśniętym `Ctrl` oryginał zostaje na miejscu.
 
 **Obiekty na płótnie.** Zaznaczony pojedynczy obiekt dostaje osiem uchwytów
 skalowania i uchwyt obrotu nad górną krawędzią. Przeciągnięcie uchwytu trzyma

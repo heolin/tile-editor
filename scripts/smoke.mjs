@@ -116,6 +116,24 @@ try {
     )
     await page.keyboard.press('Control+z')
 
+    // Dragging from inside the selection carries the block with it.
+    await page.keyboard.press('s')
+    // The block is wherever the paste left it, so the grab starts there.
+    const held = (await peek()).selection
+    await page.mouse.move(...Object.values(at(held.x, held.y)))
+    await page.mouse.down()
+    await page.mouse.move(...Object.values(at(held.x + 3, held.y - 2)), { steps: 6 })
+    await page.mouse.up()
+    await page.waitForTimeout(300)
+    const dragged = await peek()
+    check(
+      'przeciągnięcie przenosi blok',
+      dragged.selection?.x === held.x + 3 && dragged.selection?.y === held.y - 2,
+      JSON.stringify(dragged.selection),
+    )
+    await page.keyboard.press('Control+z')
+    await page.waitForTimeout(200)
+
     // With a selection up, a brush stroke outside it must change nothing.
     await page.keyboard.press('b')
     const before = await page.evaluate(() => window.__tileEditor.state().activeTileLayer().data.toArray().join())

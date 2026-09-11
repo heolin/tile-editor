@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { SetTilesCommand } from '../src/commands.js'
+import { MoveTilesCommand, SetTilesCommand } from '../src/commands.js'
 import { DenseLayerData } from '../src/layer-data.js'
 import type { TileLayer } from '../src/model.js'
 import {
@@ -166,5 +166,90 @@ describe('flood fill', () => {
       [layer.data.get(16, 16), layer.data.get(17, 16)],
       [layer.data.get(16, 17), layer.data.get(17, 17)],
     ]).toEqual([[3, 3], [3, 3]])
+  })
+})
+
+describe('moving a block', () => {
+  const block = () => layerOf([
+    [1, 2, 0, 0],
+    [3, 4, 0, 0],
+    [0, 0, 0, 0],
+    [0, 0, 0, 0],
+  ])
+
+  it('leaves an empty hole behind and puts the tiles down elsewhere', () => {
+    const layer = block()
+    const command = new MoveTilesCommand(layer, { x: 0, y: 0, width: 2, height: 2 }, captureRegion(layer, { x: 0, y: 0, width: 2, height: 2 }))
+    command.setDelta(2, 2)
+    expect(rowsOf(layer, 4, 4)).toEqual([
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+      [0, 0, 1, 2],
+      [0, 0, 3, 4],
+    ])
+    command.revert()
+    expect(rowsOf(layer, 4, 4)).toEqual([
+      [1, 2, 0, 0],
+      [3, 4, 0, 0],
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+    ])
+  })
+
+  it('copies instead when asked, leaving the original in place', () => {
+    const layer = block()
+    const command = new MoveTilesCommand(layer, { x: 0, y: 0, width: 2, height: 2 }, captureRegion(layer, { x: 0, y: 0, width: 2, height: 2 }), true)
+    command.setDelta(2, 0)
+    expect(rowsOf(layer, 4, 4)[0]).toEqual([1, 2, 1, 2])
+    expect(rowsOf(layer, 4, 4)[1]).toEqual([3, 4, 3, 4])
+  })
+
+  it('survives being re-aimed, which is what a drag does forty times', () => {
+    const layer = block()
+    const region = { x: 0, y: 0, width: 2, height: 2 }
+    const command = new MoveTilesCommand(layer, region, captureRegion(layer, region))
+    for (const [dx, dy] of [[1, 0], [2, 1], [1, 2], [2, 2]] as const) command.setDelta(dx, dy)
+    expect(rowsOf(layer, 4, 4)).toEqual([
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+      [0, 0, 1, 2],
+      [0, 0, 3, 4],
+    ])
+    command.revert()
+    expect(rowsOf(layer, 4, 4)[0]).toEqual([1, 2, 0, 0])
+  })
+
+  it('overlaps itself without eating the tiles it is standing on', () => {
+    const layer = block()
+    const region = { x: 0, y: 0, width: 2, height: 2 }
+    const command = new MoveTilesCommand(layer, region, captureRegion(layer, region))
+    command.setDelta(1, 0)
+    // The source column the destination covers must not come back as a hole.
+    expect(rowsOf(layer, 4, 4)[0]).toEqual([0, 1, 2, 0])
+    expect(rowsOf(layer, 4, 4)[1]).toEqual([0, 3, 4, 0])
+    command.revert()
+    expect(rowsOf(layer, 4, 4)[0]).toEqual([1, 2, 0, 0])
+  })
+
+  it('drops the part that would leave the map, and keeps the rest reversible', () => {
+    const layer = block()
+    const region = { x: 0, y: 0, width: 2, height: 2 }
+    const command = new MoveTilesCommand(layer, region, captureRegion(layer, region))
+    command.setDelta(3, 0)
+    expect(rowsOf(layer, 4, 4)[0]).toEqual([0, 0, 0, 1])
+    command.revert()
+    expect(rowsOf(layer, 4, 4)[0]).toEqual([1, 2, 0, 0])
+  })
+
+  it('knows whether it went anywhere, so a tap costs no undo step', () => {
+    const layer = block()
+    const region = { x: 0, y: 0, width: 2, height: 2 }
+    const command = new MoveTilesCommand(layer, region, captureRegion(layer, region))
+    expect(command.moved).toBe(false)
+    command.setDelta(0, 0)
+    expect(command.moved).toBe(false)
+    command.setDelta(1, 1)
+    expect(command.moved).toBe(true)
+    expect(command.target).toEqual({ x: 1, y: 1, width: 2, height: 2 })
   })
 })

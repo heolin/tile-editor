@@ -343,6 +343,13 @@ Narzędzie `S` wyciąga prostokąt zaznaczenia na warstwie kafli. Zaznaczenie
   w jego środku. Maska siedzi w `SetTilesCommand`, nie w narzędziach, więc nie
   da się o niej zapomnieć w nowym narzędziu.
 
+Zaznaczenie jest też uchwytem: naciśnięcie w jego środku bierze blok i przenosi
+go razem z ramką, zostawiając dziurę (z `Ctrl` — kopię). Podczas przeciągania
+kafle naprawdę siedzą na warstwie, więc podgląd jest za darmo i dokładny, ale
+do historii trafia dopiero miejsce, w którym blok puszczono. Robi to
+`MoveTilesCommand`, przemierzany w locie przez `setDelta()` — jeden gest to
+jedna komenda, a nie czterdzieści.
+
 Schowek przeżywa otwarcie innej mapy, bo przeniesienie fragmentu z mapy na mapę
 to połowa powodu, dla którego istnieje. Samo zaznaczenie nie przeżywa.
 

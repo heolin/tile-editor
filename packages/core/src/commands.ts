@@ -1,6 +1,6 @@
 import { DenseLayerData } from './layer-data.js'
 import type { Frame, Layer, MapObject, Property, Tile, TileLayer, TileMap, Tileset, TilesetRef } from './model.js'
-import type { TileRegion } from './tiles.js'
+import type { Stamp, TileRegion } from './tiles.js'
 import { walkLayers } from './model.js'
 
 /**
@@ -184,6 +184,84 @@ export class SetTilesCommand implements EditCommand {
       }
     }
     return true
+  }
+}
+
+/**
+ * A block of tiles picked up and put down somewhere else. Unlike a paint
+ * stroke this is one gesture with a changing answer, so the command is built
+ * once and re-aimed with `setDelta` while the drag is in flight; only the
+ * position it is let go at reaches the history.
+ */
+export class MoveTilesCommand implements EditCommand {
+  readonly label: string
+  readonly mergeKey: string | undefined
+  private touched: { x: number; y: number; before: number }[] = []
+  private dx = 0
+  private dy = 0
+  private live = false
+
+  constructor(
+    private layer: TileLayer,
+    private region: TileRegion,
+    private stamp: Stamp,
+    private copy = false,
+    mergeKey?: string,
+  ) {
+    this.label = copy ? 'Skopiuj blok' : 'Przesuń blok'
+    this.mergeKey = mergeKey
+  }
+
+  get delta(): { x: number; y: number } {
+    return { x: this.dx, y: this.dy }
+  }
+
+  get moved(): boolean {
+    return this.dx !== 0 || this.dy !== 0
+  }
+
+  /** Where the block sits now, for drawing the selection that follows it. */
+  get target(): TileRegion {
+    return { ...this.region, x: this.region.x + this.dx, y: this.region.y + this.dy }
+  }
+
+  /** Re-aims a move already on screen; safe to call on every pointer move. */
+  setDelta(dx: number, dy: number): void {
+    if (this.live) this.revert()
+    this.dx = dx
+    this.dy = dy
+    this.apply()
+  }
+
+  apply(): void {
+    this.touched = []
+    const bounds = this.layer.data.bounds
+    const write = (x: number, y: number, gid: number) => {
+      if (x < bounds.x || y < bounds.y || x >= bounds.x + bounds.width || y >= bounds.y + bounds.height) return
+      this.touched.push({ x, y, before: this.layer.data.get(x, y) })
+      this.layer.data.set(x, y, gid)
+    }
+    // Source first: where it overlaps the destination the write below wins, and
+    // reverting walks backwards so the original value is still the one restored.
+    if (!this.copy) {
+      for (let y = 0; y < this.region.height; y++) {
+        for (let x = 0; x < this.region.width; x++) write(this.region.x + x, this.region.y + y, 0)
+      }
+    }
+    for (let y = 0; y < this.stamp.height; y++) {
+      for (let x = 0; x < this.stamp.width; x++) {
+        write(this.region.x + this.dx + x, this.region.y + this.dy + y, this.stamp.gids[y * this.stamp.width + x] ?? 0)
+      }
+    }
+    this.live = true
+  }
+
+  revert(): void {
+    for (let i = this.touched.length - 1; i >= 0; i--) {
+      const cell = this.touched[i]!
+      this.layer.data.set(cell.x, cell.y, cell.before)
+    }
+    this.live = false
   }
 }
 
