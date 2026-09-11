@@ -279,23 +279,44 @@ function useKeyboardShortcuts(): void {
         state.redo()
         return
       }
-      // The tile clipboard only claims these when it has something to do with
+      // The clipboard keys only claim these when there is something to do with
       // them; otherwise they stay the browser's, so copying text still works.
       const onTiles = state.activeTileLayer() !== undefined
-      if (mod && event.key.toLowerCase() === 'a' && onTiles) {
+      const onObjects = state.activeObjectLayer() !== undefined
+      const key = event.key.toLowerCase()
+      if (mod && key === 'a' && onTiles) {
         event.preventDefault()
         state.selectAllTiles()
         return
       }
-      if (mod && onTiles && state.tileSelection && /^[cx]$/.test(event.key.toLowerCase())) {
+      if (mod && key === 'd' && onObjects && state.selectedObjectIds.length > 0) {
         event.preventDefault()
-        state.copyTiles(event.key.toLowerCase() === 'x')
+        state.duplicateObjects()
         return
       }
-      if (mod && onTiles && state.clipboard && event.key.toLowerCase() === 'v') {
-        event.preventDefault()
-        state.pasteTiles()
-        return
+      if (mod && /^[cx]$/.test(key)) {
+        if (onTiles && state.tileSelection) {
+          event.preventDefault()
+          state.copyTiles(key === 'x')
+          return
+        }
+        if (onObjects && state.selectedObjectIds.length > 0) {
+          event.preventDefault()
+          state.copyObjects(key === 'x')
+          return
+        }
+      }
+      if (mod && key === 'v') {
+        if (onTiles && state.clipboard) {
+          event.preventDefault()
+          state.pasteTiles()
+          return
+        }
+        if (onObjects && state.objectClipboard) {
+          event.preventDefault()
+          state.pasteObjects()
+          return
+        }
       }
       if (event.key === 'Escape' && state.tileSelection) {
         event.preventDefault()

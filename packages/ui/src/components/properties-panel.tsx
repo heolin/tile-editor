@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import clsx from 'clsx'
 import { Plus, Trash2 } from 'lucide-react'
 import {
-  FLIP_H, FLIP_V, ResizeMapCommand, SetAnimationCommand, SetPropertyCommand,
-  UpdateLayerCommand, UpdateObjectsCommand, classFor, classMemberStates,
+  FLIP_H, FLIP_V, ResizeMapCommand, SetAnimationCommand, SetPropertiesCommand,
+  SetPropertyCommand, UpdateLayerCommand, UpdateObjectsCommand, classFor, classMemberStates,
   defaultValueFor, flagsToValues, parseGid, propertiesOutsideClass,
   setClassMember, storageTypeOf, tileLabel, valuesToFlags, walkLayers,
   type ClassMember, type ClassPropertyType, type EnumPropertyType, type Frame,
@@ -22,6 +22,17 @@ const TYPES: PropertyType[] = ['string', 'int', 'float', 'bool', 'color', 'file'
  * (docs/PLAN.md section 5.1).
  */
 export function PropertiesPanel() {
+  const doc = useEditor((s) => s.doc)
+  const selectedObjectIds = useEditor((s) => s.selectedObjectIds)
+  // Several objects at once get their own editor - a map with 712 of them is
+  // edited in batches, and one at a time is the whole cost of that. It is a
+  // separate component rather than a branch, so neither side's hooks depend
+  // on how many objects happen to be selected.
+  if (doc && selectedObjectIds.length > 1) return <ManyObjects ids={selectedObjectIds} />
+  return <SingleNode />
+}
+
+function SingleNode() {
   const doc = useEditor((s) => s.doc)
   const target = useEditor((s) => s.propertyTarget)
   useEditor((s) => s.revision)
@@ -501,6 +512,272 @@ function resolveOwner(target: PropertyOwner): ResolvedOwner | undefined {
         <TileAnimationEditor tilesetPath={target.tilesetPath} tileset={entry.tileset} tile={tile} />
       </div>
     ),
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Several objects at once                                             */
+/* ------------------------------------------------------------------ */
+
+interface SharedProperty {
+  name: string
+  type: PropertyType
+  propertytype?: string
+  /** How many of the selected objects carry it. */
+  present: number
+  /** The value, when every object that has it agrees. */
+  value?: unknown
+  mixed: boolean
+}
+
+/** What the selected objects say about each property name they mention. */
+function sharedProperties(objects: { properties: Property[] }[]): SharedProperty[] {
+  const byName = new Map<string, SharedProperty>()
+  for (const object of objects) {
+    for (const prop of object.properties) {
+      const entry = byName.get(prop.name)
+      if (!entry) {
+        byName.set(prop.name, {
+          name: prop.name,
+          type: prop.type,
+          propertytype: prop.propertytype,
+          present: 1,
+          value: prop.value,
+          mixed: false,
+        })
+        continue
+      }
+      entry.present++
+      if (!Object.is(entry.value, prop.value)) entry.mixed = true
+      if (entry.type !== prop.type) entry.mixed = true
+    }
+  }
+  // Left in the order the objects themselves list them: sorting would move a
+  // row out from under the cursor the moment its name was edited.
+  return [...byName.values()]
+}
+
+/**
+ * Property editing across a selection. Every write goes to all of them,
+ * including the ones that did not have the property yet - the point of the
+ * batch is to make them agree.
+ */
+function ManyObjects({ ids }: { ids: number[] }) {
+  const doc = useEditor((s) => s.doc)!
+  useEditor((s) => s.revision)
+  const state = useEditor.getState()
+  const registry = state.types()
+  const objects = state.selectedObjects()
+  const propertyIndex = useEditor((s) => s.propertyIndex)
+  const knownNames = useMemo(() => propertyIndex.filter((e) => e.scope === 'object'), [propertyIndex])
+
+  if (objects.length === 0) {
+    return <Panel title="Properties"><Empty>Zaznaczone obiekty zniknęły.</Empty></Panel>
+  }
+
+  const shared = sharedProperties(objects)
+  const classes = new Set(objects.map((o) => o.className))
+  const commonClass = classes.size === 1 ? [...classes][0]! : undefined
+
+  // Every edit in this panel merges into one undo step, the same way the
+  // single-object editor treats one node's properties as one act.
+  const mergeKey = `props:many:${ids.join(',')}`
+
+  /** Writes one property to every selected object, adding it where missing. */
+  const setOnAll = (name: string, patch: Partial<Property>) => {
+    const base = shared.find((s) => s.name === name)
+    const next = objects.map((obj) => {
+      const at = obj.properties.findIndex((p) => p.name === name)
+      if (at === -1) {
+        return [
+          ...obj.properties.map((p) => ({ ...p })),
+          { name, type: base?.type ?? 'string', propertytype: base?.propertytype, value: base?.value ?? '', ...patch },
+        ]
+      }
+      return obj.properties.map((p, i) => (i === at ? { ...p, ...patch } : { ...p }))
+    })
+    state.history.run(
+      new SetPropertiesCommand(objects, next, `Properties: ${objects.length} obiektów`, mergeKey),
+    )
+    state.touch()
+  }
+
+  /** Renames a property everywhere it appears in the selection. */
+  const renameOnAll = (from: string, to: string) => {
+    state.history.run(
+      new SetPropertiesCommand(
+        objects,
+        objects.map((obj) => obj.properties.map((p) => (p.name === from ? { ...p, name: to } : { ...p }))),
+        `Properties: ${objects.length} obiektów`,
+        mergeKey,
+      ),
+    )
+    state.touch()
+  }
+
+  const removeFromAll = (name: string) => {
+    state.history.run(
+      new SetPropertiesCommand(
+        objects,
+        objects.map((obj) => obj.properties.filter((p) => p.name !== name).map((p) => ({ ...p }))),
+        `Usuń „${name}" z ${objects.length} obiektów`,
+      ),
+    )
+    state.touch()
+  }
+
+  const addToAll = () => {
+    const taken = new Set(shared.map((s) => s.name))
+    let name = 'nowa'
+    let n = 2
+    while (taken.has(name)) name = `nowa${n++}`
+    setOnAll(name, { name, type: 'string', value: '' })
+  }
+
+  const setClassOnAll = (className: string) => {
+    state.history.run(
+      new UpdateObjectsCommand(`Klasa ${objects.length} obiektów`, objects, objects.map(() => ({ className }))),
+    )
+    state.touch()
+  }
+
+  return (
+    <Panel
+      title={`Properties · ${objects.length} obiektów`}
+      actions={
+        <Button size="sm" title="Dodaj property wszystkim" onClick={addToAll}>
+          <Plus size={14} />
+        </Button>
+      }
+    >
+      <div className="border-b border-line pb-2">
+        <p className="px-3 py-2 text-[11px] text-ink-faint">
+          Zmiany dotyczą wszystkich {objects.length} zaznaczonych obiektów.
+        </p>
+        <ClassField
+          value={commonClass ?? ''}
+          target="object"
+          onChange={setClassOnAll}
+        />
+        {commonClass === undefined ? (
+          <p className="px-3 text-[11px] text-warn">
+            Zaznaczone obiekty mają {classes.size} różne klasy — wybór ustawi jedną wszystkim.
+          </p>
+        ) : null}
+        <div className="grid grid-cols-2">
+          <Field label="Widoczność">
+            <div className="grid grid-cols-2 gap-1">
+              <Button size="sm" variant="outline" onClick={() => setVisibility(true)}>Pokaż</Button>
+              <Button size="sm" variant="outline" onClick={() => setVisibility(false)}>Ukryj</Button>
+            </div>
+          </Field>
+          <Field label="Obrót">
+            <div className="grid grid-cols-2 gap-1">
+              {[0, 90].map((deg) => (
+                <Button key={deg} size="sm" variant="outline" onClick={() => setRotation(deg)}>{deg}°</Button>
+              ))}
+            </div>
+          </Field>
+        </div>
+      </div>
+
+      <datalist id="tile-editor-property-names">
+        {knownNames.map((entry) => (
+          <option key={entry.name} value={entry.name}>{entry.type}</option>
+        ))}
+      </datalist>
+
+      {shared.length === 0 ? (
+        <Empty>Żaden z zaznaczonych obiektów nie ma properties.</Empty>
+      ) : (
+        <ul className="flex flex-col divide-y divide-line/60">
+          {shared.map((entry, index) => (
+            <li key={index} className="flex flex-col gap-1.5 px-3 py-2">
+              {/* Same three-column row as the single-object editor, so the two
+                  panels do not look like different products. */}
+              <div className="grid grid-cols-[minmax(0,1fr)_76px_auto] items-center gap-1.5">
+                <TextInput
+                  value={entry.name}
+                  aria-label="Nazwa property"
+                  list="tile-editor-property-names"
+                  onChange={(e) => renameOnAll(entry.name, e.target.value)}
+                  className="font-medium"
+                />
+                <Select
+                  value={entry.propertytype ? `custom:${entry.propertytype}` : entry.type}
+                  aria-label="Typ property"
+                  className="px-1 text-[11px]"
+                  onChange={(e) => {
+                    const chosen = e.target.value
+                    if (chosen.startsWith('custom:')) {
+                      const def = registry.get(chosen.slice(7))
+                      if (!def) return
+                      setOnAll(entry.name, {
+                        type: storageTypeOf(def),
+                        propertytype: def.name,
+                        value: defaultValueFor(def),
+                      })
+                      return
+                    }
+                    setOnAll(entry.name, {
+                      type: chosen as PropertyType,
+                      propertytype: undefined,
+                      value: coerce(entry.value, chosen as PropertyType),
+                    })
+                  }}
+                >
+                  {TYPES.map((ty) => (
+                    <option key={ty} value={ty}>{ty}</option>
+                  ))}
+                  {registry.usableOn('object').length > 0 ? (
+                    <optgroup label="Typy projektu">
+                      {registry.usableOn('object').map((def) => (
+                        <option key={def.name} value={`custom:${def.name}`}>{def.name}</option>
+                      ))}
+                    </optgroup>
+                  ) : null}
+                </Select>
+                <button
+                  type="button"
+                  className="hit shrink-0 px-1 text-ink-faint hover:text-danger"
+                  title="Usuń property ze wszystkich"
+                  aria-label={`Usuń property ${entry.name} ze wszystkich`}
+                  onClick={() => removeFromAll(entry.name)}
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+              <PropertyValue
+                prop={{ name: entry.name, type: entry.type, value: entry.value, propertytype: entry.propertytype }}
+                definition={registry.get(entry.propertytype)}
+                onChange={(value) => setOnAll(entry.name, { value })}
+              />
+              <p className="flex flex-wrap items-center gap-x-2 text-[11px] text-ink-faint">
+                <span className="num">{entry.present}/{objects.length}</span>
+                {entry.mixed ? <span className="text-warn">wartości się różnią</span> : null}
+                {entry.present < objects.length ? (
+                  <span>brakuje w {objects.length - entry.present} — zapis doda ją wszystkim</span>
+                ) : null}
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Panel>
+  )
+
+  function setVisibility(visible: boolean) {
+    state.history.run(
+      new UpdateObjectsCommand(`Widoczność ${objects.length} obiektów`, objects, objects.map(() => ({ visible }))),
+    )
+    state.touch()
+  }
+
+  function setRotation(rotation: number) {
+    state.history.run(
+      new UpdateObjectsCommand(`Obrót ${objects.length} obiektów`, objects, objects.map(() => ({ rotation }))),
+    )
+    state.touch()
   }
 }
 

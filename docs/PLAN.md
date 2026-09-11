@@ -276,6 +276,31 @@ Każdy kończy się czymś, co da się uruchomić na telefonie.
 | **M6** | Autotiling (Wang sets + reguły w stylu LDtk), command palette, wyszukiwanie w projekcie, lint mapy | Funkcje, których Tiled nie ma albo ma gorsze | lint, paleta i wyszukiwanie gotowe; autotiling odłożony |
 | **M7** | Capacitor 7, `CapacitorProjectFS` przez SAF, pipeline APK w GitHub Actions | Podpisany APK do pobrania z Actions | **wycofane** — patrz niżej |
 | **M8** | Masowa edycja kafli: zaznaczanie obszaru, schowek, zaznaczenie jako maska narzędzi | Blok kafli przenosi się w obrębie mapy i między mapami | **gotowe** |
+| **M9** | Masowa edycja obiektów: schowek obiektów, duplikowanie, properties całego zaznaczenia | Poprawka na 40 obiektach to jedna operacja, nie 40 | **gotowe** |
+
+### M9 — masowa edycja obiektów, 11 września 2026
+
+To samo, co M8 zrobiło dla kafli, dla obiektów — bo tam, a nie w kaflach,
+siedzi cała semantyka tych gier (§5.1, 712 obiektów w tilt-ballu).
+
+`Ctrl+C` / `Ctrl+X` / `Ctrl+V` nie są dwoma osobnymi poleceniami: wybierają
+schowek po rodzaju aktywnej warstwy. `Ctrl+D` duplikuje zaznaczenie o kafel
+w prawo i w dół, menu kontekstowe robi to samo palcem, a naciśnięcie na obiekt
+należący do zaznaczenia działa na całym zaznaczeniu, nie na tym jednym.
+
+Przy zaznaczeniu większym niż jeden obiekt panel properties zamienia się
+w edytor zbiorczy: pokazuje sumę nazw properties ze wszystkich zaznaczonych
+obiektów, przy każdej `19/19` albo `12/19` i ostrzeżenie, gdy wartości się
+różnią. Zapis idzie do **wszystkich**, dopisując property tam, gdzie jej nie
+było — bo o to chodzi w poprawce hurtem. Cała sesja edycji w tym panelu to
+jedno cofnięcie, tak samo jak przy jednym węźle.
+
+Dwie rzeczy wyszły dopiero z testu end-to-end w przeglądarce:
+`AddObjectCommand` nie cofał `nextobjectid`, więc cofnięte wklejenie zostawiało
+ślad w zapisanym pliku; a przełączenie panelu między jednym a wieloma obiektami
+zmieniało liczbę hooków w komponencie i wywracało cały interfejs (React #310).
+Dlatego `npm run smoke` chodzi teraz po dwóch projektach: sokoban ma same
+warstwy kafli, tilt-ball same obiekty.
 
 ### M8 — masowa edycja kafli, 11 września 2026
 

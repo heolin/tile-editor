@@ -1,5 +1,5 @@
 import { DenseLayerData } from './layer-data.js'
-import type { Layer, ObjectLayer, TileLayer, TileMap, TilesetRef } from './model.js'
+import type { Layer, MapObject, ObjectLayer, TileLayer, TileMap, TilesetRef } from './model.js'
 import { relativeFrom } from './paths.js'
 
 export interface NewMapOptions {
@@ -134,5 +134,30 @@ function cloneLayer(layer: Layer, width: number, height: number, keepContent: bo
       return { ...layer, properties, layers: layer.layers.map((l) => cloneLayer(l, width, height, keepContent)) }
     default:
       return { ...layer, properties }
+  }
+}
+
+/**
+ * A deep enough copy to paste: everything the model knows about, plus the
+ * parts of the source file it only carries (`extra`, `keyOrder`), so a pasted
+ * object writes out like the one it came from rather than a stripped version.
+ */
+export function cloneObject(object: MapObject, id: number): MapObject {
+  const copy: MapObject = { ...object, id, properties: object.properties.map((p) => ({ ...p })) }
+  // Assigned only when present: writing `polygon: undefined` would put the key
+  // on the object, and the codecs go by which keys exist.
+  if (object.polygon) copy.polygon = object.polygon.map((point) => ({ ...point }))
+  if (object.polyline) copy.polyline = object.polyline.map((point) => ({ ...point }))
+  if (object.text) copy.text = { ...object.text }
+  if (object.extra) copy.extra = { ...object.extra }
+  if (object.keyOrder) copy.keyOrder = [...object.keyOrder]
+  return copy
+}
+
+/** The top-left corner of the box a set of objects hangs from. */
+export function objectsOrigin(objects: readonly MapObject[]): { x: number; y: number } {
+  return {
+    x: Math.min(...objects.map((o) => o.x)),
+    y: Math.min(...objects.map((o) => o.y)),
   }
 }

@@ -42,6 +42,7 @@ dodaj `--lan`.
 | **Tworzenie map** | pusta mapa albo na podstawie szablonu, z przepisaniem ścieżek do tilesetów |
 | **Warstwy** | kolejność, widoczność, krycie, dodawanie i usuwanie |
 | **Obiekty** | stawianie, zaznaczanie ramką, przeciąganie uchwytów do skalowania i obrotu, przesuwanie ze snapowaniem, kasowanie; render z rozciąganiem, obrotem, flipem i `objectalignment` |
+| **Obiekty hurtem** | kopiowanie, wycinanie, wklejanie i duplikowanie całego zaznaczenia; properties, klasa, widoczność i obrót ustawiane wszystkim naraz, jednym cofnięciem |
 | **Properties** | mapy, warstwy, obiektu i **kafla** — wszystkie typy skalarne; zmiany kafla zapisują się do tilesetu |
 | **Typy własne** | enumy i klasy w `.tiled-project`; enum staje się listą wyboru, flagi checkboxami, klasa rozwija się na pola |
 | **Paleta poleceń** | `Ctrl+K` — polecenia, skok do mapy i wyszukiwanie po properties w całym projekcie |
@@ -79,10 +80,11 @@ npm run dev:ui         # Vite dev server; równolegle uruchom npm start <folder>
 `G` siatka · `O` obiekty · `P` animacje · `Ctrl+Z` / `Ctrl+Shift+Z` cofnij i
 ponów · `Ctrl+S` zapisz · `Ctrl+K` paleta poleceń.
 
-Na warstwie kafli: `Ctrl+A` zaznacz całą warstwę · `Ctrl+C` / `Ctrl+X` kopiuj
-i wytnij blok · `Ctrl+V` wklej · `Delete` czyści zaznaczenie · `Esc` odznacza.
-`Delete` usuwa zaznaczone obiekty, gdy warstwa jest warstwą obiektów. Bez
-klawiatury to samo robi menu z długiego przytrzymania.
+`Ctrl+C` / `Ctrl+X` / `Ctrl+V` działają na tym, co niesie aktywna warstwa:
+na warstwie kafli na zaznaczonym bloku, na warstwie obiektów na zaznaczonych
+obiektach. Do tego na kaflach `Ctrl+A` zaznacza całą warstwę, `Delete` czyści
+zaznaczenie, `Esc` odznacza; na obiektach `Ctrl+D` duplikuje zaznaczenie,
+a `Delete` je usuwa. Bez klawiatury to samo robi menu z długiego przytrzymania.
 
 **Obiekty na płótnie.** Zaznaczony pojedynczy obiekt dostaje osiem uchwytów
 skalowania i uchwyt obrotu nad górną krawędzią. Przeciągnięcie uchwytu trzyma

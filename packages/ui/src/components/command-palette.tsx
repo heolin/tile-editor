@@ -4,7 +4,7 @@ import {
   ArrowRight, Brush, Eraser, FileText, Grid3x3, Layers, ListChecks, MousePointer2,
   PaintBucket, Palette, Pipette, Play, Plus, Redo2, Save, Search, Shapes,
   ShieldCheck, SlidersHorizontal, Smartphone, Square, SquareDashed, StickyNote,
-  ClipboardCopy, ClipboardPaste, Scissors, Undo2,
+  ClipboardCopy, ClipboardPaste, CopyPlus, Scissors, Undo2,
 } from 'lucide-react'
 import { allObjects, mapFolder, mapTitle, type TileMap } from '@tile-editor/core'
 import { THEMES } from '../theme'
@@ -50,6 +50,7 @@ export function CommandPalette() {
 
   const commands = useMemo<Entry[]>(() => {
     const state = useEditor.getState()
+    const onObjects = () => useEditor.getState().activeObjectLayer() !== undefined
     const tool = (id: Parameters<typeof state.setTool>[0], label: string, icon: typeof Brush, hint: string): Entry => ({
       id: `tool:${id}`, label, group: 'Narzędzia', icon, hint, run: () => useEditor.getState().setTool(id),
     })
@@ -61,9 +62,12 @@ export function CommandPalette() {
       { id: 'undo', label: 'Cofnij', group: 'Edycja', icon: Undo2, hint: 'Ctrl+Z', run: () => useEditor.getState().undo() },
       { id: 'redo', label: 'Ponów', group: 'Edycja', icon: Redo2, hint: 'Ctrl+Shift+Z', run: () => useEditor.getState().redo() },
       { id: 'select-all', label: 'Zaznacz całą warstwę', group: 'Edycja', icon: SquareDashed, hint: 'Ctrl+A', run: () => useEditor.getState().selectAllTiles() },
-      { id: 'copy', label: 'Kopiuj zaznaczenie', group: 'Edycja', icon: ClipboardCopy, hint: 'Ctrl+C', run: () => useEditor.getState().copyTiles() },
-      { id: 'cut', label: 'Wytnij zaznaczenie', group: 'Edycja', icon: Scissors, hint: 'Ctrl+X', run: () => useEditor.getState().copyTiles(true) },
-      { id: 'paste', label: 'Wklej', group: 'Edycja', icon: ClipboardPaste, hint: 'Ctrl+V', run: () => useEditor.getState().pasteTiles() },
+      // Which clipboard these mean depends on the layer, exactly as the
+      // keyboard shortcuts do - one command, not two that mostly do nothing.
+      { id: 'copy', label: 'Kopiuj zaznaczenie', group: 'Edycja', icon: ClipboardCopy, hint: 'Ctrl+C', run: () => onObjects() ? useEditor.getState().copyObjects() : useEditor.getState().copyTiles() },
+      { id: 'cut', label: 'Wytnij zaznaczenie', group: 'Edycja', icon: Scissors, hint: 'Ctrl+X', run: () => onObjects() ? useEditor.getState().copyObjects(true) : useEditor.getState().copyTiles(true) },
+      { id: 'paste', label: 'Wklej', group: 'Edycja', icon: ClipboardPaste, hint: 'Ctrl+V', run: () => onObjects() ? useEditor.getState().pasteObjects() : useEditor.getState().pasteTiles() },
+      { id: 'duplicate', label: 'Duplikuj obiekty', group: 'Edycja', icon: CopyPlus, hint: 'Ctrl+D', run: () => useEditor.getState().duplicateObjects() },
       tool('brush', 'Pędzel', Brush, 'B'),
       tool('eraser', 'Gumka', Eraser, 'E'),
       tool('fill', 'Wypełnienie', PaintBucket, 'F'),

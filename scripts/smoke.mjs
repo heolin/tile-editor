@@ -4,6 +4,9 @@
  * project, drives the real UI in a browser, and checks the two things that
  * matter most: the map renders, and a one-tile edit produces a one-line diff.
  *
+ * `npm run smoke` uruchamia go dwa razy: sokoban ma same warstwy kafli,
+ * tilt-ball same obiekty, więc dopiero oba przechodzą przez cały edytor.
+ *
  *   node scripts/smoke.mjs [projekt]      domyślnie: examples/sokoban
  */
 import { chromium } from 'playwright'
@@ -128,6 +131,54 @@ try {
     // Copying loads the block onto the brush, so the palette pick the edit
     // below relies on has to be made again.
     await tiles.nth(3).click()
+  }
+
+  // The object clipboard, on an object layer. Like the tile block above it runs
+  // before the edit under test and undoes itself, so the diff stays honest.
+  if (objectMode) {
+    const peek = () => page.evaluate(() => {
+      const s = window.__tileEditor.state()
+      return {
+        selected: s.selectedObjectIds.length,
+        held: s.objectClipboard?.objects.length,
+        objects: s.activeObjectLayer()?.objects.length,
+        panel: document.querySelector('aside h2, aside header')?.textContent ?? '',
+      }
+    })
+    await page.getByRole('button', { name: 'Zaznaczanie obiektów' }).click()
+    // A band starting outside the map cannot land on an object, so it always
+    // rubber-bands rather than dragging whatever sits under the first press.
+    const view = await page.evaluate(() => ({ ...window.__tileEditor.state().camera }))
+    const at = (wx, wy) => ({ x: box.x + view.x + wx * view.zoom, y: box.y + view.y + wy * view.zoom })
+    const start = at(-60, -60)
+    const end = at(4000, 4000)
+    await page.mouse.move(start.x, start.y)
+    await page.mouse.down()
+    await page.mouse.move(end.x, end.y, { steps: 8 })
+    await page.mouse.up()
+    await page.waitForTimeout(300)
+    const many = await peek()
+    check('ramka zaznacza wiele obiektów', many.selected > 1, `${many.selected} obiektów`)
+
+    await page.getByRole('button', { name: 'Properties' }).first().click()
+    await page.waitForTimeout(400)
+    const title = await page.locator('aside').first().innerText()
+    check('panel właściwości zbiorczych', title.toLowerCase().includes(`${many.selected} obiektów`), title.split('\n')[0])
+
+    await page.keyboard.press('Control+c')
+    await page.waitForTimeout(200)
+    check('kopiowanie obiektów', (await peek()).held === many.selected)
+
+    await page.keyboard.press('Control+d')
+    await page.waitForTimeout(300)
+    const duplicated = await peek()
+    check('duplikowanie obiektów', duplicated.objects === many.objects * 2, `${duplicated.objects} obiektów`)
+    await page.keyboard.press('Control+z')
+    await page.waitForTimeout(300)
+    check('cofnięcie zdejmuje kopie', (await peek()).objects === many.objects)
+
+    await page.evaluate(() => window.__tileEditor.state().selectObjects([]))
+    await page.getByRole('button', { name: 'Stawianie obiektów' }).click()
   }
 
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2)

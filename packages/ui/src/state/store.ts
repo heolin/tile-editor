@@ -1,9 +1,9 @@
 import { create } from 'zustand'
 import {
-  AddTilesCommand, AddTilesetCommand, DenseLayerData, History, ProjectLoader,
-  PropertyTypeRegistry, RemoveTilesetCommand, SetTilesCommand, applyFix,
-  captureRegion, clampRegion, fillRegion, indexProperties, paintStamp,
-  serializeProjectJson, suggestEnums,
+  AddObjectCommand, AddTilesCommand, AddTilesetCommand, DenseLayerData, History,
+  ProjectLoader, PropertyTypeRegistry, RemoveObjectsCommand, RemoveTilesetCommand,
+  SetTilesCommand, applyFix, captureRegion, clampRegion, cloneObject, fillRegion,
+  indexProperties, objectsOrigin, paintStamp, serializeProjectJson, suggestEnums,
   addImagesToTileset, createFromTemplate, createTileMap, createTileset,
   findTilesetRef, lintMap, lintProject, lintUnusedTiles, mapTitle,
   nextFirstGid, normalizePath, relativeFrom, tileId, tilesetUsage, walkLayers,
@@ -84,6 +84,8 @@ interface EditorState {
   tileSelection?: TileRegion
   /** Tiles held for pasting. Separate from the stamp, which the brush follows. */
   clipboard?: Stamp
+  /** Objects held for pasting, with the corner they were lifted from. */
+  objectClipboard?: { objects: MapObject[]; origin: { x: number; y: number } }
   activeTilesetPath?: string
   hoverTile?: { x: number; y: number }
 
@@ -137,6 +139,11 @@ interface EditorState {
   /** Drops the clipboard at a cell, or loads it onto the brush when there is no target. */
   pasteTiles(at?: { x: number; y: number }): void
   fillSelection(gid: number): void
+  /** Lifts the selected objects into the object clipboard; `cut` removes them. */
+  copyObjects(cut?: boolean): void
+  /** Drops them at a map point, or one tile down and right of where they came from. */
+  pasteObjects(at?: { x: number; y: number }): void
+  duplicateObjects(): void
   setActiveLayer(id: number | undefined): void
   selectObjects(ids: number[]): void
   setCamera(camera: Partial<Camera>): void
@@ -610,6 +617,84 @@ export const useEditor = create<EditorState>((set, get) => ({
     set({ tileSelection: { x: target.x, y: target.y, width: clipboard.width, height: clipboard.height } })
     if (command.empty) return
     state.history.run(command)
+    state.touch()
+  },
+  copyObjects: (cut = false) => {
+    const state = get()
+    const layer = state.activeObjectLayer()
+    const objects = state.selectedObjects()
+    if (!layer || objects.length === 0) {
+      state.notify('Najpierw zaznacz obiekty.', 'error')
+      return
+    }
+    const origin = objectsOrigin(objects)
+    set({
+      objectClipboard: {
+        origin,
+        // Held relative to their own corner, so where they land later depends
+        // only on where they are put down.
+        objects: objects.map((obj, i) => {
+          const copy = cloneObject(obj, i)
+          copy.x -= origin.x
+          copy.y -= origin.y
+          return copy
+        }),
+      },
+    })
+    if (cut) {
+      state.history.run(new RemoveObjectsCommand(layer, objects))
+      state.selectObjects([])
+      state.touch()
+    }
+    state.notify(`${cut ? 'Wycięto' : 'Skopiowano'} ${objects.length} ${objects.length === 1 ? 'obiekt' : 'obiektów'}`)
+  },
+  pasteObjects: (at) => {
+    const state = get()
+    const held = state.objectClipboard
+    const layer = state.activeObjectLayer()
+    const map = state.doc?.map
+    if (!held || !map) {
+      state.notify('Schowek obiektów jest pusty.', 'error')
+      return
+    }
+    if (!layer) {
+      state.notify('Wybierz warstwę obiektów.', 'error')
+      return
+    }
+    const target = at
+      ? {
+          x: Math.floor(at.x / map.tilewidth) * map.tilewidth,
+          y: Math.floor(at.y / map.tileheight) * map.tileheight,
+        }
+      : { x: held.origin.x + map.tilewidth, y: held.origin.y + map.tileheight }
+    let id = map.nextobjectid
+    const pasted = held.objects.map((obj) => {
+      const copy = cloneObject(obj, id++)
+      copy.x += target.x
+      copy.y += target.y
+      return copy
+    })
+    state.history.run(new AddObjectCommand(layer, pasted, map))
+    state.selectObjects(pasted.map((o) => o.id))
+    // Pasting again walks the block further, instead of stacking copies.
+    set({ objectClipboard: { ...held, origin: target } })
+    state.touch()
+  },
+  duplicateObjects: () => {
+    const state = get()
+    const layer = state.activeObjectLayer()
+    const objects = state.selectedObjects()
+    const map = state.doc?.map
+    if (!layer || !map || objects.length === 0) return
+    let id = map.nextobjectid
+    const copies = objects.map((obj) => {
+      const copy = cloneObject(obj, id++)
+      copy.x += map.tilewidth
+      copy.y += map.tileheight
+      return copy
+    })
+    state.history.run(new AddObjectCommand(layer, copies, map))
+    state.selectObjects(copies.map((o) => o.id))
     state.touch()
   },
   fillSelection: (gid) => {

@@ -179,17 +179,37 @@ export class SetTilesCommand implements EditCommand {
 }
 
 export class AddObjectCommand implements EditCommand {
-  readonly label = 'Dodaj obiekt'
-  constructor(private layer: { objects: MapObject[] }, private object: MapObject, private map: TileMap) {}
+  readonly label: string
+  private nextObjectId: number
+
+  constructor(
+    private layer: { objects: MapObject[] },
+    private objects: MapObject | MapObject[],
+    private map: TileMap,
+  ) {
+    this.label = Array.isArray(objects) && objects.length > 1 ? `Dodaj ${objects.length} obiektów` : 'Dodaj obiekt'
+    this.nextObjectId = map.nextobjectid
+  }
+
+  private get added(): MapObject[] {
+    return Array.isArray(this.objects) ? this.objects : [this.objects]
+  }
 
   apply(): void {
-    this.layer.objects.push(this.object)
-    this.map.nextobjectid = Math.max(this.map.nextobjectid, this.object.id + 1)
+    for (const object of this.added) {
+      this.layer.objects.push(object)
+      this.map.nextobjectid = Math.max(this.map.nextobjectid, object.id + 1)
+    }
   }
 
   revert(): void {
-    const i = this.layer.objects.indexOf(this.object)
-    if (i >= 0) this.layer.objects.splice(i, 1)
+    for (const object of this.added) {
+      const i = this.layer.objects.indexOf(object)
+      if (i >= 0) this.layer.objects.splice(i, 1)
+    }
+    // Undoing has to put the counter back too, or the map saves with a
+    // `nextobjectid` that no longer matches anything in it.
+    this.map.nextobjectid = this.nextObjectId
   }
 }
 
@@ -287,6 +307,47 @@ export class SetPropertyCommand implements EditCommand {
 
   absorb(next: EditCommand): boolean {
     if (!(next instanceof SetPropertyCommand) || next.owner !== this.owner) return false
+    this.next = next.next
+    return true
+  }
+}
+
+/**
+ * The same property change across many nodes, as one undo step. Editing a
+ * property on forty selected objects is a single act, not forty of them.
+ */
+export class SetPropertiesCommand implements EditCommand {
+  readonly label: string
+  readonly mergeKey: string | undefined
+  private before: Property[][]
+
+  constructor(
+    private owners: { properties: Property[] }[],
+    private next: Property[][],
+    label = 'Zmień properties',
+    mergeKey?: string,
+  ) {
+    this.label = label
+    this.mergeKey = mergeKey
+    this.before = owners.map((owner) => owner.properties.map((p) => ({ ...p })))
+  }
+
+  apply(): void {
+    this.owners.forEach((owner, i) => {
+      owner.properties = (this.next[i] ?? []).map((p) => ({ ...p }))
+    })
+  }
+
+  revert(): void {
+    this.owners.forEach((owner, i) => {
+      owner.properties = (this.before[i] ?? []).map((p) => ({ ...p }))
+    })
+  }
+
+  absorb(next: EditCommand): boolean {
+    if (!(next instanceof SetPropertiesCommand)) return false
+    if (next.owners.length !== this.owners.length) return false
+    if (next.owners.some((owner, i) => owner !== this.owners[i])) return false
     this.next = next.next
     return true
   }

@@ -296,44 +296,48 @@ export function MapCanvas() {
       const world = renderer.toWorld(clientX, clientY)
       const hit = renderer.hitTestObject(objectLayer, world.x, world.y)
       if (hit) {
+        // Acting on a whole selection is the point of having one, so a press on
+        // a member of it works on all of them; a press elsewhere takes over.
+        const inSelection = state.selectedObjectIds.includes(hit.id)
+        if (!inSelection) state.selectObjects([hit.id])
+        const targets = inSelection ? state.selectedObjects() : [hit]
+        const many = targets.length > 1
+        const suffix = many ? ` (${targets.length})` : ''
         return [
           {
             label: 'Właściwości',
             onSelect: () => {
-              state.selectObjects([hit.id])
               state.setPropertyTarget({ kind: 'object', id: hit.id })
               state.setPanel('properties')
             },
           },
+          { label: `Kopiuj${suffix}`, hint: 'Ctrl C', onSelect: () => state.copyObjects() },
+          { label: `Wytnij${suffix}`, hint: 'Ctrl X', onSelect: () => state.copyObjects(true) },
+          { label: `Duplikuj${suffix}`, hint: 'Ctrl D', onSelect: () => state.duplicateObjects() },
           {
-            label: 'Duplikuj',
-            onSelect: () => {
-              const copy: MapObject = {
-                ...hit,
-                id: state.doc!.map.nextobjectid,
-                x: hit.x + state.doc!.map.tilewidth,
-                properties: hit.properties.map((p) => ({ ...p })),
-              }
-              state.history.run(new AddObjectCommand(objectLayer, copy, state.doc!.map))
-              state.selectObjects([copy.id])
-              state.touch()
-            },
-          },
-          {
-            label: 'Usuń obiekt',
+            label: many ? `Usuń ${targets.length} obiektów` : 'Usuń obiekt',
             danger: true,
             hint: 'Del',
             onSelect: () => {
-              state.history.run(new RemoveObjectsCommand(objectLayer, [hit]))
+              state.history.run(new RemoveObjectsCommand(objectLayer, targets))
               state.selectObjects([])
               state.touch()
             },
           },
         ]
       }
-      return state.stamp
-        ? [{ label: 'Postaw obiekt tutaj', onSelect: () => placeObject(clientX, clientY) }]
-        : []
+      const items: MenuItem[] = []
+      if (state.objectClipboard) {
+        items.push({
+          label: `Wklej tutaj (${state.objectClipboard.objects.length})`,
+          hint: 'Ctrl V',
+          onSelect: () => state.pasteObjects(world),
+        })
+      }
+      if (state.stamp) {
+        items.push({ label: 'Postaw obiekt tutaj', onSelect: () => placeObject(clientX, clientY) })
+      }
+      return items
     }
 
     const tileLayer = state.activeTileLayer()
