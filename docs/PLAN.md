@@ -276,10 +276,38 @@ Każdy kończy się czymś, co da się uruchomić na telefonie.
 | **M6** | Autotiling (Wang sets + reguły w stylu LDtk), command palette, wyszukiwanie w projekcie, lint mapy | Funkcje, których Tiled nie ma albo ma gorsze | lint, paleta i wyszukiwanie gotowe; autotiling odłożony |
 | **M7** | Capacitor 7, `CapacitorProjectFS` przez SAF, pipeline APK w GitHub Actions | Podpisany APK do pobrania z Actions | **wycofane** — patrz niżej |
 | **M8** | Masowa edycja kafli: zaznaczanie obszaru, schowek, zaznaczenie jako maska narzędzi | Blok kafli przenosi się w obrębie mapy i między mapami | **gotowe** |
+| **M13** | Właściwości w osobnej kolumnie, ustawienia mapy w oknie, reakcja na zmianę rozmiaru | Widać, co się edytuje, i zmiana rozmiaru jest widoczna | **gotowe** |
 | **M12** | Zmiana property w całym projekcie: nazwa, typ, usunięcie — z podglądem | `railId` → `rail_id` w 115 mapach to jedna operacja, nie `sed` | **gotowe** |
 | **M11** | Miniatury map w panelu projektu, rysowane leniwie i cache'owane w IndexedDB | Mapę wybiera się po wyglądzie, nie po numerze | **gotowe** |
 | **M10** | Odzyskiwanie niezapisanej pracy: szkic w IndexedDB, propozycja przywrócenia przy starcie | Ubicie procesu nie kosztuje pracy | **gotowe** |
 | **M9** | Masowa edycja obiektów: schowek obiektów, duplikowanie, properties całego zaznaczenia | Poprawka na 40 obiektach to jedna operacja, nie 40 | **gotowe** |
+
+### M13 — panel właściwości przebudowany, 12 września 2026
+
+Z testów na żywo wyszły dwie rzeczy, obie moje błędy projektowe.
+
+**Zmiana rozmiaru mapy wyglądała, jakby nic nie robiła.** Dane były poprawne —
+warstwy rosły, można było malować po nowym obszarze — ale kamera zostawała
+w miejscu, więc nowe krawędzie lądowały poza ekranem, a pusty obszar rysował
+się **czarną** siatką na prawie czarnym tle. Teraz widok przekadrowuje się na
+całą mapę (`fitToMap()`), leci potwierdzenie „Mapa ma teraz 20 × 14 kafli",
+a siatka rysuje się kolorem `ink`, nie czarnym — bo właśnie w pustym obszarze
+jest jedyną rzeczą, w którą można celować.
+
+**Panel properties był jednym oknem o niewidocznym celu.** Przełączał się
+w milczeniu między mapą, warstwą, obiektem i kaflem, a otwarcie tilesetu
+kasowało go z ekranu. Rozbicie:
+
+- **Właściwości mają własną kolumnę po prawej** od 1180 px w górę — czyli na
+  Tab S7 w poziomie. Zostają na miejscu, kiedy po lewej otwierasz projekt albo
+  tileset. Poniżej tego progu dwie kolumny zostawiłyby ~300 px płótna, więc
+  tam panel dalej jest jeden.
+- **Mapa dostała własne okno**, otwierane nazwą mapy w pasku górnym — bo mapa
+  nie jest zaznaczeniem, a jest tym, do czego chce się sięgnąć, patrząc na coś
+  innego. Rozmiar, orientacja, format i properties mapy siedzą tam.
+- **Przełącznik celu** na górze panelu nazywa to, co edytujesz (`objects`,
+  `obiekt #52`, `kafel #12`) i pozwala wrócić. Wcześniej trzeba było zgadywać
+  z tytułu panelu.
 
 ### M12 — property w całym projekcie, 12 września 2026
 

@@ -49,7 +49,8 @@ dodaj `--lan`.
 | **Paleta poleceń** | `Ctrl+K` — polecenia, skok do mapy i wyszukiwanie po properties w całym projekcie |
 | **Property w projekcie** | zmiana nazwy, typu albo usunięcie property we **wszystkich** plikach naraz — z podglądem „zmieni 74 w 6 plikach" przed zapisem; osobno dla mapy, warstwy, obiektu i kafla |
 | **Lint** | sprzeczne typy property, braki względem reszty map, GID-y spoza tilesetu, nieużywane kafle, wartości spoza typu; część zgłoszeń z naprawą jednym kliknięciem |
-| **Układ** | trzy progi: telefon, tablet w pionie, tablet w poziomie i desktop |
+| **Układ** | trzy progi: telefon, tablet w pionie, tablet w poziomie i desktop. Od 1180 px właściwości mają własną kolumnę po prawej, więc nie znikają przy otwarciu tilesetu ani projektu |
+| **Właściwości** | panel pokazuje to, co zaznaczone, i mówi wprost co to jest (przełącznik warstwa / obiekt / kafel). Ustawienia całej mapy — rozmiar i properties — są w osobnym oknie pod nazwą mapy w pasku górnym |
 | **Gesty** | dwa palce = pan i zoom, tapnięcie dwoma palcami = cofnij, długie przytrzymanie = menu kontekstowe, kółko = zoom do kursora |
 | **Odzyskiwanie pracy** | każda zmiana trafia po sekundzie do IndexedDB jako tekst, który zapisałby `Ctrl+S`; po ubiciu procesu edytor proponuje przywrócenie. Nic nie ląduje na dysku bez zapisu |
 | **PWA** | manifest, ikony i service worker — instalowalne z ekranu domowego, powłoka działa offline i wraca sama, gdy serwer zniknie |

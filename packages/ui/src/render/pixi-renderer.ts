@@ -413,7 +413,10 @@ export class PixiTileRenderer implements TileRenderer {
     for (let y = top; y <= bottom; y++) {
       this.grid.moveTo(left * map.tilewidth, y * map.tileheight).lineTo(right * map.tilewidth, y * map.tileheight)
     }
-    this.grid.stroke({ color: 0x000000, width, alpha })
+    // The ink colour, not black: over artwork either reads, but an empty part
+    // of the map is the dark ground itself, and black lines on it are invisible
+    // - which is exactly where the grid is the only thing to aim at.
+    this.grid.stroke({ color: canvasTheme.ink, width, alpha: alpha * 0.55 })
   }
 
   private drawOverlay(options: RenderOptions): void {

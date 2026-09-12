@@ -9,7 +9,7 @@ import { MapCanvas } from './components/canvas'
 import { LayersPanel } from './components/layers-panel'
 import { LintPanel } from './components/lint-panel'
 import { ProjectPanel } from './components/project-panel'
-import { PropertiesPanel } from './components/properties-panel'
+import { MapPropertiesDialog, PropertiesPanel } from './components/properties-panel'
 import { TilesetPanel } from './components/tileset-panel'
 import { HistoryControls, ToolBar, ViewControls } from './components/toolbar'
 import { CommandPalette } from './components/command-palette'
@@ -40,6 +40,21 @@ function PanelBody({ id }: { id: PanelId }) {
     case 'properties': return <PropertiesPanel />
     case 'lint': return <LintPanel />
   }
+}
+
+/** True while the viewport is at least this wide. */
+function useBreakpoint(query: string): boolean {
+  const [matches, setMatches] = useState(() =>
+    typeof window === 'undefined' ? false : window.matchMedia(query).matches,
+  )
+  useEffect(() => {
+    const media = window.matchMedia(query)
+    const update = () => setMatches(media.matches)
+    update()
+    media.addEventListener('change', update)
+    return () => media.removeEventListener('change', update)
+  }, [query])
+  return matches
 }
 
 /**
@@ -73,6 +88,9 @@ export function App() {
   const dialog = useEditor((s) => s.dialog)
   const setDialog = useEditor((s) => s.setDialog)
   const compact = useCompactLayout()
+  // Wide enough for two columns: properties get their own, so they stop
+  // disappearing the moment you open the tileset or the project.
+  const wide = useBreakpoint('(min-width: 1180px)')
 
   useEffect(() => {
     void init()
@@ -84,8 +102,10 @@ export function App() {
   if (status === 'error') return <ConnectScreen error={error} />
 
   // On medium and wide the docked panel always shows something; on compact the
-  // panels are sheets, so nothing is docked.
-  const dockedPanel = openPanel ?? 'layers'
+  // panels are sheets, so nothing is docked. Where properties have their own
+  // column, the left one never shows them.
+  const rail = wide ? PANELS.filter((panel) => panel.id !== 'properties') : PANELS
+  const dockedPanel = (wide && openPanel === 'properties' ? 'layers' : openPanel) ?? 'layers'
 
   return (
     <div className="flex h-full flex-col bg-ground">
@@ -94,10 +114,17 @@ export function App() {
           tile-editor
         </span>
         <span className="mx-1 hidden h-5 w-px bg-line md:block" />
-        <span className="min-w-0 flex-1 truncate text-[13px] text-ink-dim">
+        {/* The map's own name is where you look for the map's own settings. */}
+        <button
+          type="button"
+          disabled={!doc}
+          onClick={() => setDialog('map-properties')}
+          title="Rozmiar i properties mapy"
+          className="hit min-w-0 flex-1 truncate rounded-md px-1 text-left text-[13px] text-ink-dim hover:bg-hover hover:text-ink disabled:hover:bg-transparent"
+        >
           {doc ? mapTitle(doc.path) : 'brak mapy'}
           {dirty ? <span className="ml-1 text-warn">•</span> : null}
-        </span>
+        </button>
         <Button
           onClick={() => setDialog('palette')}
           title="Paleta poleceń (Ctrl+K)"
@@ -124,7 +151,7 @@ export function App() {
       <div className="flex min-h-0 flex-1">
         {/* Icon rail: the only chrome that survives on a phone. */}
         <nav className="hidden w-11 shrink-0 flex-col items-center gap-0.5 border-r border-line bg-surface py-1 md:flex" aria-label="Panele">
-          {PANELS.map(({ id, label, icon: Icon }) => (
+          {rail.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               type="button"
@@ -143,7 +170,10 @@ export function App() {
         </nav>
 
         {compact ? null : (
-          <aside className="flex w-[240px] shrink-0 border-r border-line wide:w-[300px]">
+          <aside
+            className="flex w-[240px] shrink-0 border-r border-line wide:w-[300px]"
+            aria-label={PANELS.find((panel) => panel.id === dockedPanel)?.label}
+          >
             <PanelBody id={dockedPanel} />
           </aside>
         )}
@@ -155,6 +185,12 @@ export function App() {
             <MapCanvas />
           )}
         </main>
+
+        {wide ? (
+          <aside className="flex w-[300px] shrink-0 border-l border-line" aria-label="Właściwości">
+            <PropertiesPanel />
+          </aside>
+        ) : null}
       </div>
 
       {/* Compact widths get the tools along the bottom, within thumb reach. The
@@ -205,6 +241,7 @@ export function App() {
       <PropertyTypesDialog open={dialog === 'property-types'} onClose={() => setDialog(null)} />
       <PropertyRefactorDialog open={dialog === 'rename-property'} onClose={() => setDialog(null)} />
       <ThemeDialog open={dialog === 'theme'} onClose={() => setDialog(null)} />
+      <MapPropertiesDialog open={dialog === 'map-properties'} onClose={() => setDialog(null)} />
 
       {toast ? <Toast text={toast.text} tone={toast.tone} /> : null}
     </div>

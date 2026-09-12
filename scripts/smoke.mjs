@@ -52,7 +52,7 @@ try {
 
   await page.getByRole('button', { name: 'Tilesety' }).first().click()
   await page.waitForTimeout(600)
-  const tiles = page.locator('aside button[title]')
+  const tiles = page.locator('[aria-label="Tilesety"] button[title]')
   const tileCount = await tiles.count()
   check('tileset ma kafle', tileCount > 0, `${tileCount} kafli`)
   await tiles.nth(3).click()
@@ -178,10 +178,24 @@ try {
     const many = await peek()
     check('ramka zaznacza wiele obiektów', many.selected > 1, `${many.selected} obiektów`)
 
-    await page.getByRole('button', { name: 'Properties' }).first().click()
+    // On this viewport properties have their own column; nothing to open.
     await page.waitForTimeout(400)
-    const title = await page.locator('aside').first().innerText()
-    check('panel właściwości zbiorczych', title.toLowerCase().includes(`${many.selected} obiektów`), title.split('\n')[0])
+    const propertyColumn = page.getByRole('complementary', { name: 'Właściwości' })
+    const title = await propertyColumn.innerText()
+    check(
+      'panel właściwości zbiorczych',
+      title.toLowerCase().includes(`${many.selected} obiektów`),
+      title.split('\n').find((line) => /obiekt/i.test(line)) ?? '—',
+    )
+
+    // The complaint this column exists for: properties used to vanish the
+    // moment another panel was opened.
+    await page.getByRole('button', { name: 'Projekt' }).first().click()
+    await page.waitForTimeout(500)
+    check(
+      'właściwości zostają przy zmianie panelu',
+      (await propertyColumn.innerText()).toLowerCase().includes(`${many.selected} obiektów`),
+    )
 
     await page.keyboard.press('Control+c')
     await page.waitForTimeout(200)
@@ -210,10 +224,10 @@ try {
   // scrolled, one at a time, so this walks it to the bottom first.
   await page.getByRole('button', { name: 'Projekt' }).first().click()
   const count = () => page.evaluate(() => {
-    const images = [...document.querySelectorAll('aside img')]
+    const images = [...document.querySelectorAll('[aria-label="Projekt"] img')]
     return {
       drawn: images.length,
-      maps: document.querySelectorAll('aside li button').length,
+      maps: document.querySelectorAll('[aria-label="Projekt"] li button').length,
       real: images.every((img) => img.getAttribute('src')?.startsWith('data:image/')),
     }
   })
@@ -222,7 +236,7 @@ try {
   let thumbs = await count()
   for (let pass = 0; pass < 4 && thumbs.drawn < thumbs.maps; pass++) {
     await page.evaluate(async () => {
-      const list = document.querySelector('aside .overflow-y-auto')
+      const list = document.querySelector('[aria-label="Projekt"] .overflow-y-auto')
       list.scrollTop = 0
       for (let i = 0; i < 200; i++) {
         list.scrollTop += 240
@@ -243,7 +257,7 @@ try {
   // knowing where to look.
   const absent = thumbs.drawn < thumbs.maps
     ? await page.evaluate(() =>
-        [...document.querySelectorAll('aside li button')]
+        [...document.querySelectorAll('[aria-label="Projekt"] li button')]
           .filter((button) => !button.querySelector('img'))
           .map((button) => button.textContent.trim()),
       )

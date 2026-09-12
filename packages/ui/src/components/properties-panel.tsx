@@ -1,16 +1,16 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import clsx from 'clsx'
-import { Plus, Trash2 } from 'lucide-react'
+import { Map as MapIcon, Plus, Trash2 } from 'lucide-react'
 import {
   FLIP_H, FLIP_V, ResizeMapCommand, SetAnimationCommand, SetPropertiesCommand,
   SetPropertyCommand, UpdateLayerCommand, UpdateObjectsCommand, classFor, classMemberStates,
-  defaultValueFor, flagsToValues, parseGid, propertiesOutsideClass,
+  defaultValueFor, flagsToValues, mapTitle, parseGid, propertiesOutsideClass,
   setClassMember, storageTypeOf, tileLabel, valuesToFlags, walkLayers,
   type ClassMember, type ClassPropertyType, type EnumPropertyType, type Frame,
   type Property, type PropertyScope, type PropertyType, type PropertyTypeDef, type PropertyTypeTarget,
   type Tile, type Tileset,
 } from '@tile-editor/core'
-import { Button, Empty, Field, Panel, Select, TextInput } from './ui'
+import { Button, Dialog, Empty, Field, Panel, Select, TextInput } from './ui'
 import { useEditor, type PropertyOwner } from '../state/store'
 import { themeColor } from '../theme'
 
@@ -21,20 +21,114 @@ const TYPES: PropertyType[] = ['string', 'int', 'float', 'bool', 'color', 'file'
  * this panel is the editor's centre of gravity, not a side feature
  * (docs/PLAN.md section 5.1).
  */
+/**
+ * What is selected, edited. The map itself is deliberately not here: it has no
+ * selection to follow, it is the one thing you want to reach while looking at
+ * something else, and a panel that silently retargets between map, layer,
+ * object and tile leaves you unsure what you are typing into. Map-level
+ * settings live in their own window; this panel shows a target chooser so the
+ * answer is always on screen.
+ */
 export function PropertiesPanel() {
   const doc = useEditor((s) => s.doc)
   const selectedObjectIds = useEditor((s) => s.selectedObjectIds)
-  // Several objects at once get their own editor - a map with 712 of them is
-  // edited in batches, and one at a time is the whole cost of that. It is a
-  // separate component rather than a branch, so neither side's hooks depend
-  // on how many objects happen to be selected.
-  if (doc && selectedObjectIds.length > 1) return <ManyObjects ids={selectedObjectIds} />
-  return <SingleNode />
+  const target = useEditor((s) => s.propertyTarget)
+  const activeLayerId = useEditor((s) => s.activeLayerId)
+  // The map is never the panel's subject, so a stored map target falls back to
+  // whatever layer is active rather than quietly showing map properties here.
+  const panelTarget: PropertyOwner | undefined =
+    target.kind === 'map' ? (activeLayerId === undefined ? undefined : { kind: 'layer', id: activeLayerId }) : target
+
+  return (
+    <Panel title="Właściwości" actions={<MapPropertiesButton />}>
+      <TargetPicker />
+      {doc && selectedObjectIds.length > 1 ? (
+        <ManyObjects ids={selectedObjectIds} bare />
+      ) : panelTarget ? (
+        <SingleNode target={panelTarget} bare />
+      ) : (
+        <Empty>Wybierz warstwę albo obiekt.</Empty>
+      )}
+    </Panel>
+  )
 }
 
-function SingleNode() {
+function MapPropertiesButton() {
+  const setDialog = useEditor((s) => s.setDialog)
+  return (
+    <Button size="sm" title="Właściwości mapy" aria-label="Właściwości mapy" onClick={() => setDialog('map-properties')}>
+      <MapIcon size={14} />
+    </Button>
+  )
+}
+
+/**
+ * The chain of things that can be edited right now. Without it the panel's
+ * contents change under you when you click a layer, and nothing says why.
+ */
+function TargetPicker() {
   const doc = useEditor((s) => s.doc)
   const target = useEditor((s) => s.propertyTarget)
+  const selected = useEditor((s) => s.selectedObjectIds)
+  const activeLayerId = useEditor((s) => s.activeLayerId)
+  const setPropertyTarget = useEditor((s) => s.setPropertyTarget)
+  useEditor((s) => s.revision)
+  if (!doc) return null
+
+  const state = useEditor.getState()
+  const layer = state.activeLayer()
+  const options: { key: string; label: string; target: PropertyOwner }[] = []
+  if (layer) options.push({ key: 'layer', label: layer.name || 'warstwa', target: { kind: 'layer', id: layer.id } })
+  if (selected.length === 1) options.push({ key: 'object', label: `obiekt #${selected[0]}`, target: { kind: 'object', id: selected[0]! } })
+  if (target.kind === 'tile') options.push({ key: 'tile', label: `kafel #${target.tileId}`, target })
+  if (options.length === 0) return null
+
+  const activeKey =
+    target.kind === 'object' && selected.length === 1 ? 'object' : target.kind === 'tile' ? 'tile' : 'layer'
+
+  return (
+    <div className="flex flex-wrap items-center gap-1 border-b border-line px-2 py-1.5">
+      {options.map((option) => (
+        <button
+          key={option.key}
+          type="button"
+          onClick={() => setPropertyTarget(option.target)}
+          className={clsx(
+            'max-w-full truncate rounded-md px-2 py-1 text-[11px]',
+            activeKey === option.key
+              ? 'bg-accent-deep text-accent-ink'
+              : 'text-ink-faint hover:bg-hover hover:text-ink',
+          )}
+        >
+          {option.label}
+        </button>
+      ))}
+      {selected.length > 1 ? (
+        <span className="rounded-md bg-accent-deep px-2 py-1 text-[11px] text-accent-ink">
+          {selected.length} obiektów
+        </span>
+      ) : null}
+      {activeLayerId === undefined ? <span className="px-1 text-[11px] text-ink-faint">brak warstwy</span> : null}
+    </div>
+  )
+}
+
+/** Map-level settings, in a window because they belong to no selection. */
+export function MapPropertiesDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const doc = useEditor((s) => s.doc)
+  return (
+    <Dialog open={open} onClose={onClose} title={doc ? `Mapa · ${mapTitle(doc.path)}` : 'Mapa'} footer={
+      <Button variant="outline" onClick={onClose}>Zamknij</Button>
+    }>
+      {doc ? <SingleNode target={{ kind: 'map' }} bare /> : <Empty>Brak otwartej mapy.</Empty>}
+    </Dialog>
+  )
+}
+
+function SingleNode({ target: forced, bare }: { target?: PropertyOwner; bare?: boolean } = {}) {
+  const doc = useEditor((s) => s.doc)
+  const stored = useEditor((s) => s.propertyTarget)
+  const target = forced ?? stored
   useEditor((s) => s.revision)
   const state = useEditor.getState()
 
@@ -56,8 +150,10 @@ function SingleNode() {
     [propertyIndex, target],
   )
 
-  if (!doc) return <Panel title="Properties"><Empty>Brak otwartej mapy.</Empty></Panel>
-  if (!owner) return <Panel title="Properties"><Empty>Nic nie jest zaznaczone.</Empty></Panel>
+  const shell = (children: ReactNode) =>
+    bare ? <div className="flex min-h-0 flex-col">{children}</div> : <Panel title="Właściwości">{children}</Panel>
+  if (!doc) return shell(<Empty>Brak otwartej mapy.</Empty>)
+  if (!owner) return shell(<Empty>Nic nie jest zaznaczone.</Empty>)
 
   const commit = (next: Property[]) => {
     state.history.run(new SetPropertyCommand(owner.node, next, `Properties: ${owner.title}`, `props:${owner.key}`))
@@ -70,19 +166,25 @@ function SingleNode() {
     commit(next)
   }
 
-  return (
-    <Panel
-      title={`Properties · ${owner.title}`}
-      actions={
-        <Button
-          size="sm"
-          title="Dodaj property"
-          onClick={() => commit([...owner.node.properties, { name: uniqueName(owner.node.properties), type: 'string', value: '' }])}
-        >
-          <Plus size={14} />
-        </Button>
-      }
+  const add = (
+    <Button
+      size="sm"
+      title="Dodaj property"
+      aria-label="Dodaj property"
+      onClick={() => commit([...owner.node.properties, { name: uniqueName(owner.node.properties), type: 'string', value: '' }])}
     >
+      <Plus size={14} />
+    </Button>
+  )
+
+  const body = (
+    <>
+      {bare ? (
+        <div className="flex items-center justify-between gap-2 px-3 py-1.5">
+          <h3 className="panel-title">{owner.title}</h3>
+          {add}
+        </div>
+      ) : null}
       {owner.header}
 
       {nodeClass ? (
@@ -172,7 +274,13 @@ function SingleNode() {
           ))}
         </ul>
       )}
-    </Panel>
+    </>
+  )
+
+  return bare ? (
+    <div className="flex min-h-0 flex-col overflow-y-auto">{body}</div>
+  ) : (
+    <Panel title={`Właściwości · ${owner.title}`} actions={add}>{body}</Panel>
   )
 }
 
@@ -562,7 +670,7 @@ function sharedProperties(objects: { properties: Property[] }[]): SharedProperty
  * including the ones that did not have the property yet - the point of the
  * batch is to make them agree.
  */
-function ManyObjects({ ids }: { ids: number[] }) {
+function ManyObjects({ ids, bare }: { ids: number[]; bare?: boolean }) {
   const doc = useEditor((s) => s.doc)!
   useEditor((s) => s.revision)
   const state = useEditor.getState()
@@ -641,15 +749,20 @@ function ManyObjects({ ids }: { ids: number[] }) {
     state.touch()
   }
 
-  return (
-    <Panel
-      title={`Properties · ${objects.length} obiektów`}
-      actions={
-        <Button size="sm" title="Dodaj property wszystkim" onClick={addToAll}>
-          <Plus size={14} />
-        </Button>
-      }
-    >
+  const add = (
+    <Button size="sm" title="Dodaj property wszystkim" aria-label="Dodaj property wszystkim" onClick={addToAll}>
+      <Plus size={14} />
+    </Button>
+  )
+
+  const body = (
+    <>
+      {bare ? (
+        <div className="flex items-center justify-between gap-2 px-3 py-1.5">
+          <h3 className="panel-title">{objects.length} obiektów</h3>
+          {add}
+        </div>
+      ) : null}
       <div className="border-b border-line pb-2">
         <p className="px-3 py-2 text-[11px] text-ink-faint">
           Zmiany dotyczą wszystkich {objects.length} zaznaczonych obiektów.
@@ -763,7 +876,13 @@ function ManyObjects({ ids }: { ids: number[] }) {
           ))}
         </ul>
       )}
-    </Panel>
+    </>
+  )
+
+  return bare ? (
+    <div className="flex min-h-0 flex-col overflow-y-auto">{body}</div>
+  ) : (
+    <Panel title={`Właściwości · ${objects.length} obiektów`} actions={add}>{body}</Panel>
   )
 
   function setVisibility(visible: boolean) {
@@ -794,6 +913,9 @@ function MapHeader() {
     if (!changed || w < 1 || h < 1) return
     state.history.run(new ResizeMapCommand(doc.map, w, h))
     state.touch()
+    // Without this the map grows off screen and nothing appears to happen.
+    state.fitToMap()
+    state.notify(`Mapa ma teraz ${w} × ${h} kafli`)
     setSize(null)
   }
 

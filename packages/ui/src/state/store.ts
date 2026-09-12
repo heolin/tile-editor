@@ -20,7 +20,7 @@ import { INSTALL_MESSAGES, promptInstall } from '../pwa'
 import { buildTileSourceIndex, type TileSourceIndex } from '../render/tile-source'
 import { draftKey, dropDraft, listDrafts, putDraft, type Draft } from './drafts'
 import { forgetThumb } from '../components/map-thumb'
-import { pruneThumbs, thumbKey } from './thumbs'
+import { dropThumbs, pruneThumbs, thumbKey } from './thumbs'
 
 export type ToolId = 'brush' | 'eraser' | 'fill' | 'rect' | 'picker' | 'area' | 'select' | 'object'
 
@@ -109,6 +109,8 @@ interface EditorState {
   hoverTile?: { x: number; y: number }
 
   camera: Camera
+  /** Bumped to ask the canvas to frame the whole map; it owns the viewport. */
+  fitRequest: number
   showGrid: boolean
   showObjects: boolean
   /** Off by default: animating means redrawing continuously, which costs battery. */
@@ -118,7 +120,7 @@ interface EditorState {
   /** Id of the active colour theme; see theme.ts for the list. */
   theme: string
   /** Modal dialogs live here so the command palette can open them too. */
-  dialog: 'new-map' | 'add-tileset' | 'property-types' | 'palette' | 'theme' | 'drafts' | 'rename-property' | null
+  dialog: 'new-map' | 'add-tileset' | 'property-types' | 'palette' | 'theme' | 'drafts' | 'rename-property' | 'map-properties' | null
   propertyTarget: PropertyOwner
   lint: LintFinding[]
   lintRunning: boolean
@@ -172,8 +174,10 @@ interface EditorState {
   setActiveLayer(id: number | undefined): void
   selectObjects(ids: number[]): void
   setCamera(camera: Partial<Camera>): void
+  /** Frames the whole map. Used after a resize, when the new edges are off screen. */
+  fitToMap(): void
   setPanel(panel: PanelId | null): void
-  setDialog(dialog: 'new-map' | 'add-tileset' | 'property-types' | 'palette' | 'theme' | 'drafts' | 'rename-property' | null): void
+  setDialog(dialog: 'new-map' | 'add-tileset' | 'property-types' | 'palette' | 'theme' | 'drafts' | 'rename-property' | 'map-properties' | null): void
   setTheme(id: string): void
   addToHomeScreen(): Promise<void>
   setPropertyTarget(target: PropertyOwner): void
@@ -214,6 +218,7 @@ export const useEditor = create<EditorState>((set, get) => ({
   dirtyTilesets: new Set<string>(),
   tool: 'brush',
   camera: { x: 0, y: 0, zoom: 1 },
+  fitRequest: 0,
   showGrid: true,
   showObjects: true,
   animate: false,
@@ -398,6 +403,7 @@ export const useEditor = create<EditorState>((set, get) => ({
       set({ doc: { ...doc, baseText: text }, dirty: false, saving: false, dirtyTilesets: new Set() })
       // The file moved on, so its thumbnail and its timestamp both have to.
       forgetThumb(get().root, doc.path)
+      void dropThumbs(get().root, doc.path)
       void get().refreshProject()
       get().notify(
         savedTilesets.length > 0
@@ -852,6 +858,7 @@ export const useEditor = create<EditorState>((set, get) => ({
       propertyTarget: ids.length === 1 ? { kind: 'object', id: ids[0]! } : get().propertyTarget,
     }),
   setCamera: (camera) => set({ camera: { ...get().camera, ...camera } }),
+  fitToMap: () => set({ fitRequest: get().fitRequest + 1 }),
   setPanel: (openPanel) => set({ openPanel }),
   setDialog: (dialog) => set({ dialog }),
   /** Offers the browser's install prompt, or explains why there is not one. */

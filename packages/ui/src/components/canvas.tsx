@@ -59,6 +59,7 @@ export function MapCanvas() {
   const tool = useEditor((s) => s.tool)
   const stamp = useEditor((s) => s.stamp)
   const tileSelection = useEditor((s) => s.tileSelection)
+  const fitRequest = useEditor((s) => s.fitRequest)
   const showGrid = useEditor((s) => s.showGrid)
   const showObjects = useEditor((s) => s.showObjects)
   const animate = useEditor((s) => s.animate)
@@ -163,6 +164,13 @@ export function MapCanvas() {
     frame = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(frame)
   }, [animate, mounted, revision])
+
+  // Growing a map puts its new edges outside the viewport, so the view follows
+  // rather than leaving the user staring at an unchanged picture.
+  useEffect(() => {
+    if (!mounted || fitRequest === 0) return
+    fitToView()
+  }, [fitRequest, mounted])
 
   function fitToView(): void {
     const host = hostRef.current

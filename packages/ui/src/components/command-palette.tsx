@@ -58,6 +58,7 @@ export function CommandPalette() {
       { id: 'save', label: 'Zapisz mapę', group: 'Plik', icon: Save, hint: 'Ctrl+S', run: () => useEditor.getState().save() },
       { id: 'new-map', label: 'Nowa mapa…', group: 'Plik', icon: Plus, run: () => useEditor.getState().setDialog('new-map') },
       { id: 'add-tileset', label: 'Dodaj tileset…', group: 'Plik', icon: Palette, run: () => useEditor.getState().setDialog('add-tileset') },
+      { id: 'map-properties', label: 'Właściwości mapy…', group: 'Plik', icon: SlidersHorizontal, hint: 'rozmiar, properties', run: () => useEditor.getState().setDialog('map-properties') },
       { id: 'types', label: 'Typy projektu…', group: 'Projekt', icon: ListChecks, run: () => useEditor.getState().setDialog('property-types') },
       { id: 'rename-property', label: 'Zmień property w całym projekcie…', group: 'Projekt', icon: Replace, detail: 'Zmiana nazwy, typu albo usunięcie we wszystkich plikach naraz', run: () => useEditor.getState().setDialog('rename-property') },
       { id: 'drafts', label: 'Niezapisane zmiany…', group: 'Plik', icon: History, detail: 'Odzyskaj pracę z sesji, która skończyła się bez zapisu', run: () => useEditor.getState().setDialog('drafts') },

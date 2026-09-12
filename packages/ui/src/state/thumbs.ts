@@ -26,6 +26,18 @@ export async function writeThumb(thumb: Thumb): Promise<void> {
 }
 
 /**
+ * Removes every stored thumbnail of one map, whatever timestamp it was made
+ * for. Saving mints a new key, so without this the old one would sit in storage
+ * until the next startup sweep.
+ */
+export async function dropThumbs(root: string, path: string): Promise<void> {
+  const prefix = `${root}::${path}::`
+  await idb(THUMBS, 'readwrite', (store) =>
+    store.delete(IDBKeyRange.bound(prefix, `${prefix}\uffff`)) as unknown as IDBRequest<undefined>,
+  )
+}
+
+/**
  * Throws away thumbnails of maps that have since changed. Keys carry the
  * timestamp they were made for, so anything whose prefix matches a live map but
  * whose key does not is by definition out of date.
