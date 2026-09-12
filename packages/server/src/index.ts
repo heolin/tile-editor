@@ -186,10 +186,14 @@ export async function startServer(options: ServerOptions) {
   }
 
   await new Promise<void>((resolveListen) => server.listen(port, host, resolveListen))
+  // Port 0 asks the system for any free one, which is how tests avoid fighting
+  // each other over a hardcoded number - so report what was actually bound.
+  const address = server.address()
+  const bound = typeof address === 'object' && address !== null ? address.port : port
 
   return {
-    url: `http://${host}:${port}`,
-    port,
+    url: `http://${host}:${bound}`,
+    port: bound,
     async close(): Promise<void> {
       watcher?.close()
       for (const res of listeners) res.end()

@@ -55,7 +55,7 @@ for (const [name, size, fill] of CASES) {
   writeFileSync(join(project, `levels/bench-${name}.tmj`), serializeMapJson(map, DEFAULT_HINTS))
 }
 
-const server = await startServer({ root: project, port: 4408, uiDir: resolve('packages/ui/dist') })
+const server = await startServer({ root: project, port: 0, uiDir: resolve('packages/ui/dist') })
 const browser = await chromium.launch({
   args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
 })

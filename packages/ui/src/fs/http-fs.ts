@@ -74,6 +74,7 @@ export class HttpProjectFS implements ProjectFS {
     maps: string[]
     tilesets: string[]
     images: string[]
+    stamps: Record<string, number>
   }> {
     let res: Response
     try {
@@ -96,10 +97,11 @@ export class HttpProjectFS implements ProjectFS {
   async listAll(): Promise<FsEntry[]> {
     if (this.cachedList) return this.cachedList
     const data = await this.project()
+    const stamp = (path: string) => data.stamps?.[path]
     this.cachedList = [
-      ...data.maps.map((path): FsEntry => ({ path, kind: 'file' })),
-      ...data.tilesets.map((path): FsEntry => ({ path, kind: 'file' })),
-      ...data.images.map((path): FsEntry => ({ path, kind: 'file' })),
+      ...data.maps.map((path): FsEntry => ({ path, kind: 'file', mtime: stamp(path) })),
+      ...data.tilesets.map((path): FsEntry => ({ path, kind: 'file', mtime: stamp(path) })),
+      ...data.images.map((path): FsEntry => ({ path, kind: 'file', mtime: stamp(path) })),
     ]
     return this.cachedList
   }

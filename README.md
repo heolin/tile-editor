@@ -39,6 +39,7 @@ dodaj `--lan`.
 | **Mapy nieskończone** | odczyt i zapis chunków w obu formatach |
 | **Edycja kafli** | pędzel, gumka, wypełnienie, prostokąt, pipeta, cofanie ze scalaniem pociągnięć |
 | **Masowa edycja** | zaznaczanie obszaru, przeciąganie zaznaczonego bloku (`Ctrl` kopiuje zamiast przenosić), kopiowanie i wycinanie, wklejanie (także między mapami), wypełnianie i czyszczenie zaznaczenia; dopóki zaznaczenie stoi, żadne narzędzie nie pisze poza nim |
+| **Panel projektu** | siatka miniatur zamiast listy nazw; rysowane leniwie, po jednej, i pamiętane między sesjami — `story-11` od `story-13` odróżnia kształt, nie numer |
 | **Tworzenie map** | pusta mapa albo na podstawie szablonu, z przepisaniem ścieżek do tilesetów |
 | **Warstwy** | kolejność, widoczność, krycie, dodawanie i usuwanie |
 | **Obiekty** | stawianie, zaznaczanie ramką, przeciąganie uchwytów do skalowania i obrotu, przesuwanie ze snapowaniem, kasowanie; render z rozciąganiem, obrotem, flipem i `objectalignment` |

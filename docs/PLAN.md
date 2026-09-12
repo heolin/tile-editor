@@ -276,8 +276,38 @@ Każdy kończy się czymś, co da się uruchomić na telefonie.
 | **M6** | Autotiling (Wang sets + reguły w stylu LDtk), command palette, wyszukiwanie w projekcie, lint mapy | Funkcje, których Tiled nie ma albo ma gorsze | lint, paleta i wyszukiwanie gotowe; autotiling odłożony |
 | **M7** | Capacitor 7, `CapacitorProjectFS` przez SAF, pipeline APK w GitHub Actions | Podpisany APK do pobrania z Actions | **wycofane** — patrz niżej |
 | **M8** | Masowa edycja kafli: zaznaczanie obszaru, schowek, zaznaczenie jako maska narzędzi | Blok kafli przenosi się w obrębie mapy i między mapami | **gotowe** |
+| **M11** | Miniatury map w panelu projektu, rysowane leniwie i cache'owane w IndexedDB | Mapę wybiera się po wyglądzie, nie po numerze | **gotowe** |
 | **M10** | Odzyskiwanie niezapisanej pracy: szkic w IndexedDB, propozycja przywrócenia przy starcie | Ubicie procesu nie kosztuje pracy | **gotowe** |
 | **M9** | Masowa edycja obiektów: schowek obiektów, duplikowanie, properties całego zaznaczenia | Poprawka na 40 obiektach to jedna operacja, nie 40 | **gotowe** |
+
+### M11 — miniatury map, 12 września 2026
+
+115 poziomów nazwanych `story-01`…`story-40` nie da się odróżnić po nazwie.
+Panel projektu rysuje je teraz małe, w siatce (lista została pod przełącznikiem
+i zapamiętuje wybór).
+
+Decyzje, które to ukształtowały:
+
+- **Płaskie płótno 2D, nie Pixi.** Renderer WebGL trzyma mapę, którą się
+  edytuje; walka o kontekst dla kilkudziesięciu miniatur nie ma sensu, a
+  `drawImage` z `TileSourceIndex` wystarcza w zupełności.
+- **Obiekty rysują się razem z kaflami.** Poziom tilt-balla to same obiekty —
+  miniatura bez nich byłaby pustym prostokątem. Kotwica z `objectalignment`
+  i obrót są respektowane, inaczej każdy obiekt siedziałby o własny rozmiar
+  obok.
+- **Leniwie i po jednej.** `IntersectionObserver` zamawia miniaturę dopiero,
+  gdy kafelek zbliża się do ekranu, a kolejka rysuje po jednej — inaczej
+  otwarcie panelu ściągałoby 115 map naraz. Margines 400 px nie jest ozdobą:
+  bez niego szybkie przewinięcie wynosiło kafelek poza ekran, zanim doszła
+  pierwsza odpowiedź obserwatora, i taka miniatura nie rysowała się nigdy.
+  Nieudane rysowanie ponawia się, zamiast zostawiać dziurę w siatce.
+- **Klucz cache zawiera czas modyfikacji pliku.** `scanProject` zwraca teraz
+  `stamps`, więc zmieniona mapa to zwykłe pudło w cache, a nie nieaktualny
+  obrazek. Stare klucze sprząta `pruneThumbs()` przy starcie.
+
+Zmierzone na sokobanie (79 map, SwiftShader): pierwsze przewinięcie panelu
+rysuje komplet w **2,7 s**, a po przeładowaniu strony wszystkie 79 wraca
+z IndexedDB, pobierając z serwera **jedną** mapę — tę otwartą w edytorze.
 
 ### M10 — odzyskiwanie niezapisanej pracy, 11 września 2026
 

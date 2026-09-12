@@ -17,7 +17,7 @@ const workdir = mkdtempSync(join(tmpdir(), 'tile-editor-recovery-'))
 const project = join(workdir, 'project')
 cpSync(sourceProject, project, { recursive: true })
 
-const server = await startServer({ root: project, port: 4404, uiDir: resolve('packages/ui/dist') })
+const server = await startServer({ root: project, port: 0, uiDir: resolve('packages/ui/dist') })
 const browser = await chromium.launch({
   args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
 })
@@ -91,7 +91,9 @@ try {
   check('zapis dopiero teraz zmienia plik', readFileSync(join(project, edited.path), 'utf8') !== onDisk)
   const left = await page.evaluate(async () => {
     const db = await new Promise((done) => {
-      const request = indexedDB.open('tile-editor', 1)
+      // No version number: the editor owns the schema, and naming a stale one
+      // here makes the open fail with a VersionError that never resolves.
+      const request = indexedDB.open('tile-editor')
       request.onsuccess = () => done(request.result)
     })
     return await new Promise((done) => {

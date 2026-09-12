@@ -41,6 +41,12 @@ export interface ProjectContents {
   maps: string[]
   tilesets: string[]
   images: string[]
+  /**
+   * Last-modified time per file, or its size where the filesystem has no clock.
+   * Anything cached about a file - a rendered thumbnail, say - can hang off
+   * this and be thrown away the moment the file moves on.
+   */
+  stamps: Record<string, number>
 }
 
 function hasExt(path: string, exts: readonly string[]): boolean {
@@ -71,12 +77,20 @@ export async function scanProject(fs: ProjectFS): Promise<ProjectContents> {
     else if (hasExt(file, TILESET_EXTENSIONS)) tilesets.push(file)
   }
 
+  const stamps: Record<string, number> = {}
+  for (const entry of entries) {
+    if (entry.kind !== 'file') continue
+    const stamp = entry.mtime ?? entry.size
+    if (stamp !== undefined) stamps[entry.path] = stamp
+  }
+
   return {
     configPath,
     config,
     maps: maps.sort(),
     tilesets: tilesets.sort(),
     images: files.filter((f) => hasExt(f, IMAGE_EXTENSIONS)).sort(),
+    stamps,
   }
 }
 

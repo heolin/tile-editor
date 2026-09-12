@@ -21,7 +21,7 @@ const workdir = mkdtempSync(join(tmpdir(), 'tile-editor-smoke-'))
 const project = join(workdir, 'project')
 cpSync(sourceProject, project, { recursive: true })
 
-const server = await startServer({ root: project, port: 4399, uiDir: resolve('packages/ui/dist') })
+const server = await startServer({ root: project, port: 0, uiDir: resolve('packages/ui/dist') })
 const browser = await chromium.launch({
   args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
 })
@@ -205,6 +205,69 @@ try {
 
   await page.getByRole('button', { name: /Zapisz$/ }).click()
   await page.waitForTimeout(1000)
+
+  // The project panel draws every map small. They arrive as the list is
+  // scrolled, one at a time, so this walks it to the bottom first.
+  await page.getByRole('button', { name: 'Projekt' }).first().click()
+  const count = () => page.evaluate(() => {
+    const images = [...document.querySelectorAll('aside img')]
+    return {
+      drawn: images.length,
+      maps: document.querySelectorAll('aside li button').length,
+      real: images.every((img) => img.getAttribute('src')?.startsWith('data:image/')),
+    }
+  })
+  // Thumbnails arrive as cells scroll in and are drawn one at a time, so this
+  // walks the list and gives the queue time, repeating while any are missing.
+  let thumbs = await count()
+  for (let pass = 0; pass < 4 && thumbs.drawn < thumbs.maps; pass++) {
+    await page.evaluate(async () => {
+      const list = document.querySelector('aside .overflow-y-auto')
+      list.scrollTop = 0
+      for (let i = 0; i < 200; i++) {
+        list.scrollTop += 240
+        await new Promise((done) => setTimeout(done, 50))
+        if (list.scrollTop + list.clientHeight >= list.scrollHeight - 4) break
+      }
+      // And back up: thumbnails are drawn for what is near the viewport, so a
+      // one-way sweep would never ask for the rows it started on.
+      while (list.scrollTop > 0) {
+        list.scrollTop -= 240
+        await new Promise((done) => setTimeout(done, 50))
+      }
+    })
+    await page.waitForTimeout(2500)
+    thumbs = await count()
+  }
+  // Naming the ones that never arrived is the difference between "29/31" and
+  // knowing where to look.
+  const absent = thumbs.drawn < thumbs.maps
+    ? await page.evaluate(() =>
+        [...document.querySelectorAll('aside li button')]
+          .filter((button) => !button.querySelector('img'))
+          .map((button) => button.textContent.trim()),
+      )
+    : []
+  check(
+    'każda mapa ma miniaturę',
+    thumbs.drawn === thumbs.maps && thumbs.maps > 0,
+    `${thumbs.drawn}/${thumbs.maps}${absent.length > 0 ? ` — brak: ${absent.join(', ')}` : ''}`,
+  )
+  check('miniatury to narysowane obrazki', thumbs.real)
+  const cached = await page.evaluate(async () => {
+    const db = await new Promise((done) => {
+      // No version number: the editor owns the schema, and naming a stale one
+      // here makes the open fail with a VersionError that never resolves.
+      const request = indexedDB.open('tile-editor')
+      request.onsuccess = () => done(request.result)
+    })
+    return await new Promise((done) => {
+      const request = db.transaction('thumbs').objectStore('thumbs').getAll()
+      request.onsuccess = () => done(request.result.length)
+    })
+  })
+  check('miniatury zostają w pamięci przeglądarki', cached === thumbs.maps, `${cached} w cache`)
+
   check('konsola bez błędów', errors.length === 0, errors.slice(0, 2).join(' | '))
 
   // Compare against the pristine source. One tile is one line; a new object is

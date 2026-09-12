@@ -17,6 +17,8 @@ import { DEFAULT_THEME, applyTheme, storedTheme } from '../theme'
 import { INSTALL_MESSAGES, promptInstall } from '../pwa'
 import { buildTileSourceIndex, type TileSourceIndex } from '../render/tile-source'
 import { draftKey, dropDraft, listDrafts, putDraft, type Draft } from './drafts'
+import { forgetThumb } from '../components/map-thumb'
+import { pruneThumbs, thumbKey } from './thumbs'
 
 export type ToolId = 'brush' | 'eraser' | 'fill' | 'rect' | 'picker' | 'area' | 'select' | 'object'
 
@@ -236,11 +238,18 @@ export const useEditor = create<EditorState>((set, get) => ({
           maps: data.maps,
           tilesets: data.tilesets,
           images: data.images,
+          stamps: data.stamps ?? {},
         },
       })
       // Anything left behind by a session that never got to save. Read before
       // the first map opens, so the offer is on screen from the start.
       set({ drafts: await listDrafts(data.root) })
+      // Every save mints a thumbnail under a new key; the old ones would pile
+      // up in browser storage forever if nobody swept them out.
+      void pruneThumbs(
+        data.root,
+        new Set(data.maps.map((path) => thumbKey(data.root, path, data.stamps?.[path]))),
+      )
       const first = data.maps[0]
       if (first) await get().openMap(first)
     } catch (error) {
@@ -344,6 +353,7 @@ export const useEditor = create<EditorState>((set, get) => ({
         maps: data.maps,
         tilesets: data.tilesets,
         images: data.images,
+        stamps: data.stamps ?? {},
       },
     })
   },
@@ -368,6 +378,9 @@ export const useEditor = create<EditorState>((set, get) => ({
       // left to protect.
       await dropDraft(draftKey(get().root, doc.path))
       set({ doc: { ...doc, baseText: text }, dirty: false, saving: false, dirtyTilesets: new Set() })
+      // The file moved on, so its thumbnail and its timestamp both have to.
+      forgetThumb(get().root, doc.path)
+      void get().refreshProject()
       get().notify(
         savedTilesets.length > 0
           ? `Zapisano ${mapTitle(doc.path)} i ${savedTilesets.length} tileset${savedTilesets.length === 1 ? '' : 'y'}`

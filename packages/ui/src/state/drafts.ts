@@ -1,3 +1,5 @@
+import { DRAFTS, idb } from './idb'
+
 /**
  * Unsaved work, parked in the browser.
  *
@@ -10,6 +12,8 @@
  * Nothing here ever writes to the project. Restoring puts the draft back into
  * the editor as unsaved changes; committing them stays the user's Ctrl+S.
  */
+
+export const draftKey = (root: string, path: string): string => `${root}::${path}`
 
 export interface Draft {
   /** Project root and map path together, so two folders never collide. */
@@ -25,59 +29,17 @@ export interface Draft {
   savedAt: number
 }
 
-const DB_NAME = 'tile-editor'
-const STORE = 'drafts'
-
-export const draftKey = (root: string, path: string): string => `${root}::${path}`
-
-let dbPromise: Promise<IDBDatabase | undefined> | undefined
-
-function open(): Promise<IDBDatabase | undefined> {
-  if (dbPromise) return dbPromise
-  dbPromise = new Promise((resolve) => {
-    if (typeof indexedDB === 'undefined') {
-      resolve(undefined)
-      return
-    }
-    const request = indexedDB.open(DB_NAME, 1)
-    request.onupgradeneeded = () => {
-      const db = request.result
-      if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE, { keyPath: 'key' })
-    }
-    request.onsuccess = () => resolve(request.result)
-    // Private windows and blocked storage both land here. Losing the safety net
-    // is bad; refusing to open the editor over it would be worse.
-    request.onerror = () => resolve(undefined)
-  })
-  return dbPromise
-}
-
-function run<T>(mode: IDBTransactionMode, fn: (store: IDBObjectStore) => IDBRequest<T>): Promise<T | undefined> {
-  return open().then(
-    (db) =>
-      new Promise<T | undefined>((resolve) => {
-        if (!db) {
-          resolve(undefined)
-          return
-        }
-        const request = fn(db.transaction(STORE, mode).objectStore(STORE))
-        request.onsuccess = () => resolve(request.result)
-        request.onerror = () => resolve(undefined)
-      }),
-  )
-}
-
 export async function putDraft(draft: Draft): Promise<void> {
-  await run('readwrite', (store) => store.put(draft) as IDBRequest<IDBValidKey>)
+  await idb(DRAFTS, 'readwrite', (store) => store.put(draft) as IDBRequest<IDBValidKey>)
 }
 
 export async function dropDraft(key: string): Promise<void> {
-  await run('readwrite', (store) => store.delete(key) as unknown as IDBRequest<undefined>)
+  await idb(DRAFTS, 'readwrite', (store) => store.delete(key) as unknown as IDBRequest<undefined>)
 }
 
 /** Every draft belonging to one project, newest first. */
 export async function listDrafts(root: string): Promise<Draft[]> {
-  const all = (await run('readonly', (store) => store.getAll() as IDBRequest<Draft[]>)) ?? []
+  const all = (await idb(DRAFTS, 'readonly', (store) => store.getAll() as IDBRequest<Draft[]>)) ?? []
   return all.filter((draft) => draft.root === root).sort((a, b) => b.savedAt - a.savedAt)
 }
 
