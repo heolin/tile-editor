@@ -7,7 +7,7 @@ import {
   defaultValueFor, flagsToValues, parseGid, propertiesOutsideClass,
   setClassMember, storageTypeOf, tileLabel, valuesToFlags, walkLayers,
   type ClassMember, type ClassPropertyType, type EnumPropertyType, type Frame,
-  type Property, type PropertyType, type PropertyTypeDef, type PropertyTypeTarget,
+  type Property, type PropertyScope, type PropertyType, type PropertyTypeDef, type PropertyTypeTarget,
   type Tile, type Tileset,
 } from '@tile-editor/core'
 import { Button, Empty, Field, Panel, Select, TextInput } from './ui'
@@ -204,8 +204,8 @@ function TypeMismatchHint({ property, known, onAdopt }: {
 }
 
 /** Which slice of the property index applies to the node being edited. */
-function indexScope(target: PropertyOwner): 'map' | 'layer' | 'object' {
-  return target.kind === 'map' ? 'map' : target.kind === 'object' ? 'object' : 'layer'
+function indexScope(target: PropertyOwner): PropertyScope {
+  return target.kind
 }
 
 /** Which custom types make sense here, per each class's `useAs`. */

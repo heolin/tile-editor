@@ -35,7 +35,12 @@ export type LintFix = {
   count: number
 }
 
-export type PropertyScope = 'map' | 'layer' | 'object'
+/**
+ * Where a property hangs. Tiles carry 199 of the corpus's 867 properties -
+ * second only to maps - so anything that indexes or rewrites properties has to
+ * know about them, even though they live in the tileset rather than the map.
+ */
+export type PropertyScope = 'map' | 'layer' | 'object' | 'tile'
 
 export interface LintTarget {
   path: string
@@ -395,7 +400,10 @@ export interface PropertyIndexEntry {
  * type the editor happened to be in, which is exactly how `railId` ended up an
  * int in 56 objects and a string in 18.
  */
-export function indexProperties(targets: LintTarget[]): PropertyIndexEntry[] {
+export function indexProperties(
+  targets: LintTarget[],
+  tilesets: Iterable<Tileset> = [],
+): PropertyIndexEntry[] {
   const seen = new Map<string, { scope: PropertyScope; name: string; types: Map<PropertyType, number> }>()
   const record = (scope: PropertyScope, property: Property) => {
     const key = `${scope}.${property.name}`
@@ -411,6 +419,12 @@ export function indexProperties(targets: LintTarget[]): PropertyIndexEntry[] {
     }
     for (const object of allObjects(map)) {
       for (const property of object.properties) record('object', property)
+    }
+  }
+
+  for (const tileset of tilesets) {
+    for (const tile of tileset.tiles) {
+      for (const property of tile.properties) record('tile', property)
     }
   }
 

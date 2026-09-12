@@ -3,12 +3,14 @@ import {
   AddObjectCommand, AddTilesCommand, AddTilesetCommand, DenseLayerData, History,
   ProjectLoader, PropertyTypeRegistry, RemoveObjectsCommand, RemoveTilesetCommand,
   SetTilesCommand, applyFix, captureRegion, clampRegion, cloneObject, fillRegion,
+  applyInMap, applyInTileset, countInMap, countInTileset,
   indexProperties, objectsOrigin, paintStamp, serializeProjectJson, suggestEnums,
   addImagesToTileset, createFromTemplate, createTileMap, createTileset,
   findTilesetRef, lintMap, lintProject, lintUnusedTiles, mapTitle,
   nextFirstGid, normalizePath, relativeFrom, tileId, tilesetUsage, walkLayers,
   type DocumentFormat, type FormatHints, type LintFinding, type Layer, type MapObject,
-  type LintFix, type ObjectLayer, type ProjectContents, type PropertyIndexEntry,
+  type LintFix, type ObjectLayer, type ProjectContents, type PropertyChange,
+  type PropertyIndexEntry,
   type PropertyTypeDef, type Stamp, type TileLayer, type TileMap, type TileRegion,
   type Tileset, type TilesetRef, type TypeSuggestion,
 } from '@tile-editor/core'
@@ -53,6 +55,18 @@ export interface NewMapRequest {
   /** Path of a map to copy the structure from, or undefined for a blank map. */
   templatePath?: string
   keepContent: boolean
+}
+
+/** One file a project-wide change would rewrite, and how much of it. */
+export interface ChangedFile {
+  path: string
+  kind: 'map' | 'tileset'
+  count: number
+}
+
+export interface ChangePreview {
+  files: ChangedFile[]
+  properties: number
 }
 
 export type PropertyOwner =
@@ -104,7 +118,7 @@ interface EditorState {
   /** Id of the active colour theme; see theme.ts for the list. */
   theme: string
   /** Modal dialogs live here so the command palette can open them too. */
-  dialog: 'new-map' | 'add-tileset' | 'property-types' | 'palette' | 'theme' | 'drafts' | null
+  dialog: 'new-map' | 'add-tileset' | 'property-types' | 'palette' | 'theme' | 'drafts' | 'rename-property' | null
   propertyTarget: PropertyOwner
   lint: LintFinding[]
   lintRunning: boolean
@@ -131,6 +145,10 @@ interface EditorState {
   savePropertyTypes(types: PropertyTypeDef[]): Promise<void>
   suggestPropertyTypes(): Promise<TypeSuggestion[]>
   applyPropertyType(scope: 'map' | 'object', property: string, typeName: string): Promise<{ maps: number; properties: number }>
+  /** What a project-wide property change would touch, without touching it. */
+  previewPropertyChange(change: PropertyChange): Promise<ChangePreview>
+  /** Carries it out, file by file. There is no undo across files. */
+  applyPropertyChange(change: PropertyChange): Promise<{ files: number; properties: number }>
 
   attachTileset(tilesetPath: string): Promise<void>
   detachTileset(ref: TilesetRef): void
@@ -155,7 +173,7 @@ interface EditorState {
   selectObjects(ids: number[]): void
   setCamera(camera: Partial<Camera>): void
   setPanel(panel: PanelId | null): void
-  setDialog(dialog: 'new-map' | 'add-tileset' | 'property-types' | 'palette' | 'theme' | 'drafts' | null): void
+  setDialog(dialog: 'new-map' | 'add-tileset' | 'property-types' | 'palette' | 'theme' | 'drafts' | 'rename-property' | null): void
   setTheme(id: string): void
   addToHomeScreen(): Promise<void>
   setPropertyTarget(target: PropertyOwner): void
@@ -491,6 +509,74 @@ export const useEditor = create<EditorState>((set, get) => ({
       get().touch()
     }
     return { maps, properties }
+  },
+
+  async previewPropertyChange(change) {
+    const { loader, project } = get()
+    if (!loader || !project) return { files: [], properties: 0 }
+    const files: ChangedFile[] = []
+    let properties = 0
+
+    if (change.scope === 'tile') {
+      for (const path of project.tilesets) {
+        const loaded = await loader.loadTileset(path).catch(() => undefined)
+        if (!loaded) continue
+        const count = countInTileset(loaded.tileset, change)
+        if (count === 0) continue
+        files.push({ path, kind: 'tileset', count })
+        properties += count
+      }
+    } else {
+      for (const path of project.maps) {
+        const loaded = await loader.loadMap(path).catch(() => undefined)
+        if (!loaded) continue
+        const count = countInMap(loaded.map, change)
+        if (count === 0) continue
+        files.push({ path, kind: 'map', count })
+        properties += count
+      }
+    }
+    return { files, properties }
+  },
+
+  async applyPropertyChange(change) {
+    const { loader, project, doc } = get()
+    if (!loader || !project) return { files: 0, properties: 0 }
+    let files = 0
+    let properties = 0
+
+    try {
+      if (change.scope === 'tile') {
+        for (const path of project.tilesets) {
+          const loaded = await loader.loadTileset(path).catch(() => undefined)
+          if (!loaded) continue
+          const touched = applyInTileset(loaded.tileset, change)
+          if (touched === 0) continue
+          await loader.saveTileset(loaded.tileset, path, loaded.hints)
+          files++
+          properties += touched
+        }
+      } else {
+        for (const path of project.maps) {
+          const loaded = await loader.loadMap(path).catch(() => undefined)
+          if (!loaded) continue
+          const touched = applyInMap(loaded.map, change)
+          if (touched === 0) continue
+          await loader.saveMap(loaded.map, path, loaded.hints)
+          files++
+          properties += touched
+        }
+      }
+    } catch (error) {
+      get().notify(error instanceof Error ? error.message : String(error), 'error')
+    }
+
+    // Whatever is on screen was rewritten underneath it, so it gets re-read
+    // rather than left showing the old names.
+    await get().refreshProject()
+    if (doc) await get().openMap(doc.path)
+    await get().indexProjectProperties()
+    return { files, properties }
   },
 
   async attachTileset(tilesetPath) {
@@ -851,7 +937,12 @@ export const useEditor = create<EditorState>((set, get) => ({
         // A map that will not parse contributes nothing to the index.
       }
     }
-    set({ propertyIndex: indexProperties(targets) })
+    const tilesets = []
+    for (const path of project.tilesets) {
+      const loaded = await loader.loadTileset(path).catch(() => undefined)
+      if (loaded) tilesets.push(loaded.tileset)
+    }
+    set({ propertyIndex: indexProperties(targets, tilesets) })
   },
 
   /**

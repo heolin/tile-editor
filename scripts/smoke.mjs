@@ -289,6 +289,31 @@ try {
       `${changed.join('  ->  ').trim() || 'brak zmian'}${whitespace > 0 ? ` (+${whitespace} linii formatowania)` : ''}`,
     )
   }
+
+  // Renaming a property across the project. Left until last on purpose: it
+  // rewrites files the editor never opened, so it would invalidate every diff
+  // assertion above it.
+  await page.evaluate(() => window.__tileEditor.state().setDialog('rename-property'))
+  await page.waitForFunction(() => document.querySelectorAll('[role="dialog"] li button').length > 0, null, { timeout: 30000 })
+  const first = page.locator('[role="dialog"] li button').first()
+  const label = (await first.innerText()).split('\n')[0].trim()
+  await first.click()
+  await page.waitForTimeout(300)
+  await page.getByRole('textbox', { name: 'Nowa nazwa property' }).fill(`${label}__zmiana`)
+  await page.getByRole('button', { name: 'Podejrzyj' }).click()
+  await page.waitForFunction(() => /Zmieni /.test(document.querySelector('[role="dialog"]')?.textContent ?? ''), null, { timeout: 30000 })
+  const promised = Number(/Zmieni (\d+) w (\d+)/.exec(await page.locator('[role="dialog"]').innerText())?.[2] ?? 0)
+  check('podgląd zmiany liczy pliki', promised > 0, `${label} w ${promised} plikach`)
+
+  const held = execSync(`grep -rl '"${label}"' "${project}" | wc -l`, { encoding: 'utf8' }).trim()
+  await page.getByRole('button', { name: /^Zastosuj/ }).click()
+  await page.waitForTimeout(1000)
+  await page.waitForFunction(() => document.querySelector('[role="dialog"]') === null, null, { timeout: 60000 }).catch(() => {})
+  await page.waitForTimeout(2000)
+  const left = execSync(`grep -rl '"${label}"' "${project}" | wc -l`, { encoding: 'utf8' }).trim()
+  const renamed = execSync(`grep -rl '"${label}__zmiana"' "${project}" | wc -l`, { encoding: 'utf8' }).trim()
+  check('zmiana objęła obiecane pliki', Number(renamed) === promised, `${held} → ${left}, nowa nazwa w ${renamed}`)
+  check('konsola bez błędów po zmianie', errors.length === 0, errors.slice(0, 2).join(' | '))
 } finally {
   await browser.close()
   await server.close()

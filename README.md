@@ -47,6 +47,7 @@ dodaj `--lan`.
 | **Properties** | mapy, warstwy, obiektu i **kafla** — wszystkie typy skalarne; zmiany kafla zapisują się do tilesetu |
 | **Typy własne** | enumy i klasy w `.tiled-project`; enum staje się listą wyboru, flagi checkboxami, klasa rozwija się na pola |
 | **Paleta poleceń** | `Ctrl+K` — polecenia, skok do mapy i wyszukiwanie po properties w całym projekcie |
+| **Property w projekcie** | zmiana nazwy, typu albo usunięcie property we **wszystkich** plikach naraz — z podglądem „zmieni 74 w 6 plikach" przed zapisem; osobno dla mapy, warstwy, obiektu i kafla |
 | **Lint** | sprzeczne typy property, braki względem reszty map, GID-y spoza tilesetu, nieużywane kafle, wartości spoza typu; część zgłoszeń z naprawą jednym kliknięciem |
 | **Układ** | trzy progi: telefon, tablet w pionie, tablet w poziomie i desktop |
 | **Gesty** | dwa palce = pan i zoom, tapnięcie dwoma palcami = cofnij, długie przytrzymanie = menu kontekstowe, kółko = zoom do kursora |

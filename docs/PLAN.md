@@ -276,9 +276,37 @@ Każdy kończy się czymś, co da się uruchomić na telefonie.
 | **M6** | Autotiling (Wang sets + reguły w stylu LDtk), command palette, wyszukiwanie w projekcie, lint mapy | Funkcje, których Tiled nie ma albo ma gorsze | lint, paleta i wyszukiwanie gotowe; autotiling odłożony |
 | **M7** | Capacitor 7, `CapacitorProjectFS` przez SAF, pipeline APK w GitHub Actions | Podpisany APK do pobrania z Actions | **wycofane** — patrz niżej |
 | **M8** | Masowa edycja kafli: zaznaczanie obszaru, schowek, zaznaczenie jako maska narzędzi | Blok kafli przenosi się w obrębie mapy i między mapami | **gotowe** |
+| **M12** | Zmiana property w całym projekcie: nazwa, typ, usunięcie — z podglądem | `railId` → `rail_id` w 115 mapach to jedna operacja, nie `sed` | **gotowe** |
 | **M11** | Miniatury map w panelu projektu, rysowane leniwie i cache'owane w IndexedDB | Mapę wybiera się po wyglądzie, nie po numerze | **gotowe** |
 | **M10** | Odzyskiwanie niezapisanej pracy: szkic w IndexedDB, propozycja przywrócenia przy starcie | Ubicie procesu nie kosztuje pracy | **gotowe** |
 | **M9** | Masowa edycja obiektów: schowek obiektów, duplikowanie, properties całego zaznaczenia | Poprawka na 40 obiektach to jedna operacja, nie 40 | **gotowe** |
+
+### M12 — property w całym projekcie, 12 września 2026
+
+Cała semantyka tych gier siedzi w properties rozsypanych po 115 plikach, które
+łączy tylko konwencja. Zmiana nazwy jednej z nich była do tej pory operacją na
+`sed`zie z nadzieją, że nie trafi w string w kodzie.
+
+Policzone przy okazji, i to przestawiło zakres: w korpusie jest **579 properties
+mapy, 199 kafla, 89 obiektu i ani jednej warstwy**. Kafle to drugi co do
+wielkości zakres — a indeks properties w ogóle ich nie znał, przez co
+podpowiedzi nazw przy właściwościach kafla były zawsze puste. `indexProperties`
+przyjmuje teraz tilesety, a `indexScope` w panelu przestało mapować kafel na
+warstwę.
+
+Operacja jest w `core/refactor.ts` (liczenie osobno od stosowania, żeby podgląd
+niczego nie dotykał) i ma trzy zabezpieczenia, bo jako jedyna w edytorze
+przepisuje pliki, których użytkownik nigdy nie otworzył, i **nie da się jej
+cofnąć jednym `Ctrl+Z`**:
+
+- `Zastosuj` jest martwe, dopóki nie zobaczysz podglądu — z liczbą wystąpień
+  i rozbiciem na pliki;
+- zakresy są rozdzielone, więc `railId` na obiekcie i `railId` na kaflu to dwie
+  osobne pozycje na liście, a nie jedna pułapka;
+- przy niezapisanej otwartej mapie odmawia startu.
+
+Przeliczanie typu jest celowo tępe: co się nie konwertuje, staje się wartością
+pustą typu, a nie zgadywanym odpowiednikiem — błąd ma wyglądać na błąd.
 
 ### M11 — miniatury map, 12 września 2026
 
